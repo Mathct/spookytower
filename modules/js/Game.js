@@ -37,51 +37,58 @@ class PlayerTurn {
 
     // PART 1 Event listeners
     if (isCurrentPlayerActive) {
-      // A TESTER
       this.possibles = [];
-      this.args = args.args;
-      console.log(this.args);
-      this.args.selectable.forEach((sid) => {
-        this.game.safeClass(sid, "add", "selectable");
-        //console.log("selectable ", sid);
-        this.possibles.push(sid);
-      });
+      console.log(args);
+
+      // selectable
+      if (Array.isArray(args.selectable) && args.selectable.length > 0) {
+        args.selectable.forEach((sid) => {
+          this.game.safeClass(sid, "add", "selectable");
+          this.possibles.push(sid);
+        });
+      }
 
       // selected
-      this.args.selected.forEach((sid) => {
-        this.game.safeClass(sid, "add", "selected");
-      });
+      if (Array.isArray(args.selected) && args.selected.length > 0) {
+        args.selected.forEach((sid) => {
+          this.game.safeClass(sid, "add", "selected");
+        });
+      }
 
-      // event listeners
-      this.game.setupConnections(this.possibles);
+      // event listeners uniquement s'il y a quelque chose à connecter
+      if (this.possibles.length > 0) {
+        this.game.setupConnections(this.possibles);
+      }
     }
 
     // PART 2 Titles
-    this.bga.statusBar.setTitle(
-      isCurrentPlayerActive
-        ? this.bga.gameui.format_string_recursive(
-            args.args.titleyou
-              .replace("${you}", this.divYou())
-              .replace(/#opponent#/g, args.args.opponent)
-              .replace("#nb#", args.args.nb)
-              .replace("#nb2#", args.args.nb2)
-              .replace("#icon#", args.args.icon)
-              .replace("#icon2#", args.args.icon2),
-            args.args,
-          )
-        : ($("pagemaintitletext").innerHTML = this.bga.gameui.format_string_recursive(
-            _(args.args.title)
-              .replace("${actplayer}", this.divActPlayer())
-              .replace("#nb#", args.args.nb)
-              .replace("#nb2#", args.args.nb2)
-              .replace("#icon#", args.args.icon)
-              .replace("#icon2#", args.args.icon2),
-            args.args,
-          )),
-    );
+    if (isCurrentPlayerActive && args.titleyou) {
+      this.bga.statusBar.setTitle(
+        this.bga.gameui.format_string_recursive(
+          args.titleyou
+            .replace("${you}", this.divYou())
+            .replace(/#opponent#/g, args.opponent ?? "")
+            .replace("#nb#", args.nb ?? "")
+            .replace("#nb2#", args.nb2 ?? "")
+            .replace("#icon#", args.icon ?? "")
+            .replace("#icon2#", args.icon2 ?? ""),
+          args,
+        ),
+      );
+    } else if (args.title) {
+      $("pagemaintitletext").innerHTML = this.bga.gameui.format_string_recursive(
+        _(args.title)
+          .replace("${actplayer}", this.divActPlayer())
+          .replace("#nb#", args.nb ?? "")
+          .replace("#nb2#", args.nb2 ?? "")
+          .replace("#icon#", args.icon ?? "")
+          .replace("#icon2#", args.icon2 ?? ""),
+        args,
+      );
+    }
 
     // PART 3 updateActionButtons
-    if (isCurrentPlayerActive) {
+    if (isCurrentPlayerActive && Array.isArray(args.buttons) && args.buttons.length > 0) {
       for (const key of args.buttons) {
         switch (key) {
           case "yes_btn":
@@ -94,6 +101,7 @@ class PlayerTurn {
               { color: "primary" },
             );
             break;
+
           case "no_btn":
             this.bga.statusBar.addActionButton(
               _("No"),
@@ -104,10 +112,12 @@ class PlayerTurn {
               { color: "primary" },
             );
             break;
+
           case "take_btn":
             this.bga.statusBar.addActionButton(_("Take Cards"), "onOpTakeCards", null, null, "blue");
             this.game.safeClass("#take_btn", "add", "disabled");
             break;
+
           case "end_turn_btn":
             this.bga.statusBar.addActionButton(
               _("End Turn"),
@@ -208,8 +218,8 @@ export class Game {
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 25;
     console.log("zoom_f", this.zoom_factor);
 
-    //this.setupPlayersBoard();
-    //this.setupBoard();
+    this.setupPlayersBoard();
+    this.setupBoard();
     //this.addSideButtons();
 
     //this.setupCounters();
@@ -367,46 +377,90 @@ export class Game {
       // example of setting up players boards
       this.bga.playerPanels.getElement(player.id).insertAdjacentHTML(
         "beforeend",
-        `<div class="b-board" id="ai_board_${player.id}"></div>
-          <div class="b-board" id="action_board_${player.id}"></div>
-            `,
+        `
+          <div class="a-board" id="top_board_${player.id}">
+            <!-- Ghost icon + counter -->
+            <div class="icon-group">
+              <div
+                class="icon ic_ghost"
+                id="icon_ghost_${player.id}"
+                title="${_("Ghost")}"
+              ></div>
+              <span
+                class="icon-text"
+                id="ghost_counter_${player.id}"
+              ></span>
+            </div>
+            <!-- Artefact icon + counter -->
+            <div class="icon-group">
+              <div
+                class="icon ic_artefact"
+                id="icon_artefact_${player.id}"
+                title="${_("Artefacts")}"
+              ></div>
+              <span
+                class="icon-text"
+                id="artefact_counter_${player.id}"
+              ></span>
+            </div>
+                        <!-- Clue icon + counter -->
+            <div class="icon-group">
+              <div
+                class="icon ic_clue"
+                id="icon_clue_${player.id}"
+                title="${_("Clues")}"
+              ></div>
+              <span
+                class="icon-text"
+                id="clue_counter_${player.id}"
+              ></span>
+            </div>
+          </div>
+
+          <div class="b-board" id="bottom_board_${player.id}">
+                      <!-- Reroll icon -->
+
+              <div
+                class="icon ic_reroll_${player.reroll ?? 1}"
+                id="icon_reroll_${player.id}"
+                title="${_("Reroll")}"
+              ></div>
+            </div>
+
+          `,
       );
-      /*  const counter = new ebg.counter();
-      counter.create(`superbonus_hand_counter_${player.id}`, {
-        value: player.superbonus_hand,
-        playerCounter: "superbonus_hand",
+
+      const artefact_counter = new ebg.counter();
+      artefact_counter.create(`artefact_counter_${player.id}`, {
+        value: player.artefact,
+        playerCounter: "artefact",
         playerId: player.id,
-      });*/
+      });
+
+      const ghost_counter = new ebg.counter();
+      ghost_counter.create(`ghost_counter_${player.id}`, {
+        value: player.ghost,
+        playerCounter: "ghost",
+        playerId: player.id,
+      });
+      const clue_counter = new ebg.counter();
+      clue_counter.create(`clue_counter_${player.id}`, {
+        value: player.clue,
+        playerCounter: "clue",
+        playerId: player.id,
+      });
     });
 
-    const active_player_id = this.bga.players.getActivePlayerId();
-
-    /*    const action_elt = document.getElementById(`action_board_${active_player_id}`);
-    Object.values(this.gamedatas.actions).forEach((action) => {
-      const action_played = action.used == 1 ? action.action_1 : action.action_2;
-
-      const action_x = this.actions_list.indexOf(action_played);
-
-      action_elt.insertAdjacentHTML(
-        "beforeend",
-        `<div id="action_${action.action_order}"
-          class="rm_actions"
-          style="background-position: -${action_x}00% 0%;">
-     </div>`,
-      );
-    });
-
-    // on attache un listener à l'icone du joueur
     const current_player_id = this.bga.players.getCurrentPlayerId();
 
     if (current_player_id) {
-      const icon = document.getElementById(`icon_superbonus_${current_player_id}`);
+      const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
 
-      if (icon) {
-        icon.classList.add("clickable");
-        icon.addEventListener("click", () => this.openSuperbonusModal());
+      if (rerollIcon) {
+        rerollIcon.classList.add("clickable");
+        rerollIcon.addEventListener("click", () => this.onFlipReroll());
       }
-    }*/
+    }
   }
 
   isMobileDevice() {
@@ -555,6 +609,42 @@ export class Game {
   updateBoardZoom() {
     document.documentElement.style.setProperty("--st_scale", this.zoom_factor);
     document.documentElement.style.setProperty("--font-scale", this.zoom_factor / 25);
+  }
+
+  async onFlipReroll() {
+    const playerId = this.bga.players.getCurrentPlayerId();
+    const icon = document.getElementById(`icon_reroll_${playerId}`);
+    if (!icon) return;
+
+    if (icon.dataset.flipping === "true") return;
+    icon.dataset.flipping = "true";
+
+    const half = 200; // demi-flip en ms
+
+    // Premier demi-flip : rotation + léger pop + translation Y
+    icon.style.transition = `transform ${half}ms ease-in-out`;
+    icon.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
+
+    await new Promise((resolve) => setTimeout(resolve, half));
+
+    // Changement du sprite exactement à mi-flip
+    if (icon.classList.contains("ic_reroll_1")) {
+      icon.classList.remove("ic_reroll_1");
+      icon.classList.add("ic_reroll_0");
+    } else {
+      icon.classList.remove("ic_reroll_0");
+      icon.classList.add("ic_reroll_1");
+    }
+
+    // Deuxième demi-flip : retour à la position normale avec léger rebond
+    icon.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
+
+    await new Promise((resolve) => setTimeout(resolve, half));
+
+    // Reset final
+    icon.style.transition = "";
+    icon.style.transform = "";
+    delete icon.dataset.flipping;
   }
 
   ///////////////////////////////////////////////////

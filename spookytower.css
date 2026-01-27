@@ -67,6 +67,315 @@
     }
 */
 
+ *{
+  box-sizing: border-box; 
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  
+}
+  
+:root {
+  --font-scale: 1;
+  --rm_scale: 25;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+/*////////////////////////////
+//|  ___|__  _ __ | |_ ___  //
+//| |_ / _ \| '_ \| __/ __| //
+//|  _| (_) | | | | |_\__ \ //
+//|_|  \___/|_| |_|\__|___/ //
+////////////////////////////*/
+
+
+@font-face {
+  font-family: 'AktivGrotesk-Regular';
+  font-style: normal;
+  font-weight: normal;
+  src: local('AktivGrotesk-Regular'), url(img/AktivGrotesk-Regular.ttf);
+}
+
+
+/*//////////////////////////////////////
+// ____                _ _            //
+//|_   _|__   ___ | | |_(_)_ __  ___  //
+//  | |/ _ \ / _ \| | __| | '_ \/ __| //
+//  | | (_) | (_) | | |_| | |_) \__ \ //
+//  |_|\___/ \___/|_|\__|_| .__/|___/ //
+//                        |_|         //
+//////////////////////////////////////*/
+
+/* tooltip Card */
+.tooltip_content {
+  display: flex;
+  justify-content: space-between;
+  height: auto;
+  gap: 10px;
+  flex-wrap: wrap;
+
+}
+
+
+/*  ____  _                             ____                  _  */
+/* |  _ \| | __ _ _   _  ___ _ __ ___  |  _ \ __ _ _ __   ___| | */
+/* | |_) | |/ _` | | | |/ _ \ '__/ __| | |_) / _` | '_ \ / _ \ | */
+/* |  __/| | (_| | |_| |  __/ |  \__ \ |  __/ (_| | | | |  __/ | */
+/* |_|   |_|\__,_|\__, |\___|_|  |___/ |_|   \__,_|_| |_|\___|_| */
+/*                |___/                                          */
+
+.a-board {
+  clear: both;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.b-board {
+  clear: both;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  perspective: 600px;
+}
+
+/* Groupe contenant une icône et son compteur */
+.icon-group {
+  display: flex;
+  align-items: center;
+  gap: 2px; /* Espace entre l'icône et le texte */
+  margin : 0 5px;
+}
+
+/* Compteur */
+.icon-text {
+font-family: "AktivGrotesk-Regular", sans-serif;
+  font-size: 16pt;
+  line-height: 50px;
+  text-shadow: 2px 2px 5px white, -2px -2px 5px white, 2px -2px 5px white, -2px 2px 5px white;
+}
+
+
+.icon {
+  width: 48px;
+  height: 48px;
+  background-image: url("img/ST_icons.png");
+  background-size: 500% 100%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.ic_reroll_1 { background-position: 0% 0% }
+.ic_reroll_0 { background-position: -100% 0% }
+.ic_artefact { background-position: -200% 0% }
+.ic_ghost { background-position: -300% 0% }
+.ic_clue { background-position: -400% 0% }
+
+ /* animation de flip */
+.temp-reroll-card {
+  width: 48px;
+  height: 48px;
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease-in-out;
+  position: relative;
+}
+
+.temp-reroll-card .front,
+.temp-reroll-card .back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+
+.temp-reroll-card .back {
+  transform: rotateY(180deg);
+}
+
+/*////////////////////////////////
+// ____                     _ _ //
+//| __ )  ___   __ _ _ __ __| | //
+//|  _ \ / _ \ / _` | '__/ _` | //
+//| |_) | (_) | (_| | | | (_| | //
+//|____/ \___/ \__,_|_|  \__,_| //
+////////////////////////////////*/
+
+/* Conteneur principal */
+/* Container qui va scaler */
+
+/* Conteneur adaptatif */
+#resized_id {
+  position: relative;
+  width: 100%;
+  height: 100%; /* ou height du conteneur disponible */
+  overflow-x: auto;
+}
+
+#board_id {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: calc(50px*var(--rm_scale));
+  /*height: calc(25px*var(--rm_scale));*/
+  transform-origin: top left;
+  background-color: gainsboro;
+}
 
 
 
+
+/*////////////////////////////////////////
+// ____                _ _              //
+//|  _ \ ___ _ __   __| (_)_ __   __ _  //
+//| |_) / _ \ '_ \ / _` | | '_ \ / _` | //
+//|  __/  __/ | | | (_| | | | | | (_| | //
+//|_|   \___|_| |_|\__,_|_|_| |_|\__, | //
+//                               |___/  //
+////////////////////////////////////////*/
+
+.selectable, .selectablemulti {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    outline: 4px dashed yellow; 
+    border-radius: 4px;
+    box-shadow: 0 0 3px yellow;
+    z-index: 100;
+  }
+   
+.selected, .selectedmulti {
+    outline: 4px solid yellow; 
+    border-radius: 4px;
+    box-shadow: 0 0 3px yellow;
+    z-index: 100;
+  }
+
+
+
+  #rm_help_button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  bottom: 12px;
+  left: 5px;
+  width: 50px;
+  height: 50px;
+  background: #60c2cb;
+  font-weight: bold;
+  color: white;
+  border-radius: 50%;
+  box-shadow: 3px 5px 5px rgb(0, 0, 0);
+  cursor: pointer;
+  z-index: 949;
+  font-size: 28pt;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.modal-content {
+  position: relative;
+    background: #c0d9fa;
+    padding: 10px;
+    border-radius: 10px;
+    width: 70%;
+    max-height: 95vh; /* Limite la hauteur à 90% de la fenêtre */
+    overflow-y: auto; /* Ajoute un scroll si nécessaire */
+    /*text-align: center;*/
+    border: solid 1px rgb(57, 86, 105);
+    box-shadow: 3px 5px 5px rgb(0, 0, 0);
+}
+
+.close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 32px;
+    cursor: pointer;
+}
+
+
+@media (max-width: 768px) {
+  .modal-content {
+    margin-top: 15%;
+    width: 95%;
+  }
+}
+
+
+#rm_zoom_plus_button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 125px;
+  right: 5px;
+  width: 50px;
+  height: 50px;
+  background: #e0a0b8;
+  font-weight: bold;
+  color: white;
+  border-radius: 50%;
+  box-shadow: 3px 5px 5px rgb(0, 0, 0);
+  cursor: pointer;
+  z-index: 949;
+  font-size: 28pt;
+}
+
+#rm_zoom_minus_button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 185px;
+  right: 5px;
+  width: 50px;
+  height: 50px;
+  background: #e0a0b8;
+  font-weight: bold;
+  color: white;
+  border-radius: 50%;
+  box-shadow: 3px 5px 5px rgb(0, 0, 0);
+  cursor: pointer;
+  z-index: 949;
+  font-size: 28pt;
+}
+
+@media (max-width: 600px) {
+  #rm_help_button,
+  #rm_zoom_plus_button,
+  #rm_zoom_minus_button
+   {
+    width: 30px;
+    height: 30px;
+    font-size: 18pt;
+  }
+
+
+  #rm_zoom_plus_button {
+    top: 80px;
+  }
+
+  #rm_zoom_minus_button {
+    top: 115px;
+  }
+}
