@@ -30,6 +30,10 @@ class Game extends \Bga\GameFramework\Table
     // counters
     //public PlayerCounter $playerEnergy;
 
+    //databases decks
+    public $building_DB;
+    public $grimoire_DB;
+
 
     public static $instance = null; //ATTENTION pending MAthCt
 
@@ -62,6 +66,11 @@ class Game extends \Bga\GameFramework\Table
         self::$instance = $this; // ATTENTION pending MAthCt
 
         //$this->playerEnergy = $this->counterFactory->createPlayerCounter('energy');
+
+
+        // Deck db_card created with table card 
+        $this->building_DB = $this->deckFactory->createDeck("building");
+        $this->grimoire_DB = $this->deckFactory->createDeck("grimoire");
 
         
         /* example of notification decorator.
@@ -135,6 +144,53 @@ class Game extends \Bga\GameFramework\Table
 
         $this->reattributeColorsBasedOnPreferences($players, $gameinfos["player_colors"]);
         $this->reloadPlayersBasicInfos();
+
+        //INIT DES DECKS
+        //Building
+        for($i = 1; $i <= 12; $i++)
+        {
+            $building = [];
+
+            if($i != 12)
+            {
+                for($j = 1; $j <= 5; $j++)
+                {
+                    $building[] = ['type' => $i, 'type_arg' => $j, 'nbr' => 1];
+                }
+
+                $this->building_DB->createCards($building, 'deck'.$i);
+            }
+            else
+            {
+                for($j = 1; $j <= 3; $j++)
+                {
+                    $building[] = ['type' => $i, 'type_arg' => $j, 'nbr' => 1];
+                }
+
+                $this->building_DB->createCards($building, 'deck'.$i);
+
+            }
+        }
+
+        for($i = 1; $i <= 12; $i++)
+        {
+            $this->building_DB->shuffle('deck'.$i);
+        }
+
+        //Grimoire
+        $grimoire = [];
+        $grimoire[] = ['type' => 1, 'type_arg' => 0, 'nbr' => 1];
+        $grimoire[] = ['type' => 2, 'type_arg' => 0, 'nbr' => 2];   
+        $grimoire[] = ['type' => 3, 'type_arg' => 0, 'nbr' => 1];
+        $grimoire[] = ['type' => 4, 'type_arg' => 0, 'nbr' => 1];
+        $grimoire[] = ['type' => 5, 'type_arg' => 0, 'nbr' => 1];
+        $grimoire[] = ['type' => 6, 'type_arg' => 0, 'nbr' => 1];
+        $grimoire[] = ['type' => 7, 'type_arg' => 0, 'nbr' => 3];
+
+        $this->grimoire_DB->createCards($grimoire, 'deck');
+        $this->grimoire_DB->shuffle('deck');
+
+
 
         // Init global values with their initial values.
 

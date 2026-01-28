@@ -44,3 +44,51 @@ CREATE TABLE IF NOT EXISTS `pending` (
   `arg4` varchar(50) NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1000 ;
+
+CREATE TABLE IF NOT EXISTS `building` (
+  `card_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `card_type` varchar(16) NOT NULL,
+  `card_type_arg` int(11) NOT NULL,
+  `card_location` varchar(16) NOT NULL,
+  `card_location_arg` int(11) NOT NULL,
+  `position` int(5) unsigned DEFAULT 1,
+  PRIMARY KEY (`card_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+--  `building`
+--   `card_id` 
+--   `card_type`         chiffre de la carte
+--   `card_type_arg`     numero de la carte (sprite)
+--   `card_location`     deckX (X = numero) / hand (si besoin etape transitoire) / house / discard
+--   `card_location_arg` player_id
+--   `position`          position verticale quand a coté de la house (1 etant celle du bas)
+
+CREATE TABLE IF NOT EXISTS `grimoire` (
+  `card_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `card_type` varchar(16) NOT NULL,
+  `card_type_arg` int(11) NOT NULL,
+  `card_location` varchar(16) NOT NULL,
+  `card_location_arg` int(11) NOT NULL,
+  PRIMARY KEY (`card_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+--  `grimoire`
+--   `card_id` 
+--   `card_type`         type de grimoire
+--   `card_type_arg`     non utilisé
+--   `card_location`     deck / hand (si besoin etape transitoire) / discard
+--   `card_location_arg` player_id
+
+CREATE TABLE IF NOT EXISTS `other` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `dice1` int(2) unsigned DEFAULT 1,
+  `dice2` int(2) unsigned DEFAULT 1, 
+  `clock` int(2) unsigned DEFAULT 0, 
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+--  `other`
+--   `id` 
+--   `dice1`     valeur actuelle du dé 1
+--   `dice2`     valeur actuelle du dé 2
+--   `clock`     position actuelle de l'horloge ( de 0 à 5 ... 0 étant midi)
