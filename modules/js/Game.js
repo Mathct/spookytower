@@ -23,7 +23,7 @@
 
 const BgaAnimations = await importEsmLib("bga-animations", "1.x");
 
-class PlayerTurn {
+class NormalTurn {
   constructor(game, bga) {
     this.game = game;
     this.bga = bga;
@@ -34,7 +34,7 @@ class PlayerTurn {
    */
   onEnteringState(args, isCurrentPlayerActive) {
     //this.bga.statusBar.setTitle(isCurrentPlayerActive ? _("${you} must play a card or pass") : _("${actplayer} must play a card or pass"));
-
+    
     // PART 1 Event listeners
     if (isCurrentPlayerActive) {
       this.possibles = [];
@@ -66,7 +66,7 @@ class PlayerTurn {
       this.bga.statusBar.setTitle(
         this.bga.gameui.format_string_recursive(
           args.titleyou
-            .replace("${you}", this.divYou())
+            .replace("${you}", this.game.divYou())
             .replace(/#opponent#/g, args.opponent ?? "")
             .replace("#nb#", args.nb ?? "")
             .replace("#nb2#", args.nb2 ?? "")
@@ -78,7 +78,7 @@ class PlayerTurn {
     } else if (args.title) {
       $("pagemaintitletext").innerHTML = this.bga.gameui.format_string_recursive(
         _(args.title)
-          .replace("${actplayer}", this.divActPlayer())
+          .replace("${actplayer}", this.game.divActPlayer())
           .replace("#nb#", args.nb ?? "")
           .replace("#nb2#", args.nb2 ?? "")
           .replace("#icon#", args.icon ?? "")
@@ -176,8 +176,8 @@ export class Game {
     this.bga = bga;
 
     // Declare the State classes
-    this.playerTurn = new PlayerTurn(this, bga);
-    this.bga.states.register("PlayerTurn", this.playerTurn);
+    this.playerTurn = new NormalTurn(this, bga);
+    this.bga.states.register("NormalTurn", this.playerTurn);
 
     // Uncomment the next line to show debug informations about state changes in the console. Remove before going to production!
     // this.bga.states.logger = console.log;
@@ -215,15 +215,17 @@ export class Game {
     this.nb_players = Object.keys(this.players).length;
 
     // variable en local storage pour le zoom
-    this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 25;
-    console.log("zoom_f", this.zoom_factor);
+    this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
 
     this.setupPlayersBoard();
     this.setupBoard();
-    //this.addSideButtons();
+    this.addSideButtons();
 
-    //this.setupCounters();
+    this.setupCounters();
     //this.setupTooltips();
+
+    // APPLIQUE LE SCALE IMMEDIATEMENT
+    this.updateBoardZoom();
 
     this.connections = [];
 
@@ -470,18 +472,208 @@ export class Game {
   setupBoard() {
     console.log("Setting up the board");
 
+    const centralGridHTML = [];
+
+    // =================== PETS → colonne 1 ===================
+    centralGridHTML.push('<div class="table_pet_card" id="table_pet_slot_1" style="grid-column:1; grid-row:1;"></div>');
+    centralGridHTML.push('<div class="table_pet_card" id="table_pet_slot_2" style="grid-column:1; grid-row:2;"></div>');
+    centralGridHTML.push('<div class="table_pet_card" id="table_pet_slot_3" style="grid-column:1; grid-row:3;"></div>');
+
+    // =================== BUILDINGS → colonnes 2 à 5, ligne par ligne ===================
+    let buildingNumber = 1;
+    for (let row = 1; row <= 3; row++) {
+      for (let col = 2; col <= 5; col++) {
+        centralGridHTML.push(`
+                <div class="table_building_slot" id="table_building_slot_${buildingNumber}" style="grid-column:${col}; grid-row:${row};">
+                    <div class="building_cards" id="table_building_card_${buildingNumber}" style="background-position: 0% 0%;"></div>
+                    <div class="table_building_counter" id="table_building_counter_${buildingNumber}"></div>
+                </div>
+            `);
+        buildingNumber++;
+      }
+    }
+
+    // =================== HTML complet ===================
     const gameBoardHTML = `
         <div id="resized_id">
-          <div id="board_id">
-            <div id="st_board_id" class="st_board">
+            <div id="board_id">
+
+                <!-- TOP ROW TABLE -->
+                <div id="table_top_row">
+                    <div class="table_deck_slot" id="deck_park"></div>
+                    <div class="table_deck_slot" id="deck_grimoire"></div>
+                    <div class="table_track_slot" id="dice_track"></div>
+                    <div class="table_clock_slot" id="clock_tower"></div>
+                </div>
+
+                <!-- CENTER GRID 5x3 TABLE -->
+                <div id="table_center_area">
+                    <div id="table_central_grid">
+                        ${centralGridHTML.join("")}
+                    </div>
+                </div>
+
+                <!-- ZONE JOUEURS -->
+                <div id="players_area"></div>
+
             </div>
-          </div>
-        </div>`;
+        </div>
+    `;
+
+    // Injecte le board
     document.getElementById("game_play_area").insertAdjacentHTML("beforeend", gameBoardHTML);
 
-    /*const contract_counter = new ebg.counter();
-    contract_counter.create(`rm_contract_deck_counter`, { value: this.gamedatas.contract_deck, tableCounter: "contract_deck" });
-    */
+    // =================== ZONE JOUEURS ===================
+    const playersArea = document.getElementById("players_area");
+    Object.values(this.gamedatas.players).forEach((player) => {
+      const playerHTML = `
+            <div class="player_board" id="player_${player.id}" data-player-id="${player.id}">
+                <div class="building_columns">
+                    ${[...Array(12)].map((_, i) => `<div class="building_stack" id="player_${player.id}_building_stack_${i + 1}"></div>`).join("")}
+                </div>
+                <div class="house_slot" id="player_${player.id}_house"></div>
+            </div>
+        `;
+      playersArea.insertAdjacentHTML("beforeend", playerHTML);
+    });
+
+    // =================== PETS ET BUILDINGS ===================
+    this.setupTopRow();
+    this.setupPets(); // injecte les cartes pets
+    this.setupBuildings(); // injecte les cartes buildings + div compteur
+  }
+
+  setupTopRow() {
+    // -------------------- Deck Park --------------------
+    const deckParkSlot = document.getElementById("deck_park");
+    if (!deckParkSlot) return;
+
+    // Déterminer la position dans le sprite en fonction de nb_parks
+    const nb_parks = this.nb_parks || 3; // exemple, à adapter selon ton état
+    let col;
+
+    if (nb_parks >= 5) col = 7;
+    else if (nb_parks >= 2 && nb_parks <= 4) col = 6;
+    else col = 5;
+
+    const posX = -(col * 100); // chaque colonne = -100%
+
+    // Injecter la carte + compteur
+    const parkHTML = `
+        <div class="card_item parkgrim_cards" style="background-position: ${posX}% 0%; " title="Park">
+            <div class="table_building_counter" id="deck_park_counter"></div>
+        </div>
+    `;
+
+    deckParkSlot.insertAdjacentHTML("beforeend", parkHTML);
+
+    // -------------------- Deck Grimoire --------------------
+    const deckGrimoireSlot = document.getElementById("deck_grimoire");
+    if (!deckGrimoireSlot) return;
+
+    // ---- Injecter la carte + compteur à l'intérieur ----
+    const cardHTML = `
+        <div class="card_item parkgrim_cards" 
+             style="background-position: -700% -100%;" title="Grimoire">
+            <div class="table_building_counter" id="deck_grimoire_counter"></div>
+        </div>
+    `;
+
+    deckGrimoireSlot.insertAdjacentHTML("beforeend", cardHTML);
+
+    // -------------------- Dice Track --------------------
+    const diceTrackSlot = document.getElementById("dice_track");
+    if (!diceTrackSlot) return;
+
+    // ---- Injecter la carte + compteur à l'intérieur ----
+    const diceHTML = `
+        <div class="card_item building_cards" 
+             style="background-position: -1000% -500%;" title="Dice Track">
+        </div>
+    `;
+
+    diceTrackSlot.insertAdjacentHTML("beforeend", diceHTML);
+
+    // -------------------- Clock Tower --------------------
+    const clockTowerSlot = document.getElementById("clock_tower");
+    if (!clockTowerSlot) return;
+
+    // ---- Injecter la carte + compteur à l'intérieur ----
+    const towerHTML = `
+        <div class="card_item building_cards" 
+             style="background-position: -1100% -500%;" title="Clock Tower">
+        </div>
+    `;
+
+    clockTowerSlot.insertAdjacentHTML("beforeend", towerHTML);
+  }
+
+  setupPets() {
+    // Ordre haut → bas, exemple : "213"
+    const order = this.petsOrder || "312";
+
+    // Conteneurs table fixes pour les pets
+    const petContainers = [document.getElementById("table_pet_slot_1"), document.getElementById("table_pet_slot_2"), document.getElementById("table_pet_slot_3")];
+
+    // Vider tous les conteneurs avant insertion
+    petContainers.forEach((c) => (c.innerHTML = ""));
+
+    // Parcourir l'ordre et injecter le HTML directement
+    for (let i = 0; i < 3; i++) {
+      const petType = parseInt(order[i], 10);
+      if (![1, 2, 3].includes(petType)) continue;
+
+      const container = petContainers[i];
+
+      const petHTML = `
+          <div class="card_item pet_cards" 
+               style="background-position: ${-(petType - 1) * 100}% 0%;">
+          </div>
+        `;
+      container.insertAdjacentHTML("beforeend", petHTML);
+    }
+  }
+
+  setupBuildings() {
+    for (let i = 1; i <= 12; i++) {
+      const cardDiv = document.getElementById(`table_building_card_${i}`);
+      if (!cardDiv) continue;
+
+      const posX = -(i - 1) * 100; // carte 1 -> 0%, carte 2 -> -100%, etc.
+      cardDiv.style.backgroundPosition = `${posX}% 0%`;
+    }
+  }
+
+  setupCounters() {
+    this.topRowCounters = {};
+
+    const nb_parks = this.nb_parks || 3;
+
+    const Parkcounter = new ebg.counter();
+    Parkcounter.create("deck_park_counter", {
+      value: nb_parks,
+      playerCounter: null,
+    });
+    this.topRowCounters.deck_park = Parkcounter;
+
+    const Grimcounter = new ebg.counter();
+    Grimcounter.create("deck_grimoire_counter", {
+      value: 0, // valeur initiale
+      playerCounter: null,
+    });
+    this.topRowCounters.deck_grimoire = Grimcounter;
+
+    this.tableBuildingCounters = {};
+
+    for (let i = 1; i <= 12; i++) {
+      const counter = new ebg.counter();
+
+      counter.create(`table_building_counter_${i}`, {
+        value: 0, // valeur initiale
+      });
+
+      this.tableBuildingCounters[i] = counter;
+    }
   }
 
   addSideButtons() {
@@ -593,22 +785,24 @@ export class Game {
   }
 
   zoomPlusCards() {
-    this.zoom_factor = Math.min(35, this.zoom_factor + 1);
+    // On augmente le zoom par pas de 0.05, max 1
+    this.zoom_factor = Math.min(1, this.zoom_factor + 0.05);
     window.localStorage.setItem("ST_zoom", this.zoom_factor);
 
     this.updateBoardZoom();
   }
 
   zoomMinusCards() {
-    this.zoom_factor = Math.max(15, this.zoom_factor - 1);
+    // On diminue le zoom par pas de 0.05, min 0.5
+    this.zoom_factor = Math.max(0.5, this.zoom_factor - 0.05);
     window.localStorage.setItem("ST_zoom", this.zoom_factor);
 
     this.updateBoardZoom();
   }
 
   updateBoardZoom() {
+    // Met à jour le scale CSS pour les cartes
     document.documentElement.style.setProperty("--st_scale", this.zoom_factor);
-    document.documentElement.style.setProperty("--font-scale", this.zoom_factor / 25);
   }
 
   async onFlipReroll() {
