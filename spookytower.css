@@ -143,7 +143,7 @@
   clear: both;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px;
   perspective: 600px;
 }
@@ -227,14 +227,14 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   flex-direction: column;
   transform-origin: top left;
   background-color: gainsboro;
+  gap: calc(2*var(--card_gap));
+  align-items: center;
 }
 
 /* ---------- TOP ROW ---------- */
 #table_top_row {
   display: flex;
-  gap: var(--card_gap);
-  align-items: center;
-  margin-bottom: var(--card_gap);
+  gap: calc( 8*var(--card_gap));
 }
 
 .table_deck_slot,
@@ -302,7 +302,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .player_board {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: var(--card_gap);
 }
 
@@ -326,14 +326,23 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   margin-top: calc(-1 * var(--card_h) + 60px * var(--st_scale));
 }
 
+.building_stack .building_cards {
+  position: relative;
+  margin-top: calc(-1 * var(--card_h) * 0.8); /* 80% de décalage vertical */
+}
+
+.building_stack .building_cards:first-child {
+  margin-top: 0; /* la première carte commence en haut */
+}
+
 .building_stack .card:first-child {
   margin-top: 0;
 }
 
 /* maison du joueur */
 .house_slot {
-  width: var(--card_w);
-  height: var(--card_h);
+  width: calc(var(--card_w)/312*316);
+  height: calc(var(--card_h)/350*500);
   border: 2px solid #000;
 }
 
@@ -348,6 +357,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   box-shadow: 0 0 3px gray;
   position: relative;
 }
+
 
 
 .pet_cards {
@@ -366,6 +376,29 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 
+.house_slot {
+  width: calc(var(--card_w) * 1.41);
+  height: calc(var(--card_h) * 1.43);
+  position: relative;
+}
+
+.house_slot .house_cards {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background-image: url("img/ST_houses.png");
+  background-size: 400% 100%;
+}
+
+.house_empty_slot {
+  width: var(--card_w); /* largeur d’emplacement */
+  height: var(--card_h);
+  margin-right: 2px;
+  background-color: rgba(200,200,200,0.3); /* juste pour visualiser */
+}
 
 
 /*////////////////////////////////////////

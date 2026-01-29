@@ -34,7 +34,7 @@ class NormalTurn {
    */
   onEnteringState(args, isCurrentPlayerActive) {
     //this.bga.statusBar.setTitle(isCurrentPlayerActive ? _("${you} must play a card or pass") : _("${actplayer} must play a card or pass"));
-    
+
     // PART 1 Event listeners
     if (isCurrentPlayerActive) {
       this.possibles = [];
@@ -113,19 +113,26 @@ class NormalTurn {
             );
             break;
 
-          case "take_btn":
-            this.bga.statusBar.addActionButton(_("Take Cards"), "onOpTakeCards", null, null, "blue");
-            this.game.safeClass("#take_btn", "add", "disabled");
-            break;
-
-          case "end_turn_btn":
+          case "take_card_btn":
             this.bga.statusBar.addActionButton(
-              _("End Turn"),
+              _("Take Card"),
               () =>
-                this.bga.actions.performAction("actEndTurn", {
+                this.bga.actions.performAction("actButton", {
                   arg1: key,
+                  arg2: this.selected_token,
                 }),
-              { color: "secondary" },
+              { color: "primary" },
+            );
+            break;
+          case "flip_cards_btn":
+            this.bga.statusBar.addActionButton(
+              _("Flip Cards"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                  arg2: this.selected_token,
+                }),
+              { color: "primary" },
             );
             break;
         }
@@ -176,11 +183,15 @@ export class Game {
     this.bga = bga;
 
     // Declare the State classes
-    this.playerTurn = new NormalTurn(this, bga);
-    this.bga.states.register("NormalTurn", this.playerTurn);
+    this.normalTurn = new NormalTurn(this, bga);
+    this.bga.states.register("NormalTurn", this.normalTurn);
+    /*this.pending = new Pending(this, bga);
+    this.bga.states.register("Pending", this.pending);
+    this.endScore = new EndScore(this, bga);
+    this.bga.states.register("EndScore", this.endScore);*/
 
     // Uncomment the next line to show debug informations about state changes in the console. Remove before going to production!
-    // this.bga.states.logger = console.log;
+    this.bga.states.logger = console.log;
 
     // Here, you can init the global variables of your user interface
     // Example:
@@ -213,6 +224,8 @@ export class Game {
     this.players_ordered = gamedatas.players_ordered;
 
     this.nb_players = Object.keys(this.players).length;
+
+    this.selected_token = "";
 
     // variable en local storage pour le zoom
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
@@ -342,15 +355,13 @@ export class Game {
     selectables.forEach((elt_id) => {
       const element = document.getElementById(elt_id);
 
-      if (elt_id.startsWith("square_")) {
-        const resourceClickHandler = () => this.onSelectSquare(elt_id);
-        element.addEventListener("click", resourceClickHandler);
-        this.connections.push({
-          element,
-          event: "click",
-          handler: resourceClickHandler,
-        });
-      }
+      const resourceClickHandler = () => this.onSelectToken(elt_id);
+      element.addEventListener("click", resourceClickHandler);
+      this.connections.push({
+        element,
+        event: "click",
+        handler: resourceClickHandler,
+      });
     });
   }
 
@@ -369,6 +380,38 @@ export class Game {
       }
     });
     this.connections = [];
+  }
+
+  onSelectToken(element_id) {
+    console.log("onSelectToken", element_id);
+
+    const token_elt = document.getElementById(element_id);
+    if (!token_elt) return;
+
+    // Retire 'selectable' uniquement si présent
+    if (token.classList.contains("selectable")) {
+      this.safeClass(token_elt, "remove", "selectable");
+    }
+
+    // si aucun est sélectionné
+    if (this.selected_token === "") {
+      this.safeClass(token_elt, "add", "selected");
+      this.selected_token = token_id;
+    }
+    // Si on clique sur une autre case
+    else {
+      const old_elt = document.getElementById(this.selected_token);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+      if (this.selected_token != token_id) {
+        this.safeClass(token_elt, "add", "selected");
+        this.selected_token = token_id;
+      } else {
+        this.selected_token = "";
+      }
+    }
   }
 
   setupPlayersBoard() {
@@ -523,24 +566,11 @@ export class Game {
     // Injecte le board
     document.getElementById("game_play_area").insertAdjacentHTML("beforeend", gameBoardHTML);
 
-    // =================== ZONE JOUEURS ===================
-    const playersArea = document.getElementById("players_area");
-    Object.values(this.gamedatas.players).forEach((player) => {
-      const playerHTML = `
-            <div class="player_board" id="player_${player.id}" data-player-id="${player.id}">
-                <div class="building_columns">
-                    ${[...Array(12)].map((_, i) => `<div class="building_stack" id="player_${player.id}_building_stack_${i + 1}"></div>`).join("")}
-                </div>
-                <div class="house_slot" id="player_${player.id}_house"></div>
-            </div>
-        `;
-      playersArea.insertAdjacentHTML("beforeend", playerHTML);
-    });
-
     // =================== PETS ET BUILDINGS ===================
     this.setupTopRow();
     this.setupPets(); // injecte les cartes pets
     this.setupBuildings(); // injecte les cartes buildings + div compteur
+    this.setupHouses();
   }
 
   setupTopRow() {
@@ -567,6 +597,9 @@ export class Game {
 
     deckParkSlot.insertAdjacentHTML("beforeend", parkHTML);
 
+    deckParkSlot.classList.add("clickable");
+    deckParkSlot.addEventListener("click", () => this.onFlipPark(nb_parks));
+
     // -------------------- Deck Grimoire --------------------
     const deckGrimoireSlot = document.getElementById("deck_grimoire");
     if (!deckGrimoireSlot) return;
@@ -580,6 +613,9 @@ export class Game {
     `;
 
     deckGrimoireSlot.insertAdjacentHTML("beforeend", cardHTML);
+
+    deckGrimoireSlot.classList.add("clickable");
+    deckGrimoireSlot.addEventListener("click", () => this.onFlipGrimoire());
 
     // -------------------- Dice Track --------------------
     const diceTrackSlot = document.getElementById("dice_track");
@@ -642,6 +678,59 @@ export class Game {
       const posX = -(i - 1) * 100; // carte 1 -> 0%, carte 2 -> -100%, etc.
       cardDiv.style.backgroundPosition = `${posX}% 0%`;
     }
+  }
+
+  setupHouses() {
+    const playersArea = document.getElementById("players_area");
+    const players = Object.values(this.gamedatas.players);
+    const playerCount = players.length;
+
+    // indices de sprites mélangés
+    const spriteIndices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+    const assignedSprites = spriteIndices.slice(0, playerCount);
+    console.log("assignedSprites", assignedSprites);
+
+    players.forEach((player, idx) => {
+      const houseIndex = assignedSprites[idx];
+      console.log("houseIndex", houseIndex);
+
+      // Création du HTML du joueur
+      const playerHTML = `
+      <div class="player_board" id="player_board_${player.id}" data-player-id="${player.id}">
+        <div class="building_columns">
+          ${[...Array(12)].map((_, i) => `<div class="building_stack" id="player_${player.id}_building_stack_${i + 1}"></div>`).join("")}
+        </div>
+        <div class="house_slot" id="player_house_${player.id}">
+          <div class="house_cards"></div>
+        </div>
+      </div>
+    `;
+      playersArea.insertAdjacentHTML("beforeend", playerHTML);
+
+      // Affecter le background-position pour la maison
+      const slot = document.getElementById(`player_house_${player.id}`);
+      const card = slot.querySelector(".house_cards");
+      card.style.backgroundPosition = `-${houseIndex}00% 0%`;
+
+      for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById(`player_board_${player.id}`);
+
+        const placeholderHTML = `
+              <div class="house_empty_slot" id="player_placeholder_${i}_${player.id}"></div>`;
+
+        slot.insertAdjacentHTML("afterBegin", placeholderHTML);
+      }
+
+      const stack1 = document.getElementById(`player_${player.id}_building_stack_1`); // stack 1 du joueur 1
+
+      let html = "";
+      for (let i = 0; i < 5; i++) {
+        const posX = -i * 100; // exemple de background différent par carte
+        html += `<div class="building_cards" style="background-position:0% 0%;"></div>`;
+      }
+
+      stack1.insertAdjacentHTML("beforeend", html);
+    });
   }
 
   setupCounters() {
@@ -839,6 +928,88 @@ export class Game {
     icon.style.transition = "";
     icon.style.transform = "";
     delete icon.dataset.flipping;
+  }
+
+  async onFlipPark(nb_parks) {
+    const park = document.querySelector("#deck_park .parkgrim_cards");
+    if (!park) return;
+
+    if (park.dataset.flipping === "true") return;
+    park.dataset.flipping = "true";
+
+    // Initialisation du recto si nécessaire
+    if (!park.dataset.face) {
+      park.dataset.face = "recto";
+      park.style.backgroundPosition = park.style.backgroundPosition; // garde la position actuelle comme recto
+    }
+
+    const half = 200; // demi-flip en ms
+
+    // Premier demi-flip : rotation + léger pop
+    park.style.transition = `transform ${half}ms ease-in-out`;
+    park.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
+
+    await new Promise((resolve) => setTimeout(resolve, half));
+
+    // Toggle background-position
+    if (park.dataset.face === "recto") {
+      park.dataset.face = "verso";
+      const versoCol = nb_parks - 1; // numéro de colonne pour le verso
+      park.style.backgroundPosition = `-${versoCol}00% 0%`;
+    } else {
+      park.dataset.face = "recto";
+      // recto = position initiale au moment de l’injection
+      const rectoStyle = park.getAttribute("style").match(/background-position:\s*([^;]+)/);
+      park.style.backgroundPosition = rectoStyle ? rectoStyle[1] : "-0% 0%";
+    }
+
+    // Deuxième demi-flip : retour à la position normale
+    park.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
+
+    await new Promise((resolve) => setTimeout(resolve, half));
+
+    // Reset final
+    park.style.transition = "";
+    park.style.transform = "";
+    delete park.dataset.flipping;
+  }
+
+  async onFlipGrimoire() {
+    const grimoire = document.querySelector("#deck_grimoire .parkgrim_cards");
+    if (!grimoire) return;
+
+    if (grimoire.dataset.flipping === "true") return;
+    grimoire.dataset.flipping = "true";
+
+    if (!grimoire.dataset.face) grimoire.dataset.face = "recto";
+
+    const half = 200; // demi-flip en ms
+    const grimoireVerso = 3;
+    const n = grimoireVerso - 1;
+
+    // Premier demi-flip
+    grimoire.style.transition = `transform ${half}ms ease-in-out`;
+    grimoire.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
+
+    await new Promise((resolve) => setTimeout(resolve, half));
+
+    // Toggle background-position
+    if (grimoire.dataset.face === "recto") {
+      grimoire.dataset.face = "verso";
+      grimoire.style.backgroundPosition = `-${n}00% -100%`;
+    } else {
+      grimoire.dataset.face = "recto";
+      grimoire.style.backgroundPosition = `-700% -100%`;
+    }
+
+    // Deuxième demi-flip
+    grimoire.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
+    await new Promise((resolve) => setTimeout(resolve, half));
+
+    // Reset
+    grimoire.style.transition = "";
+    grimoire.style.transform = "";
+    delete grimoire.dataset.flipping;
   }
 
   ///////////////////////////////////////////////////
