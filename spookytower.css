@@ -311,9 +311,9 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   gap: calc(var(--card_gap) / 2);
 }
 
-/* stacks du joueur (colonnes empilables) */
+/* stacks du joueur */
 .building_stack:empty {
-  display: none; /* un stack vide ne prend pas de place */
+  display: none;
 }
 
 .building_stack {
@@ -321,30 +321,25 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   position: relative;
 }
 
-.building_stack .card {
+/* cartes dans une pile */
+.building_stack .building_cards {
   position: relative;
   margin-top: calc(-1 * var(--card_h) + 60px * var(--st_scale));
 }
 
-.building_stack .building_cards {
-  position: relative;
-  margin-top: calc(-1 * var(--card_h) * 0.8); /* 80% de décalage vertical */
-}
-
+/* la première carte (celle du bas) */
 .building_stack .building_cards:first-child {
-  margin-top: 0; /* la première carte commence en haut */
-}
-
-.building_stack .card:first-child {
   margin-top: 0;
 }
 
-/* maison du joueur */
+/* maison */
 .house_slot {
   width: calc(var(--card_w)/312*316);
   height: calc(var(--card_h)/350*500);
   border: 2px solid #000;
 }
+
+
 
 
 

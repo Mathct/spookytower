@@ -191,6 +191,9 @@ class Game extends \Bga\GameFramework\Table
         $this->grimoire_DB->shuffle('deck');
 
 
+        //Other
+        self::DbQuery("INSERT INTO other () VALUES ()");
+
 
         // Init global values with their initial values.
 

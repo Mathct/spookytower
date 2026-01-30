@@ -113,6 +113,17 @@ class NormalTurn {
             );
             break;
 
+          case "roll_dice_btn":
+            this.bga.statusBar.addActionButton(
+              _("Roll dice"),
+              () =>
+                this.bga.actions.performAction("actRollDice", {
+                  arg1: key,
+                }),
+              { color: "primary" },
+            );
+            break;
+
           case "take_card_btn":
             this.bga.statusBar.addActionButton(
               _("Take Card"),
@@ -185,10 +196,6 @@ export class Game {
     // Declare the State classes
     this.normalTurn = new NormalTurn(this, bga);
     this.bga.states.register("NormalTurn", this.normalTurn);
-    /*this.pending = new Pending(this, bga);
-    this.bga.states.register("Pending", this.pending);
-    this.endScore = new EndScore(this, bga);
-    this.bga.states.register("EndScore", this.endScore);*/
 
     // Uncomment the next line to show debug informations about state changes in the console. Remove before going to production!
     this.bga.states.logger = console.log;
@@ -241,37 +248,6 @@ export class Game {
     this.updateBoardZoom();
 
     this.connections = [];
-
-    /*
-        // Example to add a div on the game area
-        this.bga.gameArea.getElement().insertAdjacentHTML('beforeend', `
-            <div id="player-tables"></div>
-        `);
-        
-
-        // Setting up player boards
-        Object.values(gamedatas.players).forEach(player => {
-            // example of setting up players boards
-            this.bga.playerPanels.getElement(player.id).insertAdjacentHTML('beforeend', `
-                <span id="energy-player-counter-${player.id}"></span> Energy
-            `);
-            const counter = new ebg.counter();
-            counter.create(`energy-player-counter-${player.id}`, {
-                value: player.energy,
-                playerCounter: 'energy',
-                playerId: player.id
-            });
-
-            // example of adding a div for each player
-            document.getElementById('player-tables').insertAdjacentHTML('beforeend', `
-                <div id="player-table-${player.id}">
-                    <strong>${player.name}</strong>
-                    <div>Player zone content goes here</div>
-                </div>
-            `);
-        });
-        */
-    // TODO: Set up your game interface here, according to "gamedatas"
 
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
@@ -354,13 +330,27 @@ export class Game {
 
     selectables.forEach((elt_id) => {
       const element = document.getElementById(elt_id);
+      if (!element) return;
 
-      const resourceClickHandler = () => this.onSelectToken(elt_id);
-      element.addEventListener("click", resourceClickHandler);
+      // --- Carte table (building) ---
+      /*      if (elt_id.startsWith("table_building_card_")) {
+        const clickHandler = () => this.onSelectBuilding(elt_id);
+        element.addEventListener("click", clickHandler);
+        this.connections.push({
+          element,
+          event: "click",
+          handler: clickHandler,
+        });
+        return;
+      }*/
+
+      // --- Cartes “token” ou autres éléments cliquables ---
+      const clickHandler = () => this.onSelectToken(elt_id);
+      element.addEventListener("click", clickHandler);
       this.connections.push({
         element,
         event: "click",
-        handler: resourceClickHandler,
+        handler: clickHandler,
       });
     });
   }
@@ -382,14 +372,76 @@ export class Game {
     this.connections = [];
   }
 
-  onSelectToken(element_id) {
-    console.log("onSelectToken", element_id);
+  onSelectBuilding(elt_id) {
+    console.log("on select building", elt_id);
 
-    const token_elt = document.getElementById(element_id);
+    const card = document.getElementById(elt_id);
+    if (!card) return;
+
+    // table_building_card_5 → 5
+    const buildingNumber = parseInt(elt_id.split("_").pop(), 10);
+
+    // récupérer le joueur actif
+    const playerId = this.bga.players.getActivePlayerId();
+
+    // récupérer la stack cible
+    const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
+    if (!stack) {
+      console.error("Stack not found", playerId, buildingNumber);
+      return;
+    }
+
+    // récupérer le counter correspondant
+    const counter = this.tableBuildingCounters[buildingNumber];
+    if (!counter) {
+      console.error("Counter not found for building", buildingNumber);
+      return;
+    }
+
+    // appeler la fonction de déplacement qui gère le clonage et la décrémentation
+    this.moveBuildingToStack(card, stack, counter);
+  }
+
+  async moveBuildingToStack(card, stack) {
+    if (!card || !stack) return;
+
+    console.log("STACK", stack);
+
+    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
+    const counter = this.tableBuildingCounters[buildingNumber];
+    const playerId = this.bga.players.getActivePlayerId();
+
+    // --- CAS 1 : plusieurs cartes dans la pile ---
+    if (counter.getValue() > 1) {
+      const clone = card.cloneNode(true);
+      clone.id = `player_${playerId}_building_${buildingNumber}`;
+
+      // l'ajouter dans le même slot parent que la carte originale
+      card.parentElement.appendChild(clone);
+
+      // animation vers le stack
+      await this.animationManager.slideAndAttach(clone, stack, { duration: 600, easing: "ease-in-out" }, stack.lastElementChild ?? undefined);
+
+      // décrémenter le compteur si nécessaire
+      counter.incValue(-1);
+      return;
+    } else {
+      // --- CAS 2 : dernière carte ---
+      await this.animationManager.slideAndAttach(card, stack, { duration: 600, easing: "ease-in-out" }, stack.lastElementChild ?? undefined);
+
+      card.id = `player_${playerId}_building_${buildingNumber}`;
+      counter.setValue(0);
+    }
+  }
+
+  onSelectToken(token_id) {
+    console.log("onSelectToken", token_id);
+
+    const token_elt = document.getElementById(token_id);
     if (!token_elt) return;
 
     // Retire 'selectable' uniquement si présent
-    if (token.classList.contains("selectable")) {
+    if (token_elt.classList.contains("selectable")) {
       this.safeClass(token_elt, "remove", "selectable");
     }
 
@@ -488,6 +540,7 @@ export class Game {
         playerCounter: "ghost",
         playerId: player.id,
       });
+
       const clue_counter = new ebg.counter();
       clue_counter.create(`clue_counter_${player.id}`, {
         value: player.clue,
@@ -688,77 +741,78 @@ export class Game {
     // indices de sprites mélangés
     const spriteIndices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
     const assignedSprites = spriteIndices.slice(0, playerCount);
-    console.log("assignedSprites", assignedSprites);
 
     players.forEach((player, idx) => {
       const houseIndex = assignedSprites[idx];
-      console.log("houseIndex", houseIndex);
 
       // Création du HTML du joueur
       const playerHTML = `
       <div class="player_board" id="player_board_${player.id}" data-player-id="${player.id}">
         <div class="building_columns">
-          ${[...Array(12)].map((_, i) => `<div class="building_stack" id="player_${player.id}_building_stack_${i + 1}"></div>`).join("")}
+          ${[...Array(12)].map((_, i) => `<div class="building_stack" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
         </div>
-        <div class="house_slot" id="player_house_${player.id}">
-          <div class="house_cards"></div>
+        <div class="house_slot" id="player_${player.id}_house">
+          <div class="house_cards" id="player_${player.id}_house_card"></div>
         </div>
       </div>
     `;
       playersArea.insertAdjacentHTML("beforeend", playerHTML);
 
       // Affecter le background-position pour la maison
-      const slot = document.getElementById(`player_house_${player.id}`);
-      const card = slot.querySelector(".house_cards");
+      const card = document.getElementById(`player_${player.id}_house_card`);
       card.style.backgroundPosition = `-${houseIndex}00% 0%`;
 
+      // Ajouter placeholders
+      const boardSlot = document.getElementById(`player_board_${player.id}`);
       for (let i = 0; i < 3; i++) {
-        const slot = document.getElementById(`player_board_${player.id}`);
-
-        const placeholderHTML = `
-              <div class="house_empty_slot" id="player_placeholder_${i}_${player.id}"></div>`;
-
-        slot.insertAdjacentHTML("afterBegin", placeholderHTML);
+        boardSlot.insertAdjacentHTML("afterBegin", `<div class="house_empty_slot" id="player_${player.id}_house_placeholder_${i}"></div>`);
       }
 
-      const stack1 = document.getElementById(`player_${player.id}_building_stack_1`); // stack 1 du joueur 1
-
+      // Exemple pour stack 1
+      const stack1 = document.getElementById(`player_${player.id}_stack_1`);
       let html = "";
-      for (let i = 0; i < 5; i++) {
-        const posX = -i * 100; // exemple de background différent par carte
-        html += `<div class="building_cards" style="background-position:0% 0%;"></div>`;
+      for (let i = 1; i <= 5; i++) {
+        html += `<div id="player_${player.id}_stack_1_card_${i}" class="building_cards" style="background-position:0% 0%;"></div>`;
       }
-
       stack1.insertAdjacentHTML("beforeend", html);
+
+      // Exemple pour stack 5
+      const stack5 = document.getElementById(`player_${player.id}_stack_5`);
+      html = `<div id="player_${player.id}_stack_5_card_1" class="building_cards" style="background-position:-400% 0%;"></div>`;
+      stack5.insertAdjacentHTML("beforeend", html);
     });
   }
 
   setupCounters() {
+    // --- Counters top row ---
     this.topRowCounters = {};
 
     const nb_parks = this.nb_parks || 3;
 
-    const Parkcounter = new ebg.counter();
-    Parkcounter.create("deck_park_counter", {
+    const parkCounter = new ebg.counter();
+    parkCounter.create("deck_park_counter", {
       value: nb_parks,
       playerCounter: null,
     });
-    this.topRowCounters.deck_park = Parkcounter;
+    this.topRowCounters.deck_park = parkCounter;
 
-    const Grimcounter = new ebg.counter();
-    Grimcounter.create("deck_grimoire_counter", {
-      value: 0, // valeur initiale
+    const grimCounter = new ebg.counter();
+    grimCounter.create("deck_grimoire_counter", {
+      value: 0,
       playerCounter: null,
     });
-    this.topRowCounters.deck_grimoire = Grimcounter;
+    this.topRowCounters.deck_grimoire = grimCounter;
 
+    // --- Counters pour chaque building sur la table ---
     this.tableBuildingCounters = {};
 
     for (let i = 1; i <= 12; i++) {
       const counter = new ebg.counter();
 
+      // ID cohérent avec les cartes table
+      // table_building_card_1 → table_building_counter_1
       counter.create(`table_building_counter_${i}`, {
-        value: 0, // valeur initiale
+        value: 5, // valeur initiale
       });
 
       this.tableBuildingCounters[i] = counter;

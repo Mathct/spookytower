@@ -43,14 +43,12 @@ class Pending extends APP_GameClass
         $ret["selected"] = [];
         $ret['buttons'] = [];
         $ret["function"] = "PlayerTurn";
-        $ret['title'] = clienttranslate('${actplayer} must do an Action');
-        $ret['titleyou'] = clienttranslate('${you} must do an Action');
-
+        $ret['title'] = clienttranslate('${actplayer} must roll the dice');
+        $ret['titleyou'] = clienttranslate('${you} must roll the dice');
 
        
-       $ret['buttons'][] = 'yes_btn';
-       $ret['buttons'][] = 'no_btn';
-
+       $ret['buttons'][] = 'roll_dice_btn';
+       
     
         return $ret;
     }
@@ -59,15 +57,60 @@ class Pending extends APP_GameClass
 
     function PlayerTurn($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
-        if($varg1 == 'yes_btn')
-        {
-            game::$instance->addPending($this->player_id, "PlayerTurn");
-        }
 
-        if($varg1 == 'no_btn')
-        {
-            game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
-        }
+        $rand_dice1 = bga_rand(1, 6);
+        self::DbQuery("UPDATE other set dice1 = $rand_dice1");
+        $rand_dice2 = bga_rand(1, 6);
+        self::DbQuery("UPDATE other set dice2 = $rand_dice2");
+
+
+        $txt = clienttranslate('${player_name} ${dice1} and ${dice2}');
+        game::$instance->notify->all(
+            "message",
+            $txt,
+            [
+                'player_id' => $this->player_id,
+                'dice1' => $rand_dice1,
+                'dice2' => $rand_dice2
+            ]
+        );
+
+        
+        game::$instance->addPending($this->player_id, "ChooseAction", $rand_dice1, $rand_dice2);
+        
+        
+    }
+
+    function argChooseAction($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "ChooseAction";
+        $ret['title'] = clienttranslate('${actplayer} must choose an action');
+        $ret['titleyou'] = clienttranslate('${you} must choose an action');
+
+        $addition = $parg1 + $parg2;
+
+        $ret["selectable"][] = 'table_building_card_'.$parg1;
+        $ret["selectable"][] = 'table_building_card_'.$parg2;
+        $ret["selectable"][] = 'table_building_card_'.$addition;
+       
+        $ret['buttons'][] = 'no_btn';
+       
+    
+        return $ret;
+    }
+
+
+
+    function ChooseAction($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {
+
+                
+        game::$instance->addPending($this->player_id, "PlayerTurn");
+        
         
     }
 
