@@ -59,9 +59,9 @@ class Pending extends APP_GameClass
     {
 
         $rand_dice1 = bga_rand(1, 6);
-        self::DbQuery("UPDATE other set dice1 = $rand_dice1");
+        game::$instance->DbQuery("UPDATE other set dice1 = $rand_dice1");
         $rand_dice2 = bga_rand(1, 6);
-        self::DbQuery("UPDATE other set dice2 = $rand_dice2");
+        game::$instance->DbQuery("UPDATE other set dice2 = $rand_dice2");
 
 
         $txt = clienttranslate('${player_name} ${dice1} and ${dice2}');
@@ -94,10 +94,13 @@ class Pending extends APP_GameClass
         $addition = $parg1 + $parg2;
 
         $ret["selectable"][] = 'table_building_card_'.$parg1;
-        $ret["selectable"][] = 'table_building_card_'.$parg2;
+        if($parg1 != $parg2)
+        {
+            $ret["selectable"][] = 'table_building_card_'.$parg2;
+        }
         $ret["selectable"][] = 'table_building_card_'.$addition;
        
-        $ret['buttons'][] = 'no_btn';
+        $ret['buttons'][] = 'take_card_btn';
        
     
         return $ret;
@@ -108,7 +111,18 @@ class Pending extends APP_GameClass
     function ChooseAction($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
 
-                
+        $explode = explode('_', $varg2);
+        
+        $txt = clienttranslate('${player_name} take card ${card}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'card' => $explode[3],
+                ]
+            );
+        
         game::$instance->addPending($this->player_id, "PlayerTurn");
         
         

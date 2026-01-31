@@ -38,6 +38,7 @@ class NormalTurn {
     // PART 1 Event listeners
     if (isCurrentPlayerActive) {
       this.possibles = [];
+      this.selected_token = "";
       console.log(args);
 
       // selectable
@@ -130,7 +131,7 @@ class NormalTurn {
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
-                  arg2: this.selected_token,
+                  arg2: this.game.selected_token,
                 }),
               { color: "primary" },
             );
@@ -141,7 +142,7 @@ class NormalTurn {
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
-                  arg2: this.selected_token,
+                  arg2: this.game.selected_token,
                 }),
               { color: "primary" },
             );
