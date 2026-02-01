@@ -169,7 +169,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   width: 48px;
   height: 48px;
   background-image: url("img/ST_icons.png");
-  background-size: 500% 100%;
+  background-size: 500% 300%;
   transform-style: preserve-3d;
   backface-visibility: hidden;
 }
@@ -179,6 +179,14 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .ic_artefact { background-position: -200% 0% }
 .ic_ghost { background-position: -300% 0% }
 .ic_clue { background-position: -400% 0% }
+.ic_grimoire { background-position: 0% -100% }
+.ic_clock { background-position: -100% -100% }
+.ic_pet { background-position: -200% -100% }
+.ic_replay { background-position: -300% -100% }
+.ic_flip8 { background-position: 0% -200% }
+.ic_flip9 { background-position: -100% -200% }
+.ic_draw8 { background-position: -200% -200% }
+.ic_draw_any { background-position: -300% -200% }
 
  /* animation de flip */
 .temp-reroll-card {
@@ -329,19 +337,17 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .building_stack {
   width: var(--card_w);
+  height: calc(var(--card_h) * 1.8);
   position: relative;
 }
 
 /* cartes dans une pile */
 .building_stack .building_cards {
-  position: relative;
-  margin-top: calc(-1 * var(--card_h) + 60px * var(--st_scale));
+  position: absolute;
+  left: 0;
+  width: 100%;
 }
 
-/* la première carte (celle du bas) */
-.building_stack .building_cards:first-child {
-  margin-top: 0;
-}
 
 /* maison */
 .house_slot {

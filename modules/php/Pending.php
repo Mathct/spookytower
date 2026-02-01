@@ -110,21 +110,44 @@ class Pending extends APP_GameClass
 
     function ChooseAction($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
+        
+        if($varg2 == '')
+        {
+            game::$instance->addPending($this->player_id, "ChooseAction", $parg1, $parg2);
+        }
 
-        $explode = explode('_', $varg2);
+        else
+        {
+            
+            //on recupree le numero du deck
+            [, , , $no_deck] = explode('_', $varg2);
+            $deck = 'deck'.$no_deck;
+
+            //on pick la carte et on recupere les info du pickcard (pour la card_id)
+            $card_pick = game::$instance->building_DB->pickCardForLocation( $deck, 'house', $this->player_id);
+
+            //on met a jour sa position
+            $count_card = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$no_deck}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
+            game::$instance->DbQuery("UPDATE building set position = $count_card WHERE card_id ='{$card_pick['id']}'");
+
+            //on recupere les info pour le front
+            $card =  game::$instance->getObjectFromDB( "SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'" );
+
+
+            $txt = clienttranslate('${player_name} take card ${no_card}');
+                game::$instance->notify->all(
+                    "takeCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'no_card' => $no_deck,
+                        'card' => $card,
+                    ]
+                );
         
-        $txt = clienttranslate('${player_name} take card ${card}');
-            game::$instance->notify->all(
-                "message",
-                $txt,
-                [
-                    'player_id' => $this->player_id,
-                    'card' => $explode[3],
-                ]
-            );
-        
-        game::$instance->addPending($this->player_id, "PlayerTurn");
-        
+        game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+
+        }
         
     }
 

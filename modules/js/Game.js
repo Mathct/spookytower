@@ -38,7 +38,6 @@ class NormalTurn {
     // PART 1 Event listeners
     if (isCurrentPlayerActive) {
       this.possibles = [];
-      this.selected_token = "";
       console.log(args);
 
       // selectable
@@ -126,6 +125,8 @@ class NormalTurn {
             break;
 
           case "take_card_btn":
+            console.log("key", key);
+            console.log("token", this.game.selected_token);
             this.bga.statusBar.addActionButton(
               _("Take Card"),
               () =>
@@ -373,66 +374,50 @@ export class Game {
     this.connections = [];
   }
 
-  onSelectBuilding(elt_id) {
-    console.log("on select building", elt_id);
+  async onSelectBuilding(elt_id) {
+    const sourceCard = document.getElementById(elt_id);
+    if (!sourceCard) return;
 
-    const card = document.getElementById(elt_id);
-    if (!card) return;
-
-    // table_building_card_5 → 5
-    const buildingNumber = parseInt(elt_id.split("_").pop(), 10);
-
-    // récupérer le joueur actif
+    const buildingNumber = Number(elt_id.split("_").pop());
     const playerId = this.bga.players.getActivePlayerId();
-
-    // récupérer la stack cible
     const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
-    if (!stack) {
-      console.error("Stack not found", playerId, buildingNumber);
-      return;
-    }
 
-    // récupérer le counter correspondant
     const counter = this.tableBuildingCounters[buildingNumber];
-    if (!counter) {
-      console.error("Counter not found for building", buildingNumber);
-      return;
-    }
+    if (!counter || counter.getValue() <= 0) return;
 
-    // appeler la fonction de déplacement qui gère le clonage et la décrémentation
-    this.moveBuildingToStack(card, stack, counter);
+    // créer l'emplacement final
+
+    const index = stack.children.length;
+    const html = `
+    <div
+      id="player_${playerId}_stack_${buildingNumber}_card_${index + 1}"
+      class="building_cards"
+      style="
+        background-position:-${buildingNumber - 1}00% 0%;
+        bottom: calc(${index} * var(--card_h) * 0.2);
+        z-index: ${6 - index};
+      ">
+    </div>
+  `;
+
+    stack.insertAdjacentHTML("beforeend", html);
+    const slot = stack.lastElementChild;
+
+    // lancer l'animation
+    await this.animateBuildingToSlot(sourceCard, slot);
+
+    counter.incValue(-1);
   }
 
-  async moveBuildingToStack(card, stack) {
-    if (!card || !stack) return;
+  async animateBuildingToSlot(sourceCard, targetSlot) {
+    const flyingCard = sourceCard.cloneNode(true);
 
-    console.log("STACK", stack);
+    // la carte volante reste dans le DOM source
+    sourceCard.parentElement.appendChild(flyingCard);
 
-    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
-    const counter = this.tableBuildingCounters[buildingNumber];
-    const playerId = this.bga.players.getActivePlayerId();
+    await this.animationManager.slideAndAttach(flyingCard, targetSlot, { duration: 600, easing: "ease-in-out" });
 
-    // --- CAS 1 : plusieurs cartes dans la pile ---
-    if (counter.getValue() > 1) {
-      const clone = card.cloneNode(true);
-      clone.id = `player_${playerId}_building_${buildingNumber}`;
-
-      // l'ajouter dans le même slot parent que la carte originale
-      card.parentElement.appendChild(clone);
-
-      // animation vers le stack
-      await this.animationManager.slideAndAttach(clone, stack, { duration: 600, easing: "ease-in-out" }, stack.lastElementChild ?? undefined);
-
-      // décrémenter le compteur si nécessaire
-      counter.incValue(-1);
-      return;
-    } else {
-      // --- CAS 2 : dernière carte ---
-      await this.animationManager.slideAndAttach(card, stack, { duration: 600, easing: "ease-in-out" }, stack.lastElementChild ?? undefined);
-
-      card.id = `player_${playerId}_building_${buildingNumber}`;
-      counter.setValue(0);
-    }
+    flyingCard.remove();
   }
 
   onSelectToken(token_id) {
@@ -477,6 +462,7 @@ export class Game {
         "beforeend",
         `
           <div class="a-board" id="top_board_${player.id}">
+
             <!-- Ghost icon + counter -->
             <div class="icon-group">
               <div
@@ -489,6 +475,20 @@ export class Game {
                 id="ghost_counter_${player.id}"
               ></span>
             </div>
+
+            <!-- Pet icon + counter -->
+            <div class="icon-group">
+              <div
+                class="icon ic_pet"
+                id="icon_pet_${player.id}"
+                title="${_("Pets")}"
+              ></div>
+              <span
+                class="icon-text"
+                id="pet_counter_${player.id}"
+              ></span>
+            </div>
+            
             <!-- Artefact icon + counter -->
             <div class="icon-group">
               <div
@@ -501,7 +501,10 @@ export class Game {
                 id="artefact_counter_${player.id}"
               ></span>
             </div>
-                        <!-- Clue icon + counter -->
+          </div>
+
+          <div class="a-board" id="middle_board_${player.id}">
+          <!-- Clue icon + counter -->
             <div class="icon-group">
               <div
                 class="icon ic_clue"
@@ -513,11 +516,36 @@ export class Game {
                 id="clue_counter_${player.id}"
               ></span>
             </div>
+          
+            <!-- Grimoire icon + counter -->
+            <div class="icon-group">
+              <div
+                class="icon ic_grimoire"
+                id="icon_grimoire_${player.id}"
+                title="${_("Grimoire")}"
+              ></div>
+              <span
+                class="icon-text"
+                id="grimoire_counter_${player.id}"
+              ></span>
+            </div>
+
+            <!-- Clock icon + counter -->
+            <div class="icon-group">
+              <div
+                class="icon ic_clock"
+                id="icon_clock_${player.id}"
+                title="${_("Clocks")}"
+              ></div>
+              <span
+                class="icon-text"
+                id="clock_counter_${player.id}"
+              ></span>
+            </div>
           </div>
 
           <div class="b-board" id="bottom_board_${player.id}">
-                      <!-- Reroll icon -->
-
+              <!-- Reroll icon -->
               <div
                 class="icon ic_reroll_${player.reroll ?? 1}"
                 id="icon_reroll_${player.id}"
@@ -528,13 +556,6 @@ export class Game {
           `,
       );
 
-      const artefact_counter = new ebg.counter();
-      artefact_counter.create(`artefact_counter_${player.id}`, {
-        value: player.artefact,
-        playerCounter: "artefact",
-        playerId: player.id,
-      });
-
       const ghost_counter = new ebg.counter();
       ghost_counter.create(`ghost_counter_${player.id}`, {
         value: player.ghost,
@@ -542,10 +563,38 @@ export class Game {
         playerId: player.id,
       });
 
+      const pet_counter = new ebg.counter();
+      pet_counter.create(`pet_counter_${player.id}`, {
+        value: player.pet,
+        playerCounter: "pet",
+        playerId: player.id,
+      });
+
+      const artefact_counter = new ebg.counter();
+      artefact_counter.create(`artefact_counter_${player.id}`, {
+        value: player.artefact,
+        playerCounter: "artefact",
+        playerId: player.id,
+      });
+
       const clue_counter = new ebg.counter();
       clue_counter.create(`clue_counter_${player.id}`, {
         value: player.clue,
         playerCounter: "clue",
+        playerId: player.id,
+      });
+
+      const grimoire_counter = new ebg.counter();
+      grimoire_counter.create(`grimoire_counter_${player.id}`, {
+        value: player.grimoire,
+        playerCounter: "grimoire",
+        playerId: player.id,
+      });
+
+      const clock_counter = new ebg.counter();
+      clock_counter.create(`clock_counter_${player.id}`, {
+        value: player.clock,
+        playerCounter: "clock",
         playerId: player.id,
       });
     });
@@ -772,14 +821,35 @@ export class Game {
       // Exemple pour stack 1
       const stack1 = document.getElementById(`player_${player.id}_stack_1`);
       let html = "";
-      for (let i = 1; i <= 5; i++) {
-        html += `<div id="player_${player.id}_stack_1_card_${i}" class="building_cards" style="background-position:0% 0%;"></div>`;
+      for (let i = 0; i < 3; i++) {
+        html += `
+          <div id="player_${player.id}_stack_1_card_${i + 1}"
+            class="building_cards"
+            style="
+              background-position:0% 0%;
+              bottom: calc(${i} * var(--card_h) * 0.2);
+              z-index: ${6 - i};
+            ">
+          </div>
+        `;
       }
       stack1.insertAdjacentHTML("beforeend", html);
 
       // Exemple pour stack 5
       const stack5 = document.getElementById(`player_${player.id}_stack_5`);
-      html = `<div id="player_${player.id}_stack_5_card_1" class="building_cards" style="background-position:-400% 0%;"></div>`;
+      html = "";
+      for (let i = 0; i < 1; i++) {
+        html += `
+          <div id="player_${player.id}_stack_5_card_${i + 1}"
+            class="building_cards"
+            style="
+              background-position:-400% 0%;
+              bottom: calc(${i} * var(--card_h) * 0.2);
+              z-index: ${6 - i};
+            ">
+          </div>
+        `;
+      }
       stack5.insertAdjacentHTML("beforeend", html);
     });
   }
@@ -1030,6 +1100,10 @@ export class Game {
   }
 
   async onFlipGrimoire() {
+    this.flipGrimoire();
+  }
+
+  async flipGrimoire() {
     const grimoire = document.querySelector("#deck_grimoire .parkgrim_cards");
     if (!grimoire) return;
 
@@ -1100,9 +1174,122 @@ export class Game {
     }
     */
 
-  async notif_placeTruck(args) {
-    // mise à jour du truck
+  async notif_takeCard(args) {
+    // on déplace une carte de la table vers sa maison
 
-    console.log("notif_placeTruck", args);
+    console.log("notif_takeCard", args);
+
+    const card_to_place = args.card;
+    // position donne l'emplacement. 1 en bas
+
+    // on créé un clone de la carte sauf si c'est la dernière
+    // on enlève le compteur dans ce cas
+
+    // attention car les cartes se positionnent sous celles qui sont en bas
+    // ou sinon, on déplace vers le haut celles qui sont présentes et on place la dernière toujours en bas
+
+    // cartes 1 2 3 4 on flipe le reroll si nécessaire
+    // carte 9 on gagne un clock, activé aussitôt
+  }
+
+  async notif_flipCards(args) {
+    // on retourne les cartes dans une colonne
+    // on récolte
+    console.log("notif_flipCards", args);
+
+    // cartes 1
+    //  bonus flip9+   : on déplace dans le conteneur si on a des cartes 9+
+    //  le fantôme     : on envoie vers le panel joueur et on incrémente
+
+    // cartes 2
+    //  des clock      : on déplace dans le conteneur
+    //  DEMANDER si les double clock s'activent
+    //  un par un ou si on tourne de deux secteurs d'un coup.
+
+    // cartes 3
+    //  des grimoires  : on déplace dans le conteneur
+    //  une torche     : on déplace dans le conteneur
+
+    // cartes 4
+    //  des cartes Pet : on déplace dans le conteneur si 0 sur la table et 2 chez 2 joueurs différents
+    //  sur la table, on envoie vers le panel joueur et on incrémente pet
+
+    //  un clock       : on déplace dans le conteneur
+
+    // cartes 5
+    //  des cartes flip8- : on déplace dans le conteneur si on a des cartes 8-
+    //  des torches
+
+    // cartes 6
+    //  des cartes draw8-  : on déplace dans le conteneur s'il reste des cartes 8- à piocher
+    //  des torches        : on déplace dans le conteneur
+    //  un clock           : on déplace dans le conteneur
+
+    // cartes 7
+    //  le fantôme         : on envoie vers le panel joueur et on incrémente
+    //  des torches        : on déplace dans le conteneur
+    //  des clocks         : on déplace dans le conteneur
+
+    // cartes 8
+    //  deux fantômes      : on envoie vers le panel joueur et on incrémente
+    //  deux pets          : on déplace dans le conteneur
+    //  un replay          : on envoie vers le panel joueur et on anime la rotation
+
+    // cartes 9
+    //  deux fantômes      : on envoie vers le panel joueur et on incrémente
+    //  deux pets          : on déplace dans le conteneur
+    //  une torche         : on déplace dans le conteneur
+
+    // cartes 10
+    //  cinq fantômes      : on envoie vers le panel joueur et on incrémente
+
+    // cartes 11
+    //  quatre fantômes      : on envoie vers le panel joueur et on incrémente
+    //  un pet               : on déplace dans le conteneur
+    //  un grimoire          : on déplace dans le conteneur
+
+    // cartes 12
+    //  trois fantômes      : on envoie vers le panel joueur et on incrémente
+  }
+
+  async notif_goToThePark(args) {
+    // on flipe une carte Park
+    // on envoie vers le panel joueur et on incrémente
+    // on décrémente les torches et le compteur
+    console.log("notif_goToThePark", args);
+  }
+
+  async notif_drawGrimoire(args) {
+    // on flipe une carte Grimoire
+    // on décrémente lecompteur
+    console.log("notif_drawGrimoire", args);
+
+    this.flipGrimoire();
+
+    // un fantôme
+    // une torche
+    // un clock
+    // deux clock
+    // un replay
+    // un pet
+    // un draw_any on déplace dans le conteneur s'il reste des cartes à piocher
+  }
+
+  async notif_activateClockTower(args) {
+    // on tourne l'aiguille et on gagne artefact, pet ou reroll
+    console.log("notif_activateClockTower", args);
+
+    // on anime l'aiguille de -60°
+
+    // artefact : on envoie vers le panel joueur et on incrémente
+    // pet      : on déplace dans le conteneur si 0 sur la table et 2 chez 2 joueurs différents
+    //            sur la table, on envoie vers le panel joueur et on incrémente pet
+    // reroll   : on flipe le reroll si nécessaire
+  }
+
+  async notif_stealPet(args) {
+    console.log("notif_stealPet", args);
+
+    // on incrémente ou  décrémente le nombre de pet
   }
 }

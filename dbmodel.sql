@@ -84,6 +84,9 @@ CREATE TABLE IF NOT EXISTS `other` (
   `dice1` int(2) unsigned DEFAULT 1,
   `dice2` int(2) unsigned DEFAULT 1, 
   `clock` int(2) unsigned DEFAULT 0, 
+  `pet1` varchar(16) NULL,
+  `pet2` varchar(16) NULL, 
+  `pet3` varchar(16) NULL, 
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -92,3 +95,7 @@ CREATE TABLE IF NOT EXISTS `other` (
 --   `dice1`     valeur actuelle du dé 1
 --   `dice2`     valeur actuelle du dé 2
 --   `clock`     position actuelle de l'horloge ( de 0 à 5 ... 0 étant midi)
+
+
+
+ALTER TABLE `player` ADD `reroll` int(5) NOT NULL DEFAULT 1;

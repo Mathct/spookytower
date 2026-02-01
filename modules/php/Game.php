@@ -27,8 +27,30 @@ class Game extends \Bga\GameFramework\Table
     // material
     //public static array $CARD_TYPES;
 
-    // counters
-    //public PlayerCounter $playerEnergy;
+    // counters table
+    public TableCounter $deck_1;
+    public TableCounter $deck_2;
+    public TableCounter $deck_3;
+    public TableCounter $deck_4;
+    public TableCounter $deck_5;
+    public TableCounter $deck_6;
+    public TableCounter $deck_7;
+    public TableCounter $deck_8;
+    public TableCounter $deck_9;
+    public TableCounter $deck_10;
+    public TableCounter $deck_11;
+    public TableCounter $deck_12;
+    public TableCounter $deck_park;
+    public TableCounter $deck_grimoire;
+    
+    // counters players
+    public PlayerCounter $player_ghosts;
+    public PlayerCounter $player_pets;
+    public PlayerCounter $player_artefacts;
+    public PlayerCounter $player_clues;
+    public PlayerCounter $player_grimoires;
+    public PlayerCounter $player_clocks;
+
 
     //databases decks
     public $building_DB;
@@ -55,7 +77,7 @@ class Game extends \Bga\GameFramework\Table
         $this->initGameStateLabels([
 
             // GSV
-            //"actions_played"              => 10,
+            //"pets"              => 10,
             //"super_bonus_action"          => 11,
 
             // options
@@ -65,7 +87,29 @@ class Game extends \Bga\GameFramework\Table
 
         self::$instance = $this; // ATTENTION pending MAthCt
 
-        //$this->playerEnergy = $this->counterFactory->createPlayerCounter('energy');
+
+        // counters
+        $this->deck_1 = $this->counterFactory->createTableCounter('deck_1');
+        $this->deck_2 = $this->counterFactory->createTableCounter('deck_2');
+        $this->deck_3 = $this->counterFactory->createTableCounter('deck_3');
+        $this->deck_4 = $this->counterFactory->createTableCounter('deck_4');
+        $this->deck_5 = $this->counterFactory->createTableCounter('deck_5');
+        $this->deck_6 = $this->counterFactory->createTableCounter('deck_6');
+        $this->deck_7 = $this->counterFactory->createTableCounter('deck_7');
+        $this->deck_8 = $this->counterFactory->createTableCounter('deck_8');
+        $this->deck_9 = $this->counterFactory->createTableCounter('deck_9');
+        $this->deck_10 = $this->counterFactory->createTableCounter('deck_10');
+        $this->deck_11 = $this->counterFactory->createTableCounter('deck_11');
+        $this->deck_12 = $this->counterFactory->createTableCounter('deck_12');
+        $this->deck_park = $this->counterFactory->createTableCounter('deck_park');
+        $this->deck_grimoire = $this->counterFactory->createTableCounter('deck_grimoire');
+
+        $this->player_ghosts = $this->counterFactory->createPlayerCounter('player_ghosts');
+        $this->player_pets = $this->counterFactory->createPlayerCounter('player_pets');
+        $this->player_artefacts = $this->counterFactory->createPlayerCounter('player_artefacts');
+        $this->player_clues = $this->counterFactory->createPlayerCounter('player_clues');
+        $this->player_grimoires = $this->counterFactory->createPlayerCounter('player_grimoires');
+        $this->player_clocks = $this->counterFactory->createPlayerCounter('player_clocks');
 
 
         // Deck db_card created with table card 
@@ -113,7 +157,29 @@ class Game extends \Bga\GameFramework\Table
      */
     protected function setupNewGame($players, $options = [])
     {
-        //$this->playerEnergy->initDb(array_keys($players), initialValue: 2);
+        //counters
+
+        $this->deck_1->initDb(5);
+        $this->deck_2->initDb(5);
+        $this->deck_3->initDb(5);
+        $this->deck_4->initDb(5);
+        $this->deck_5->initDb(5);
+        $this->deck_6->initDb(5);
+        $this->deck_7->initDb(5);
+        $this->deck_8->initDb(5);
+        $this->deck_9->initDb(5);
+        $this->deck_10->initDb(5);
+        $this->deck_11->initDb(5);
+        $this->deck_12->initDb(3);
+        $this->deck_park->initDb(5);
+        $this->deck_grimoire->initDb(10);
+
+        $this->player_ghosts->initDb(array_keys($players));
+        $this->player_pets->initDb(array_keys($players));
+        $this->player_artefacts->initDb(array_keys($players));
+        $this->player_clues->initDb(array_keys($players));
+        $this->player_grimoires->initDb(array_keys($players));
+        $this->player_clocks->initDb(array_keys($players));
 
         // Set the colors of the players with HTML color code. The default below is red/green/blue/orange/brown. The
         // number of colors defined here must correspond to the maximum number of players allowed for the gams.
@@ -191,8 +257,18 @@ class Game extends \Bga\GameFramework\Table
         $this->grimoire_DB->shuffle('deck');
 
 
-        //Other
-        self::DbQuery("INSERT INTO other () VALUES ()");
+        //INIT PETS
+        $tab = [1, 2, 3];
+        shuffle($tab);          // Mélange le tableau
+        // Prépare les valeurs
+        $pet1 = 'table_' . $tab[0];
+        $pet2 = 'table_' . $tab[1];
+        $pet3 = 'table_' . $tab[2];
+        // INSERT
+        game::$instance->DbQuery("
+            INSERT INTO other (pet1, pet2, pet3)
+            VALUES ('$pet1', '$pet2', '$pet3')
+        ");
 
 
         // Init global values with their initial values.
@@ -281,7 +357,50 @@ class Game extends \Bga\GameFramework\Table
             "SELECT `player_id` `id`, `player_score` `score` FROM `player`"
         );
 
-        //$this->playerEnergy->fillResult($result);
+        foreach ($result["players"] as $player_id => $player) {
+
+            $result["house_cards"][$player_id] = game::$instance->getObjectListFromDB( "SELECT card_type type, position position FROM building WHERE card_location ='house' AND card_location_arg ='{$player_id}'" );
+            $result["reroll"][$player_id] = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id={$player_id}");
+        }
+
+        //counters
+        $this->deck_1->fillResult($result);
+        $this->deck_2->fillResult($result);
+        $this->deck_3->fillResult($result);
+        $this->deck_4->fillResult($result);
+        $this->deck_5->fillResult($result);
+        $this->deck_6->fillResult($result);
+        $this->deck_7->fillResult($result);
+        $this->deck_8->fillResult($result);
+        $this->deck_9->fillResult($result);
+        $this->deck_10->fillResult($result);
+        $this->deck_11->fillResult($result);
+        $this->deck_12->fillResult($result);
+        $this->deck_park->fillResult($result);
+        $this->deck_grimoire->fillResult($result);
+
+        $this->player_ghosts->fillResult($result);
+        $this->player_pets->fillResult($result);
+        $this->player_artefacts->fillResult($result);
+        $this->player_clues->fillResult($result);
+        $this->player_grimoires->fillResult($result);
+        $this->player_clocks->fillResult($result);
+
+        //pets
+        $pet1 = game::$instance->getUniqueValueFromDB("SELECT pet1 FROM other WHERE id=1");
+        $pet2 = game::$instance->getUniqueValueFromDB("SELECT pet2 FROM other WHERE id=1");
+        $pet3 = game::$instance->getUniqueValueFromDB("SELECT pet3 FROM other WHERE id=1");
+        $result["pets"] = [$pet1, $pet2, $pet3];
+        
+        //clock
+        $result["clock"] = game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1");
+
+        //dices
+        $dice1 = game::$instance->getUniqueValueFromDB("SELECT dice1 FROM other WHERE id=1");
+        $dice2 = game::$instance->getUniqueValueFromDB("SELECT dice1 FROM other WHERE id=1");
+        $result["dices"] = [$dice1, $dice2];
+
+
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
