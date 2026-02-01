@@ -96,6 +96,5 @@ CREATE TABLE IF NOT EXISTS `other` (
 --   `dice2`     valeur actuelle du dé 2
 --   `clock`     position actuelle de l'horloge ( de 0 à 5 ... 0 étant midi)
 
-
-
 ALTER TABLE `player` ADD `reroll` int(5) NOT NULL DEFAULT 1;
+--   `reroll`     1 reroll OK, 0 reroll NOK
