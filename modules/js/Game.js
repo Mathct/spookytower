@@ -734,9 +734,8 @@ export class Game {
 
     diceTrackSlot.insertAdjacentHTML("beforeend", diceHTML);
 
-
     // ---- Injecter les dés ----
-    diceTrackSlot.style.position = 'relative';
+    diceTrackSlot.style.position = "relative";
 
     const dicefaceHTML = `
         <div id="scene_1" class="scene">
@@ -780,65 +779,56 @@ export class Game {
 
   /// INIT AND ROLL DICE
 
-initDice() {
-
-    
-    this.diceElements = [
-        document.getElementById('dice1'),
-        document.getElementById('dice2')
-    ];
+  initDice() {
+    this.diceElements = [document.getElementById("dice1"), document.getElementById("dice2")];
 
     this.faceRotations = {
-        1: { x: 0,   y: 0 },
-        2: { x: 0,   y: -90 },
-        3: { x: 0,   y: -180 },
-        4: { x: 0,   y: 90 },
-        5: { x: -90, y: 0 },
-        6: { x: 90,  y: 0 }
+      1: { x: 0, y: 0 },
+      2: { x: 0, y: -90 },
+      3: { x: 0, y: -180 },
+      4: { x: 0, y: 90 },
+      5: { x: -90, y: 0 },
+      6: { x: 90, y: 0 },
     };
 
     this.forcedFaces = [this.gamedatas.dices[0], this.gamedatas.dices[1]];
-    
+
     // Initial display of dice faces
     this.diceElements.forEach((dice, index) => {
-        const face = this.forcedFaces[index];
-        const rotation = this.faceRotations[face];
+      const face = this.forcedFaces[index];
+      const rotation = this.faceRotations[face];
 
-        // Apply the rotation instantly without animation
-        dice.style.transition = "none";
-        dice.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
+      // Apply the rotation instantly without animation
+      dice.style.transition = "none";
+      dice.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
     });
+  }
 
-    
-}
-
-rollDiceMultiple() {    //pour lancer les dés plusieurs fois et ainsi éviter que les dés ne tournent pas si le résultat est inchangé ou proche
+  rollDiceMultiple() {
+    //pour lancer les dés plusieurs fois et ainsi éviter que les dés ne tournent pas si le résultat est inchangé ou proche
     this.rollDice(); // Premier lancer
     setTimeout(() => {
-        this.rollDice(); // Deuxième lancer
+      this.rollDice(); // Deuxième lancer
     }, 100);
     setTimeout(() => {
-        this.rollDice(); // 3eme lancer
+      this.rollDice(); // 3eme lancer
     }, 200);
-}
+  }
 
-rollDice() {
-    
-
+  rollDice() {
     this.diceElements.forEach((dice, index) => {
-    const face = this.forcedFaces[index];
-    const target = this.faceRotations[face];
-        
-    const fullTurnsX = Math.floor(Math.random() * 10 + 10) * 360;
-    const fullTurnsY = Math.floor(Math.random() * 10 + 10) * 360;
-    const finalX = fullTurnsX + target.x;
-    const finalY = fullTurnsY + target.y;
+      const face = this.forcedFaces[index];
+      const target = this.faceRotations[face];
 
-    dice.style.transition = "transform 2s cubic-bezier(0.23, 1, 0.32, 1)";
-    dice.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
-        
+      const fullTurnsX = Math.floor(Math.random() * 10 + 10) * 360;
+      const fullTurnsY = Math.floor(Math.random() * 10 + 10) * 360;
+      const finalX = fullTurnsX + target.x;
+      const finalY = fullTurnsY + target.y;
+
+      dice.style.transition = "transform 2s cubic-bezier(0.23, 1, 0.32, 1)";
+      dice.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
     });
-}
+  }
 
   setupPets() {
     // Ordre haut → bas, exemple : "213"
@@ -912,7 +902,7 @@ rollDice() {
       }
 
       // Exemple pour stack 1
-      const stack1 = document.getElementById(`player_${player.id}_stack_1`);
+      /*  const stack1 = document.getElementById(`player_${player.id}_stack_1`);
       let html = "";
       for (let i = 0; i < 3; i++) {
         html += `
@@ -926,10 +916,10 @@ rollDice() {
           </div>
         `;
       }
-      stack1.insertAdjacentHTML("beforeend", html);
+      stack1.insertAdjacentHTML("beforeend", html);*/
 
       // Exemple pour stack 5
-      const stack5 = document.getElementById(`player_${player.id}_stack_5`);
+      /*  const stack5 = document.getElementById(`player_${player.id}_stack_5`);
       html = "";
       for (let i = 0; i < 1; i++) {
         html += `
@@ -943,7 +933,7 @@ rollDice() {
           </div>
         `;
       }
-      stack5.insertAdjacentHTML("beforeend", html);
+      stack5.insertAdjacentHTML("beforeend", html);*/
     });
   }
 
@@ -955,14 +945,14 @@ rollDice() {
 
     const parkCounter = new ebg.counter();
     parkCounter.create("deck_park_counter", {
-      value: nb_parks,
+      value: this.gamedatas.deck_park,
       playerCounter: null,
     });
     this.topRowCounters.deck_park = parkCounter;
 
     const grimCounter = new ebg.counter();
     grimCounter.create("deck_grimoire_counter", {
-      value: 0,
+      value: this.gamedatas.deck_grimoire,
       playerCounter: null,
     });
     this.topRowCounters.deck_grimoire = grimCounter;
@@ -972,11 +962,11 @@ rollDice() {
 
     for (let i = 1; i <= 12; i++) {
       const counter = new ebg.counter();
-
+      console.log("ededk", this.gamedatas[`deck_${i}`]);
       // ID cohérent avec les cartes table
       // table_building_card_1 → table_building_counter_1
       counter.create(`table_building_counter_${i}`, {
-        value: 5, // valeur initiale
+        value: this.gamedatas[`deck_${i}`], // valeur initiale
       });
 
       this.tableBuildingCounters[i] = counter;
@@ -1387,9 +1377,7 @@ rollDice() {
   }
 
   async notif_rollDice(args) {
-   
     this.forcedFaces = args.roll;
     this.rollDiceMultiple();
-               
   }
 }
