@@ -397,7 +397,7 @@ class Game extends \Bga\GameFramework\Table
 
         //dices
         $dice1 = game::$instance->getUniqueValueFromDB("SELECT dice1 FROM other WHERE id=1");
-        $dice2 = game::$instance->getUniqueValueFromDB("SELECT dice1 FROM other WHERE id=1");
+        $dice2 = game::$instance->getUniqueValueFromDB("SELECT dice2 FROM other WHERE id=1");
         $result["dices"] = [$dice1, $dice2];
 
 

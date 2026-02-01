@@ -63,17 +63,21 @@ class Pending extends APP_GameClass
         $rand_dice2 = bga_rand(1, 6);
         game::$instance->DbQuery("UPDATE other set dice2 = $rand_dice2");
 
+        $roll = [$rand_dice1, $rand_dice2];
 
         $txt = clienttranslate('${player_name} ${dice1} and ${dice2}');
         game::$instance->notify->all(
-            "message",
+            "rollDice",
             $txt,
             [
                 'player_id' => $this->player_id,
                 'dice1' => $rand_dice1,
-                'dice2' => $rand_dice2
+                'dice2' => $rand_dice2,
+                'roll' => $roll
             ]
         );
+
+       
 
         
         game::$instance->addPending($this->player_id, "ChooseAction", $rand_dice1, $rand_dice2);

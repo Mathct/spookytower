@@ -242,6 +242,7 @@ export class Game {
     this.setupPlayersBoard();
     this.setupBoard();
     this.addSideButtons();
+    this.initDice();
 
     this.setupCounters();
     //this.setupTooltips();
@@ -733,6 +734,36 @@ export class Game {
 
     diceTrackSlot.insertAdjacentHTML("beforeend", diceHTML);
 
+
+    // ---- Injecter les dés ----
+    diceTrackSlot.style.position = 'relative';
+
+    const dicefaceHTML = `
+        <div id="scene_1" class="scene">
+          <div class="dice" id="dice1">
+            <div class="face face1"></div>
+            <div class="face face2"></div>
+            <div class="face face3"></div>
+            <div class="face face4"></div>
+            <div class="face face5"></div>
+            <div class="face face6"></div>
+          </div>
+        </div>
+
+        <div id="scene_2" class="scene">
+          <div class="dice" id="dice2">
+            <div class="face face1"></div>
+            <div class="face face2"></div>
+            <div class="face face3"></div>
+            <div class="face face4"></div>
+            <div class="face face5"></div>
+            <div class="face face6"></div>
+          </div>
+        </div>
+    `;
+
+    diceTrackSlot.insertAdjacentHTML("beforeend", dicefaceHTML);
+
     // -------------------- Clock Tower --------------------
     const clockTowerSlot = document.getElementById("clock_tower");
     if (!clockTowerSlot) return;
@@ -746,6 +777,68 @@ export class Game {
 
     clockTowerSlot.insertAdjacentHTML("beforeend", towerHTML);
   }
+
+  /// INIT AND ROLL DICE
+
+initDice() {
+
+    
+    this.diceElements = [
+        document.getElementById('dice1'),
+        document.getElementById('dice2')
+    ];
+
+    this.faceRotations = {
+        1: { x: 0,   y: 0 },
+        2: { x: 0,   y: -90 },
+        3: { x: 0,   y: -180 },
+        4: { x: 0,   y: 90 },
+        5: { x: -90, y: 0 },
+        6: { x: 90,  y: 0 }
+    };
+
+    this.forcedFaces = [this.gamedatas.dices[0], this.gamedatas.dices[1]];
+    
+    // Initial display of dice faces
+    this.diceElements.forEach((dice, index) => {
+        const face = this.forcedFaces[index];
+        const rotation = this.faceRotations[face];
+
+        // Apply the rotation instantly without animation
+        dice.style.transition = "none";
+        dice.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
+    });
+
+    
+}
+
+rollDiceMultiple() {    //pour lancer les dés plusieurs fois et ainsi éviter que les dés ne tournent pas si le résultat est inchangé ou proche
+    this.rollDice(); // Premier lancer
+    setTimeout(() => {
+        this.rollDice(); // Deuxième lancer
+    }, 100);
+    setTimeout(() => {
+        this.rollDice(); // 3eme lancer
+    }, 200);
+}
+
+rollDice() {
+    
+
+    this.diceElements.forEach((dice, index) => {
+    const face = this.forcedFaces[index];
+    const target = this.faceRotations[face];
+        
+    const fullTurnsX = Math.floor(Math.random() * 10 + 10) * 360;
+    const fullTurnsY = Math.floor(Math.random() * 10 + 10) * 360;
+    const finalX = fullTurnsX + target.x;
+    const finalY = fullTurnsY + target.y;
+
+    dice.style.transition = "transform 2s cubic-bezier(0.23, 1, 0.32, 1)";
+    dice.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
+        
+    });
+}
 
   setupPets() {
     // Ordre haut → bas, exemple : "213"
@@ -1291,5 +1384,12 @@ export class Game {
     console.log("notif_stealPet", args);
 
     // on incrémente ou  décrémente le nombre de pet
+  }
+
+  async notif_rollDice(args) {
+   
+    this.forcedFaces = args.roll;
+    this.rollDiceMultiple();
+               
   }
 }
