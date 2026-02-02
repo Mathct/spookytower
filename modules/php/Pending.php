@@ -46,8 +46,8 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('${actplayer} must roll the dice');
         $ret['titleyou'] = clienttranslate('${you} must roll the dice');
 
-       
-       $ret['buttons'][] = 'roll_dice_btn';
+             
+        $ret['buttons'][] = 'roll_dice_btn';
        
     
         return $ret;
@@ -65,7 +65,7 @@ class Pending extends APP_GameClass
 
         $roll = [$rand_dice1, $rand_dice2];
 
-        $txt = clienttranslate('${player_name} ${dice1} and ${dice2}');
+        $txt = clienttranslate('${player_name} rolls ${dice1} and ${dice2}');
         game::$instance->notify->all(
             "rollDice",
             $txt,
@@ -78,8 +78,6 @@ class Pending extends APP_GameClass
         );
 
        
-
-        
         game::$instance->addPending($this->player_id, "ChooseAction", $rand_dice1, $rand_dice2);
         
         
@@ -96,16 +94,44 @@ class Pending extends APP_GameClass
         $ret['titleyou'] = clienttranslate('${you} must choose an action');
 
         $addition = $parg1 + $parg2;
+        $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id={$this->player_id}");
 
-        $ret["selectable"][] = 'table_building_card_'.$parg1;
-        if($parg1 != $parg2)
+        //COMPTEUR DE CARTES BUILDING RESTANTES
+        $count_deck1 = game::$instance->{'deck_'.$parg1}->get();
+        $count_deck2 = game::$instance->{'deck_'.$parg2}->get();
+        $count_addition = game::$instance->{'deck_'.$addition}->get();
+
+        //POSSIBLE BUTTON TAKE
+        $btn_take = 0;
+       
+
+        //SELECT BUILDING
+        if($count_deck1 >= 1)
+        {
+            $ret["selectable"][] = 'table_building_card_'.$parg1;
+            $btn_take = 1;
+        }
+        if($count_deck2 >=1 && $parg1 != $parg2)
         {
             $ret["selectable"][] = 'table_building_card_'.$parg2;
+            $btn_take = 1;
         }
-        $ret["selectable"][] = 'table_building_card_'.$addition;
+        if($count_addition >= 1)
+        {
+            $ret["selectable"][] = 'table_building_card_'.$addition;
+            $btn_take = 1;
+        }
+        
+        if($btn_take == 1)
+        {
+            $ret['buttons'][] = 'take_card_btn';
+        }
+        
        
-        $ret['buttons'][] = 'take_card_btn';
-       
+        if($reroll == 1)
+        {
+            $ret['buttons'][] = 'reroll_dice_btn';
+        }
     
         return $ret;
     }
@@ -115,9 +141,46 @@ class Pending extends APP_GameClass
     function ChooseAction($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         
-        if($varg2 == '')
+        if(($varg1 == 'flip_cards_btn' || $varg1 == 'take_card_btn') && $varg2 == '')
         {
             game::$instance->addPending($this->player_id, "ChooseAction", $parg1, $parg2);
+        }
+
+        elseif($varg1 == 'reroll_dice_btn')
+        {
+            game::$instance->DbQuery("UPDATE player set reroll = 0 WHERE player_id='{$this->player_id}'");
+
+            game::$instance->notify->all(
+                "flipReroll",
+                '',
+                [
+                    'player_id' => $this->player_id,
+                    
+                ]
+            );
+
+
+            $rand_dice1 = bga_rand(1, 6);
+            game::$instance->DbQuery("UPDATE other set dice1 = $rand_dice1");
+            $rand_dice2 = bga_rand(1, 6);
+            game::$instance->DbQuery("UPDATE other set dice2 = $rand_dice2");
+
+            $roll = [$rand_dice1, $rand_dice2];
+
+            $txt = clienttranslate('${player_name} rolls ${dice1} and ${dice2}');
+            game::$instance->notify->all(
+                "rollDice",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'dice1' => $rand_dice1,
+                    'dice2' => $rand_dice2,
+                    'roll' => $roll
+                ]
+            );
+         
+            game::$instance->addPending($this->player_id, "ChooseAction", $rand_dice1, $rand_dice2);
+
         }
 
         else
@@ -149,7 +212,11 @@ class Pending extends APP_GameClass
                     ]
                 );
         
-        game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+            
+            //je change le compteur du deck
+            game::$instance->{'deck_'.$no_deck}->inc(-1);
+
+            game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
 
         }
         

@@ -622,42 +622,42 @@ export class Game {
       const ghost_counter = new ebg.counter();
       ghost_counter.create(`ghost_counter_${player.id}`, {
         value: player.ghost,
-        playerCounter: "ghost",
+        playerCounter: "player_ghosts",
         playerId: player.id,
       });
 
       const pet_counter = new ebg.counter();
       pet_counter.create(`pet_counter_${player.id}`, {
         value: player.pet,
-        playerCounter: "pet",
+        playerCounter: "player_pets",
         playerId: player.id,
       });
 
       const artefact_counter = new ebg.counter();
       artefact_counter.create(`artefact_counter_${player.id}`, {
         value: player.artefact,
-        playerCounter: "artefact",
+        playerCounter: "player_artefacts",
         playerId: player.id,
       });
 
       const clue_counter = new ebg.counter();
       clue_counter.create(`clue_counter_${player.id}`, {
         value: player.clue,
-        playerCounter: "clue",
+        playerCounter: "player_clues",
         playerId: player.id,
       });
 
       const grimoire_counter = new ebg.counter();
       grimoire_counter.create(`grimoire_counter_${player.id}`, {
         value: player.grimoire,
-        playerCounter: "grimoire",
+        playerCounter: "player_grimoires",
         playerId: player.id,
       });
 
       const clock_counter = new ebg.counter();
       clock_counter.create(`clock_counter_${player.id}`, {
         value: player.clock,
-        playerCounter: "clock",
+        playerCounter: "player_clocks",
         playerId: player.id,
       });
     });
@@ -1034,19 +1034,17 @@ export class Game {
     // --- Counters top row ---
     this.topRowCounters = {};
 
-    const nb_parks = this.nb_parks || 3;
-
     const parkCounter = new ebg.counter();
     parkCounter.create("deck_park_counter", {
       value: this.gamedatas.deck_park,
-      playerCounter: null,
+      playerCounter: "deck_park",
     });
     this.topRowCounters.deck_park = parkCounter;
 
     const grimCounter = new ebg.counter();
     grimCounter.create("deck_grimoire_counter", {
       value: this.gamedatas.deck_grimoire,
-      playerCounter: null,
+      playerCounter: "deck_grimoire",
     });
     this.topRowCounters.deck_grimoire = grimCounter;
 
@@ -1060,6 +1058,7 @@ export class Game {
       // table_building_card_1 → table_building_counter_1
       counter.create(`table_building_counter_${i}`, {
         value: this.gamedatas[`deck_${i}`], // valeur initiale
+        tableCounter: `deck_${i}`,
       });
 
       this.tableBuildingCounters[i] = counter;
@@ -1469,7 +1468,12 @@ export class Game {
     // on incrémente ou  décrémente le nombre de pet
   }
 
+  async notif_flipReroll(args) {
+    console.log("notif_flipReroll", args);
+  }
+
   async notif_rollDice(args) {
+    console.log("notif_rollDice", args);
     this.forcedFaces = args.roll;
     this.rollDiceMultiple();
   }
