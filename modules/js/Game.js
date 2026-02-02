@@ -124,6 +124,17 @@ class NormalTurn {
             );
             break;
 
+          case "reroll_dice_btn":
+            this.bga.statusBar.addActionButton(
+              _("Reroll dice"),
+              () =>
+                this.bga.actions.performAction("actRerollDice", {
+                  arg1: key,
+                }),
+              { color: "primary" },
+            );
+            break;
+
           case "take_card_btn":
             console.log("key", key);
             console.log("token", this.game.selected_token);
@@ -336,7 +347,7 @@ export class Game {
       if (!element) return;
 
       // --- Carte table (building) ---
-      /*      if (elt_id.startsWith("table_building_card_")) {
+      /*  if (elt_id.startsWith("table_building_card_")) {
         const clickHandler = () => this.onSelectBuilding(elt_id);
         element.addEventListener("click", clickHandler);
         this.connections.push({
@@ -376,49 +387,100 @@ export class Game {
   }
 
   async onSelectBuilding(elt_id) {
+    console.log("=== onSelectBuilding START ===");
+    console.log("Elt ID:", elt_id);
+
     const sourceCard = document.getElementById(elt_id);
     if (!sourceCard) return;
 
-    const buildingNumber = Number(elt_id.split("_").pop());
+    // Ex: table_building_card_3 → 3
+    const buildingNumber = parseInt(elt_id.split("_").pop(), 10);
+
+    // Joueur actif
     const playerId = this.bga.players.getActivePlayerId();
+
+    // Stack cible
     const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
+    if (!stack) {
+      console.error("Stack not found", playerId, buildingNumber);
+      return;
+    }
 
+    // Counter
     const counter = this.tableBuildingCounters[buildingNumber];
-    if (!counter || counter.getValue() <= 0) return;
+    if (!counter) {
+      console.error("Counter not found for building", buildingNumber);
+      return;
+    }
 
-    // créer l'emplacement final
-
-    const index = stack.children.length;
-    const html = `
-    <div
-      id="player_${playerId}_stack_${buildingNumber}_card_${index + 1}"
-      class="building_cards"
-      style="
-        background-position:-${buildingNumber - 1}00% 0%;
-        bottom: calc(${index} * var(--card_h) * 0.2);
-        z-index: ${6 - index};
-      ">
-    </div>
-  `;
-
-    stack.insertAdjacentHTML("beforeend", html);
-    const slot = stack.lastElementChild;
-
-    // lancer l'animation
-    await this.animateBuildingToSlot(sourceCard, slot);
-
-    counter.incValue(-1);
+    // Appeler la fonction de déplacement
+    await this.moveBuildingToStack(sourceCard, stack, counter);
+    console.log("=== onSelectBuilding END ===");
   }
 
-  async animateBuildingToSlot(sourceCard, targetSlot) {
-    const flyingCard = sourceCard.cloneNode(true);
+  async moveBuildingToStack(card, stackOrDeck) {
+    if (!card || !stackOrDeck) return;
 
-    // la carte volante reste dans le DOM source
-    sourceCard.parentElement.appendChild(flyingCard);
+    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
+    const playerId = this.bga.players.getActivePlayerId();
+    const counter = this.tableBuildingCounters[buildingNumber];
 
-    await this.animationManager.slideAndAttach(flyingCard, targetSlot, { duration: 600, easing: "ease-in-out" });
+    // --- créer la carte volante ---
+    const flyingCard = card.cloneNode(true);
+    flyingCard.style.width = "100%";
+    flyingCard.style.height = "100%";
+    flyingCard.style.position = "absolute"; // essentiel pour slideAndAttach
 
-    flyingCard.remove();
+    // ajouter au DOM à côté de la carte source
+    card.parentElement.appendChild(flyingCard);
+
+    // --- déterminer la cible ---
+    let targetContainer = null;
+
+    // si c'est une stack avec containers
+    if (stackOrDeck.classList.contains("building_stack")) {
+      const containers = stackOrDeck.querySelectorAll(".building_card_container");
+      for (const container of containers) {
+        if (container.children.length === 0) {
+          targetContainer = container;
+          break;
+        }
+      }
+
+      if (!targetContainer) {
+        console.error("Aucun container disponible dans la stack");
+        return;
+      }
+
+      // rendre visible la stack si elle était cachée
+      stackOrDeck.classList.remove("empty");
+    } else {
+      // si c'est un deck ou la maison, la cible est le slot lui-même
+      targetContainer = stackOrDeck;
+    }
+
+    console.log("Animation de", card.id, "vers", targetContainer.id);
+
+    // --- lancer l'animation ---
+    await this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600, easing: "ease-in-out" }, targetContainer.lastElementChild ?? null);
+
+    // --- après animation : mettre la carte définitivement ---
+    if (targetContainer.classList.contains("building_card_container")) {
+      flyingCard.id = targetContainer.id.replace("container", "card");
+    } else {
+      // maison ou deck : conserver un ID unique
+      flyingCard.id = `${targetContainer.id}_card_${buildingNumber}`;
+    }
+
+    targetContainer.appendChild(flyingCard);
+
+    // --- décrémenter le compteur si nécessaire ---
+    if (counter) {
+      counter.incValue(-1);
+    }
+
+    // supprimer la carte source si nécessaire
+    if (card.parentElement) card.remove();
   }
 
   onSelectToken(token_id) {
@@ -631,11 +693,25 @@ export class Game {
     for (let row = 1; row <= 3; row++) {
       for (let col = 2; col <= 5; col++) {
         centralGridHTML.push(`
-                <div class="table_building_slot" id="table_building_slot_${buildingNumber}" style="grid-column:${col}; grid-row:${row};">
-                    <div class="building_cards" id="table_building_card_${buildingNumber}" style="background-position: 0% 0%;"></div>
-                    <div class="table_building_counter" id="table_building_counter_${buildingNumber}"></div>
-                </div>
-            `);
+          <div class="table_building_slot"
+              id="table_building_slot_${buildingNumber}"
+              style="grid-column:${col}; grid-row:${row};"
+              title="Building ${buildingNumber}">
+
+            <div class="table_building_cards_container">
+              <div class="building_cards opa_30"
+                  id="table_building_card_${buildingNumber}_blank"
+                  style="background-position: 0% 0%;"></div>
+
+              <div class="building_cards"
+                  id="table_building_card_${buildingNumber}"
+                  style="background-position: 0% 0%;"></div>
+            </div>
+
+            <div class="table_building_counter"
+                id="table_building_counter_${buildingNumber}"></div>
+          </div>
+        `);
         buildingNumber++;
       }
     }
@@ -647,10 +723,10 @@ export class Game {
 
                 <!-- TOP ROW TABLE -->
                 <div id="table_top_row">
-                    <div class="table_deck_slot" id="deck_park"></div>
-                    <div class="table_deck_slot" id="deck_grimoire"></div>
-                    <div class="table_track_slot" id="dice_track"></div>
-                    <div class="table_clock_slot" id="clock_tower"></div>
+                    <div class="table_deck_slot" id="deck_park" title="Park"></div>
+                    <div class="table_deck_slot" id="deck_grimoire" title="Grimoire"></div>
+                    <div class="table_track_slot" id="dice_track" title="Dice Track"></div>
+                    <div class="table_clock_slot" id="clock_tower" title="Clock Tower"></div>
                 </div>
 
                 <!-- CENTER GRID 5x3 TABLE -->
@@ -693,8 +769,9 @@ export class Game {
     const posX = -(col * 100); // chaque colonne = -100%
 
     // Injecter la carte + compteur
-    const parkHTML = `
-        <div class="card_item parkgrim_cards" style="background-position: ${posX}% 0%; " title="Park">
+    const parkHTML = `        
+        <div class="card_item parkgrim_cards opa_30" style="background-position: -500% 0%;"></div>
+        <div class="card_item parkgrim_cards" style="background-position: ${posX}% 0%;">
             <div class="table_building_counter" id="deck_park_counter"></div>
         </div>
     `;
@@ -710,8 +787,8 @@ export class Game {
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const cardHTML = `
-        <div class="card_item parkgrim_cards" 
-             style="background-position: -700% -100%;" title="Grimoire">
+        <div class="card_item parkgrim_cards opa_30" style="background-position: -700% -100%;"></div>
+        <div class="card_item parkgrim_cards" style="background-position: -700% -100%;">
             <div class="table_building_counter" id="deck_grimoire_counter"></div>
         </div>
     `;
@@ -769,8 +846,7 @@ export class Game {
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const towerHTML = `
-        <div class="card_item building_cards" 
-             style="background-position: -1100% -500%;" title="Clock Tower">
+        <div class="card_item building_cards" style="background-position: -1100% -500%;">
         </div>
     `;
 
@@ -863,77 +939,94 @@ export class Game {
 
       const posX = -(i - 1) * 100; // carte 1 -> 0%, carte 2 -> -100%, etc.
       cardDiv.style.backgroundPosition = `${posX}% 0%`;
+
+      const cardDivBlank = document.getElementById(`table_building_card_${i}_blank`);
+      if (!cardDivBlank) continue;
+
+      cardDivBlank.style.backgroundPosition = `${posX}% 0%`;
     }
   }
 
   setupHouses() {
     const playersArea = document.getElementById("players_area");
-    const players = Object.values(this.gamedatas.players);
-    const playerCount = players.length;
+    const players = Object.values(this.gamedatas.players_ordered);
 
-    // indices de sprites mélangés
     const spriteIndices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
-    const assignedSprites = spriteIndices.slice(0, playerCount);
 
     players.forEach((player, idx) => {
-      const houseIndex = assignedSprites[idx];
+      const houseIndex = spriteIndices[idx];
 
-      // Création du HTML du joueur
-      const playerHTML = `
-      <div class="player_board" id="player_board_${player.id}" data-player-id="${player.id}">
+      // création du board
+      playersArea.insertAdjacentHTML(
+        "beforeend",
+        `
+      <div class="player_board" id="player_board_${player.id}">
         <div class="building_columns">
-          ${[...Array(12)].map((_, i) => `<div class="building_stack" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
+          ${[...Array(6)].map((_, i) => `<div class="building_stack" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
         </div>
-        <div class="house_slot" id="player_${player.id}_house">
+        <div class="house_slot">
           <div class="house_cards" id="player_${player.id}_house_card"></div>
         </div>
-      </div>
-    `;
-      playersArea.insertAdjacentHTML("beforeend", playerHTML);
+      </div>`,
+      );
 
-      // Affecter le background-position pour la maison
+      // maison
       const card = document.getElementById(`player_${player.id}_house_card`);
       card.style.backgroundPosition = `-${houseIndex}00% 0%`;
 
-      // Ajouter placeholders
-      const boardSlot = document.getElementById(`player_board_${player.id}`);
+      // placeholders
+      /*const boardSlot = document.getElementById(`player_board_${player.id}`);
       for (let i = 0; i < 3; i++) {
         boardSlot.insertAdjacentHTML("afterBegin", `<div class="house_empty_slot" id="player_${player.id}_house_placeholder_${i}"></div>`);
+      }*/
+
+      // containers vides pour toutes les stacks
+      for (let stackIndex = 1; stackIndex <= 6; stackIndex++) {
+        const stack = document.getElementById(`player_${player.id}_stack_${stackIndex}`);
+        const maxCards = 5;
+        let html = "";
+
+        for (let i = 0; i < maxCards; i++) {
+          html += `
+          <div class="building_card_container"
+               id="player_${player.id}_stack_${stackIndex}_container_${i + 1}"
+               style="
+                 bottom: calc(${i} * var(--card_h) * 0.2);
+                 z-index: ${6 - i};
+               ">
+          </div>`;
+        }
+
+        stack.insertAdjacentHTML("beforeend", html);
       }
 
-      // Exemple pour stack 1
-      /*  const stack1 = document.getElementById(`player_${player.id}_stack_1`);
-      let html = "";
+      // ================= EXEMPLE TEST =================
+      // stack 1 : 3 cartes
+      const stack1 = document.getElementById(`player_${player.id}_stack_1`);
+      stack1.classList.remove("empty");
+      const bgPos = 0;
       for (let i = 0; i < 3; i++) {
-        html += `
-          <div id="player_${player.id}_stack_1_card_${i + 1}"
-            class="building_cards"
-            style="
-              background-position:0% 0%;
-              bottom: calc(${i} * var(--card_h) * 0.2);
-              z-index: ${6 - i};
-            ">
-          </div>
-        `;
+        const container = document.getElementById(`player_${player.id}_stack_1_container_${i + 1}`);
+        container.insertAdjacentHTML(
+          "beforeend",
+          `<div id="player_${player.id}_stack_1_card_${i + 1}"
+              class="building_cards"
+              style="background-position:${bgPos}% 0%">
+         </div>`,
+        );
       }
-      stack1.insertAdjacentHTML("beforeend", html);*/
 
-      // Exemple pour stack 5
-      /*  const stack5 = document.getElementById(`player_${player.id}_stack_5`);
-      html = "";
-      for (let i = 0; i < 1; i++) {
-        html += `
-          <div id="player_${player.id}_stack_5_card_${i + 1}"
+      // stack 5 : 1 carte
+      const stack5 = document.getElementById(`player_${player.id}_stack_5`);
+      stack5.classList.remove("empty");
+      const container5 = document.getElementById(`player_${player.id}_stack_5_container_1`);
+      container5.insertAdjacentHTML(
+        "beforeend",
+        `<div id="player_${player.id}_stack_5_card_1"
             class="building_cards"
-            style="
-              background-position:-400% 0%;
-              bottom: calc(${i} * var(--card_h) * 0.2);
-              z-index: ${6 - i};
-            ">
-          </div>
-        `;
-      }
-      stack5.insertAdjacentHTML("beforeend", html);*/
+            style="background-position:-400% 0%">
+       </div>`,
+      );
     });
   }
 

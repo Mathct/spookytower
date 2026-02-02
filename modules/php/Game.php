@@ -1,4 +1,5 @@
 <?php
+
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
@@ -14,6 +15,7 @@
  *
  * In this PHP file, you are going to defines the rules of the game.
  */
+
 declare(strict_types=1);
 
 namespace Bga\Games\spookytower;
@@ -42,7 +44,7 @@ class Game extends \Bga\GameFramework\Table
     public TableCounter $deck_12;
     public TableCounter $deck_park;
     public TableCounter $deck_grimoire;
-    
+
     // counters players
     public PlayerCounter $player_ghosts;
     public PlayerCounter $player_pets;
@@ -116,7 +118,7 @@ class Game extends \Bga\GameFramework\Table
         $this->building_DB = $this->deckFactory->createDeck("building");
         $this->grimoire_DB = $this->deckFactory->createDeck("grimoire");
 
-        
+
         /* example of notification decorator.
         // automatically complete notification args when needed
         $this->notify->addDecorator(function(string $message, array $args) {
@@ -213,40 +215,32 @@ class Game extends \Bga\GameFramework\Table
 
         //INIT DES DECKS
         //Building
-        for($i = 1; $i <= 12; $i++)
-        {
+        for ($i = 1; $i <= 12; $i++) {
             $building = [];
 
-            if($i != 12)
-            {
-                for($j = 1; $j <= 5; $j++)
-                {
+            if ($i != 12) {
+                for ($j = 1; $j <= 5; $j++) {
                     $building[] = ['type' => $i, 'type_arg' => $j, 'nbr' => 1];
                 }
 
-                $this->building_DB->createCards($building, 'deck'.$i);
-            }
-            else
-            {
-                for($j = 1; $j <= 3; $j++)
-                {
+                $this->building_DB->createCards($building, 'deck' . $i);
+            } else {
+                for ($j = 1; $j <= 3; $j++) {
                     $building[] = ['type' => $i, 'type_arg' => $j, 'nbr' => 1];
                 }
 
-                $this->building_DB->createCards($building, 'deck'.$i);
-
+                $this->building_DB->createCards($building, 'deck' . $i);
             }
         }
 
-        for($i = 1; $i <= 12; $i++)
-        {
-            $this->building_DB->shuffle('deck'.$i);
+        for ($i = 1; $i <= 12; $i++) {
+            $this->building_DB->shuffle('deck' . $i);
         }
 
         //Grimoire
         $grimoire = [];
         $grimoire[] = ['type' => 1, 'type_arg' => 0, 'nbr' => 1];
-        $grimoire[] = ['type' => 2, 'type_arg' => 0, 'nbr' => 2];   
+        $grimoire[] = ['type' => 2, 'type_arg' => 0, 'nbr' => 2];
         $grimoire[] = ['type' => 3, 'type_arg' => 0, 'nbr' => 1];
         $grimoire[] = ['type' => 4, 'type_arg' => 0, 'nbr' => 1];
         $grimoire[] = ['type' => 5, 'type_arg' => 0, 'nbr' => 1];
@@ -323,7 +317,7 @@ class Game extends \Bga\GameFramework\Table
         return 0;
     }
 
-    
+
 
     /////////////////////////////////////////////////////////////////////////////////  
     //               _            _ _ _____        _            
@@ -357,9 +351,22 @@ class Game extends \Bga\GameFramework\Table
             "SELECT `player_id` `id`, `player_score` `score` FROM `player`"
         );
 
+        $sql = "SELECT player_no no FROM player WHERE player_id = $current_player_id";
+        $current_player_no = $this->getUniqueValueFromDb($sql);
+        if (is_null($current_player_no)) {
+            $current_player_no = 0;
+        }
+
+        // ordered players list
+        $sql = "SELECT player_no no, player_id id, player_score score, player_name name, player_color color 
+                FROM player
+                ORDER BY (player_no >= $current_player_no) DESC, player_no ASC";
+        $ordered_list = $this->getObjectListFromDB($sql);
+        $result['players_ordered'] = $ordered_list;
+
         foreach ($result["players"] as $player_id => $player) {
 
-            $result["house_cards"][$player_id] = game::$instance->getObjectListFromDB( "SELECT card_type type, position position FROM building WHERE card_location ='house' AND card_location_arg ='{$player_id}'" );
+            $result["house_cards"][$player_id] = game::$instance->getObjectListFromDB("SELECT card_type type, position position FROM building WHERE card_location ='house' AND card_location_arg ='{$player_id}'");
             $result["reroll"][$player_id] = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id={$player_id}");
         }
 
@@ -391,7 +398,7 @@ class Game extends \Bga\GameFramework\Table
         $pet2 = game::$instance->getUniqueValueFromDB("SELECT pet2 FROM other WHERE id=1");
         $pet3 = game::$instance->getUniqueValueFromDB("SELECT pet3 FROM other WHERE id=1");
         $result["pets"] = [$pet1, $pet2, $pet3];
-        
+
         //clock
         $result["clock"] = game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1");
 
@@ -407,7 +414,7 @@ class Game extends \Bga\GameFramework\Table
         return $result;
     }
 
-    
+
     /////////////////////////////////////////////////////////////////////////////////  
     //     _    _ _   _ _ _ _            __                  _   _                 
     //    | |  | | | (_) (_) |          / _|                | | (_)                
@@ -592,14 +599,16 @@ class Game extends \Bga\GameFramework\Table
      * Here, jump to a state you want to test (by default, jump to next player state)
      * You can trigger it on Studio using the Debug button on the right of the top bar.
      */
-    public function debug_goToState(int $state = 3) {
+    public function debug_goToState(int $state = 3)
+    {
         $this->gamestate->jumpToState($state);
     }
 
     /**
      * Another example of debug function, to easily test the zombie code.
      */
-    public function debug_playOneMove() {
+    public function debug_playOneMove()
+    {
         $this->debug->playUntil(fn(int $count) => $count == 1);
     }
 
