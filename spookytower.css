@@ -254,7 +254,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .table_clock_slot {
   width: var(--card_w);
   height: var(--card_h);
-  border: 1px solid #444;
+  /*border: 1px solid #444;*/
   background: #ddd;
   position: relative; /* pour les cartes superposées */
 }
@@ -263,6 +263,32 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   position: absolute; /* les cartes sont superposées */
   top: 0;
   left: 0;
+}
+
+.clock_tower {
+  width: calc(0.8 *var(--card_w));
+  height: calc(0.8 *var(--card_w));
+  position: relative;
+  top: 26%;
+  left: 10%;
+  /*background-color: rgba(128, 0, 128, 0.7); /* violet avec alpha 30% */
+}
+
+#clock_hand_sprite {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+   /* centré */
+  transform-origin: center center;               /* pivot pour rotation */
+
+  background-image: url('img/ST_clock_hand.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: contain;                       /* l’image s’adapte au div */
+
+  transition: transform 0.6s ease-in-out;
 }
 
 /* ================= CENTER GRID 5x3 ================= */
@@ -277,7 +303,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .table_building_slot {
   width: var(--card_w);
   height: var(--card_h);
-  border: 1px solid #333;
+  /*border: 1px solid #333;*/
   position: relative; /* pour les cartes superposées */
 }
 
@@ -297,7 +323,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .table_building_slot {
   width: var(--card_w);
   height: var(--card_h);
-  border: 1px dashed #666;
+  /*border: 1px dashed #666;*/
   position: relative;
   overflow: visible; /* pour que les animations puissent dépasser si besoin */
 }
@@ -349,6 +375,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 #players_area {
   display: flex;
   flex-direction: column;
+  align-self: flex-end; /* pour aligner seuelemtn celui-ci à droite */
+  margin: 0 calc(var(--card_gap) * 2);
   gap: calc(var(--card_gap) * 2);
 }
 
@@ -384,9 +412,9 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 /* container vide : invisible */
-/*.building_card_container:empty {
+.building_card_container:empty {
   display: none;
-}*/
+}
 
 /* ---------- CARTES ---------- */
 .building_cards {
@@ -400,7 +428,6 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .house_slot {
   width: calc(var(--card_w)/312*316);
   height: calc(var(--card_h)/350*500);
-  border: 2px solid #000;
 }
 
 

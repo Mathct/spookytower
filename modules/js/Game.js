@@ -386,103 +386,6 @@ export class Game {
     this.connections = [];
   }
 
-  async onSelectBuilding(elt_id) {
-    console.log("=== onSelectBuilding START ===");
-    console.log("Elt ID:", elt_id);
-
-    const sourceCard = document.getElementById(elt_id);
-    if (!sourceCard) return;
-
-    // Ex: table_building_card_3 → 3
-    const buildingNumber = parseInt(elt_id.split("_").pop(), 10);
-
-    // Joueur actif
-    const playerId = this.bga.players.getActivePlayerId();
-
-    // Stack cible
-    const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
-    if (!stack) {
-      console.error("Stack not found", playerId, buildingNumber);
-      return;
-    }
-
-    // Counter
-    const counter = this.tableBuildingCounters[buildingNumber];
-    if (!counter) {
-      console.error("Counter not found for building", buildingNumber);
-      return;
-    }
-
-    // Appeler la fonction de déplacement
-    await this.moveBuildingToStack(sourceCard, stack, counter);
-    console.log("=== onSelectBuilding END ===");
-  }
-
-  async moveBuildingToStack(card, stackOrDeck) {
-    if (!card || !stackOrDeck) return;
-
-    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
-    const playerId = this.bga.players.getActivePlayerId();
-    const counter = this.tableBuildingCounters[buildingNumber];
-
-    // --- créer la carte volante ---
-    const flyingCard = card.cloneNode(true);
-    flyingCard.style.width = "100%";
-    flyingCard.style.height = "100%";
-    flyingCard.style.position = "absolute"; // essentiel pour slideAndAttach
-
-    // ajouter au DOM à côté de la carte source
-    card.parentElement.appendChild(flyingCard);
-
-    // --- déterminer la cible ---
-    let targetContainer = null;
-
-    // si c'est une stack avec containers
-    if (stackOrDeck.classList.contains("building_stack")) {
-      const containers = stackOrDeck.querySelectorAll(".building_card_container");
-      for (const container of containers) {
-        if (container.children.length === 0) {
-          targetContainer = container;
-          break;
-        }
-      }
-
-      if (!targetContainer) {
-        console.error("Aucun container disponible dans la stack");
-        return;
-      }
-
-      // rendre visible la stack si elle était cachée
-      stackOrDeck.classList.remove("empty");
-    } else {
-      // si c'est un deck ou la maison, la cible est le slot lui-même
-      targetContainer = stackOrDeck;
-    }
-
-    console.log("Animation de", card.id, "vers", targetContainer.id);
-
-    // --- lancer l'animation ---
-    await this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600, easing: "ease-in-out" }, targetContainer.lastElementChild ?? null);
-
-    // --- après animation : mettre la carte définitivement ---
-    if (targetContainer.classList.contains("building_card_container")) {
-      flyingCard.id = targetContainer.id.replace("container", "card");
-    } else {
-      // maison ou deck : conserver un ID unique
-      flyingCard.id = `${targetContainer.id}_card_${buildingNumber}`;
-    }
-
-    targetContainer.appendChild(flyingCard);
-
-    // --- décrémenter le compteur si nécessaire ---
-    if (counter) {
-      counter.incValue(-1);
-    }
-
-    // supprimer la carte source si nécessaire
-    if (card.parentElement) card.remove();
-  }
-
   onSelectToken(token_id) {
     console.log("onSelectToken", token_id);
 
@@ -618,60 +521,7 @@ export class Game {
 
           `,
       );
-
-      const ghost_counter = new ebg.counter();
-      ghost_counter.create(`ghost_counter_${player.id}`, {
-        value: player.ghost,
-        playerCounter: "player_ghosts",
-        playerId: player.id,
-      });
-
-      const pet_counter = new ebg.counter();
-      pet_counter.create(`pet_counter_${player.id}`, {
-        value: player.pet,
-        playerCounter: "player_pets",
-        playerId: player.id,
-      });
-
-      const artefact_counter = new ebg.counter();
-      artefact_counter.create(`artefact_counter_${player.id}`, {
-        value: player.artefact,
-        playerCounter: "player_artefacts",
-        playerId: player.id,
-      });
-
-      const clue_counter = new ebg.counter();
-      clue_counter.create(`clue_counter_${player.id}`, {
-        value: player.clue,
-        playerCounter: "player_clues",
-        playerId: player.id,
-      });
-
-      const grimoire_counter = new ebg.counter();
-      grimoire_counter.create(`grimoire_counter_${player.id}`, {
-        value: player.grimoire,
-        playerCounter: "player_grimoires",
-        playerId: player.id,
-      });
-
-      const clock_counter = new ebg.counter();
-      clock_counter.create(`clock_counter_${player.id}`, {
-        value: player.clock,
-        playerCounter: "player_clocks",
-        playerId: player.id,
-      });
     });
-
-    const current_player_id = this.bga.players.getCurrentPlayerId();
-
-    if (current_player_id) {
-      const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
-
-      if (rerollIcon) {
-        rerollIcon.classList.add("clickable");
-        rerollIcon.addEventListener("click", () => this.onFlipReroll());
-      }
-    }
   }
 
   isMobileDevice() {
@@ -759,12 +609,12 @@ export class Game {
     if (!deckParkSlot) return;
 
     // Déterminer la position dans le sprite en fonction de nb_parks
-    const nb_parks = this.nb_parks || 3; // exemple, à adapter selon ton état
+    const nb_parks = this.gamedatas.deck_park; // exemple, à adapter selon ton état
     let col;
 
-    if (nb_parks >= 5) col = 7;
+    if (nb_parks >= 5) col = 5;
     else if (nb_parks >= 2 && nb_parks <= 4) col = 6;
-    else col = 5;
+    else col = 7;
 
     const posX = -(col * 100); // chaque colonne = -100%
 
@@ -777,9 +627,6 @@ export class Game {
     `;
 
     deckParkSlot.insertAdjacentHTML("beforeend", parkHTML);
-
-    deckParkSlot.classList.add("clickable");
-    deckParkSlot.addEventListener("click", () => this.onFlipPark(nb_parks));
 
     // -------------------- Deck Grimoire --------------------
     const deckGrimoireSlot = document.getElementById("deck_grimoire");
@@ -794,9 +641,6 @@ export class Game {
     `;
 
     deckGrimoireSlot.insertAdjacentHTML("beforeend", cardHTML);
-
-    deckGrimoireSlot.classList.add("clickable");
-    deckGrimoireSlot.addEventListener("click", () => this.onFlipGrimoire());
 
     // -------------------- Dice Track --------------------
     const diceTrackSlot = document.getElementById("dice_track");
@@ -844,9 +688,14 @@ export class Game {
     const clockTowerSlot = document.getElementById("clock_tower");
     if (!clockTowerSlot) return;
 
+    const clockHourRot = 2 * 60;
+
     // ---- Injecter la carte + compteur à l'intérieur ----
     const towerHTML = `
         <div class="card_item building_cards" style="background-position: -1100% -500%;">
+          <div class="clock_tower" id="clock_tower_id">
+            <div class="clock_hand" id="clock_hand_sprite" style="transform: translate(-50%, -50%) rotate(${clockHourRot}deg);"></div>
+          </div>
         </div>
     `;
 
@@ -962,7 +811,7 @@ export class Game {
         `
       <div class="player_board" id="player_board_${player.id}">
         <div class="building_columns">
-          ${[...Array(6)].map((_, i) => `<div class="building_stack" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
+          ${[...Array(12)].map((_, i) => `<div class="building_stack empty" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
         </div>
         <div class="house_slot">
           <div class="house_cards" id="player_${player.id}_house_card"></div>
@@ -981,7 +830,7 @@ export class Game {
       }*/
 
       // containers vides pour toutes les stacks
-      for (let stackIndex = 1; stackIndex <= 6; stackIndex++) {
+      for (let stackIndex = 1; stackIndex <= 12; stackIndex++) {
         const stack = document.getElementById(`player_${player.id}_stack_${stackIndex}`);
         const maxCards = 5;
         let html = "";
@@ -1000,37 +849,91 @@ export class Game {
         stack.insertAdjacentHTML("beforeend", html);
       }
 
-      // ================= EXEMPLE TEST =================
-      // stack 1 : 3 cartes
-      const stack1 = document.getElementById(`player_${player.id}_stack_1`);
-      stack1.classList.remove("empty");
-      const bgPos = 0;
-      for (let i = 0; i < 3; i++) {
-        const container = document.getElementById(`player_${player.id}_stack_1_container_${i + 1}`);
-        container.insertAdjacentHTML(
-          "beforeend",
-          `<div id="player_${player.id}_stack_1_card_${i + 1}"
-              class="building_cards"
-              style="background-position:${bgPos}% 0%">
-         </div>`,
-        );
-      }
+      // ================= GÉNÉRATION DES CARTES HOUSE =================
+      const houseCards = this.gamedatas.house_cards[player.id] ?? {};
 
-      // stack 5 : 1 carte
-      const stack5 = document.getElementById(`player_${player.id}_stack_5`);
-      stack5.classList.remove("empty");
-      const container5 = document.getElementById(`player_${player.id}_stack_5_container_1`);
-      container5.insertAdjacentHTML(
-        "beforeend",
-        `<div id="player_${player.id}_stack_5_card_1"
-            class="building_cards"
-            style="background-position:-400% 0%">
-       </div>`,
-      );
+      // regroupement par stack
+      const cardsByStack = {};
+      Object.values(houseCards).forEach((card) => {
+        const stackIndex = Number(card.type);
+        if (!cardsByStack[stackIndex]) {
+          cardsByStack[stackIndex] = [];
+        }
+        cardsByStack[stackIndex].push(card);
+      });
+
+      // insertion des cartes
+      Object.entries(cardsByStack).forEach(([stackIndex, cards]) => {
+        const stack = document.getElementById(`player_${player.id}_stack_${stackIndex}`);
+        stack.classList.remove("empty");
+
+        cards.forEach((card, i) => {
+          const container = document.getElementById(`player_${player.id}_stack_${stackIndex}_container_${i + 1}`);
+
+          if (!container) return;
+
+          const bgPos = (Number(card.type) - 1) * 100;
+
+          container.insertAdjacentHTML(
+            "beforeend",
+            `
+      <div id="player_${player.id}_stack_${stackIndex}_card_${i + 1}"
+           class="building_cards"
+           style="background-position: -${bgPos}% 0%">
+      </div>
+      `,
+          );
+        });
+      });
     });
   }
 
   setupCounters() {
+    // Player Board Counters
+    Object.values(this.gamedatas.players).forEach((player) => {
+      const ghost_counter = new ebg.counter();
+      ghost_counter.create(`ghost_counter_${player.id}`, {
+        value: player.ghost,
+        playerCounter: "player_ghosts",
+        playerId: player.id,
+      });
+
+      const pet_counter = new ebg.counter();
+      pet_counter.create(`pet_counter_${player.id}`, {
+        value: player.pet,
+        playerCounter: "player_pets",
+        playerId: player.id,
+      });
+
+      const artefact_counter = new ebg.counter();
+      artefact_counter.create(`artefact_counter_${player.id}`, {
+        value: player.artefact,
+        playerCounter: "player_artefacts",
+        playerId: player.id,
+      });
+
+      const clue_counter = new ebg.counter();
+      clue_counter.create(`clue_counter_${player.id}`, {
+        value: player.clue,
+        playerCounter: "player_clues",
+        playerId: player.id,
+      });
+
+      const grimoire_counter = new ebg.counter();
+      grimoire_counter.create(`grimoire_counter_${player.id}`, {
+        value: player.grimoire,
+        playerCounter: "player_grimoires",
+        playerId: player.id,
+      });
+
+      const clock_counter = new ebg.counter();
+      clock_counter.create(`clock_counter_${player.id}`, {
+        value: player.clock,
+        playerCounter: "player_clocks",
+        playerId: player.id,
+      });
+    });
+
     // --- Counters top row ---
     this.topRowCounters = {};
 
@@ -1053,7 +956,6 @@ export class Game {
 
     for (let i = 1; i <= 12; i++) {
       const counter = new ebg.counter();
-      console.log("ededk", this.gamedatas[`deck_${i}`]);
       // ID cohérent avec les cartes table
       // table_building_card_1 → table_building_counter_1
       counter.create(`table_building_counter_${i}`, {
@@ -1194,8 +1096,7 @@ export class Game {
     document.documentElement.style.setProperty("--st_scale", this.zoom_factor);
   }
 
-  async onFlipReroll() {
-    const playerId = this.bga.players.getCurrentPlayerId();
+  async animFlipReroll(playerId) {
     const icon = document.getElementById(`icon_reroll_${playerId}`);
     if (!icon) return;
 
@@ -1230,7 +1131,7 @@ export class Game {
     delete icon.dataset.flipping;
   }
 
-  async onFlipPark(nb_parks) {
+  async animFlipPark(nb_parks) {
     const park = document.querySelector("#deck_park .parkgrim_cards");
     if (!park) return;
 
@@ -1274,11 +1175,7 @@ export class Game {
     delete park.dataset.flipping;
   }
 
-  async onFlipGrimoire() {
-    this.flipGrimoire();
-  }
-
-  async flipGrimoire() {
+  async animFlipGrimoire() {
     const grimoire = document.querySelector("#deck_grimoire .parkgrim_cards");
     if (!grimoire) return;
 
@@ -1314,6 +1211,201 @@ export class Game {
     grimoire.style.transition = "";
     grimoire.style.transform = "";
     delete grimoire.dataset.flipping;
+  }
+
+  async animFlipStack(no_stack) {
+    // Récupère toutes les cartes du stack
+    const stack = document.querySelector(`#player_${no_stack}_stack_1`); // adapte le stackIndex si nécessaire
+    if (!stack) return;
+
+    const cards = Array.from(stack.querySelectorAll(".building_cards"));
+    if (cards.length === 0) return;
+
+    const half = 200; // demi-flip en ms
+    const versoIndex = 1; // numéro de l'image verso dans le sprite, à adapter
+    const rectoIndex = 0; // numéro de l'image recto
+
+    // Empêcher les flips simultanés
+    if (stack.dataset.flipping === "true") return;
+    stack.dataset.flipping = "true";
+
+    // Parcours toutes les cartes et anime le flip
+    for (const card of cards) {
+      if (!card.dataset.face) card.dataset.face = "recto";
+
+      // Premier demi-flip
+      card.style.transition = `transform ${half}ms ease-in-out`;
+      card.style.transform = "rotateY(90deg)";
+
+      await new Promise((resolve) => setTimeout(resolve, half));
+
+      // Toggle face
+      if (card.dataset.face === "recto") {
+        card.dataset.face = "verso";
+        card.style.backgroundPosition = `-${versoIndex}00% 0%`;
+      } else {
+        card.dataset.face = "recto";
+        card.style.backgroundPosition = `-${rectoIndex}00% 0%`;
+      }
+
+      // Deuxième demi-flip
+      card.style.transform = "rotateY(0deg)";
+      await new Promise((resolve) => setTimeout(resolve, half));
+
+      // Reset
+      card.style.transition = "";
+      card.style.transform = "";
+    }
+
+    delete stack.dataset.flipping;
+  }
+
+  async animClockTower() {
+    // on fait tourner l'aiguille de 60°
+  }
+
+  async animTakeCard(no_card) {
+    const elt_id = `table_building_card_${no_card}`;
+    console.log("=== onSelectBuilding START ===");
+    console.log("Elt ID:", elt_id);
+
+    const sourceCard = document.getElementById(elt_id);
+
+    console.log("sourceCard", sourceCard);
+    if (!sourceCard) return;
+
+    // Ex: table_building_card_3 → 3
+    const buildingNumber = parseInt(elt_id.split("_").pop(), 10);
+
+    // Joueur actif
+    const playerId = this.bga.players.getActivePlayerId();
+
+    // Stack cible
+    const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
+    if (!stack) {
+      console.error("Stack not found", playerId, buildingNumber);
+      return;
+    }
+
+    // Counter
+    const counter = this.tableBuildingCounters[buildingNumber];
+    if (!counter) {
+      console.error("Counter not found for building", buildingNumber);
+      return;
+    }
+
+    // Appeler la fonction de déplacement
+    await this.moveBuildingToStack(sourceCard, stack, counter);
+    console.log("=== onSelectBuilding END ===");
+  }
+
+  async moveBuildingToStack(card, stackOrDeck) {
+    if (!card || !stackOrDeck) return;
+
+    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
+
+    // --- créer la carte volante au même endroit que la source ---
+    const flyingCard = card.cloneNode(true);
+    flyingCard.style.width = "100%";
+    flyingCard.style.height = "100%";
+    flyingCard.style.position = "absolute";
+
+    // ajouter au même parent pour que le point de départ soit correct
+    card.parentElement.appendChild(flyingCard);
+
+    // --- récupérer les containers du stack ---
+    const containers = stackOrDeck.querySelectorAll(".building_card_container");
+    if (containers.length === 0) {
+      console.error("Pas de containers dans le stack");
+      return;
+    }
+
+    // --- cartes existantes dans le stack ---
+    const existingCards = [];
+    containers.forEach((container) => {
+      if (container.children.length > 0) existingCards.push(container.children[0]);
+    });
+
+    const animations = [];
+
+    // cartes existantes : décalage vers le haut
+    existingCards.forEach((c, i) => {
+      const nextContainer = containers[i + 1];
+      if (!nextContainer) return;
+
+      animations.push(() =>
+        this.animationManager.slideAndAttach(c, nextContainer, { duration: 600, easing: "ease-in-out" }, nextContainer.lastElementChild ?? null).then(() => {
+          c.id = nextContainer.id.replace("container", "card");
+          c.style.zIndex = 6 - (i + 1);
+          nextContainer.appendChild(c);
+        }),
+      );
+    });
+
+    // nouvelle carte : arrive en bas (container 1)
+    const targetContainer = containers[0];
+    animations.push(() =>
+      this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600, easing: "ease-in-out" }, null).then(() => {
+        flyingCard.id = targetContainer.id.replace("container", "card");
+        flyingCard.style.zIndex = 6 - 0;
+        targetContainer.appendChild(flyingCard);
+      }),
+    );
+
+    // --- lancer toutes les animations en parallèle ---
+    await this.animationManager.playParallel(animations);
+
+    // --- rendre visible la stack si elle était cachée ---
+    stackOrDeck.classList.remove("empty");
+  }
+
+  async moveBuildingToStackOld(card, stackOrDeck) {
+    if (!card || !stackOrDeck) return;
+
+    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
+
+    // --- créer la carte volante ---
+    const flyingCard = card.cloneNode(true);
+    flyingCard.style.width = "100%";
+    flyingCard.style.height = "100%";
+    flyingCard.style.position = "absolute"; // essentiel pour slideAndAttach
+
+    // ajouter au DOM à côté de la carte source
+    card.parentElement.appendChild(flyingCard);
+
+    // --- déterminer la cible ---
+    let targetContainer = null;
+
+    const containers = stackOrDeck.querySelectorAll(".building_card_container");
+    for (const container of containers) {
+      if (container.children.length === 0) {
+        targetContainer = container;
+        break;
+      }
+    }
+
+    if (!targetContainer) {
+      console.error("Aucun container disponible dans la stack");
+      return;
+    }
+
+    // rendre visible la stack si elle était cachée
+    stackOrDeck.classList.remove("empty");
+
+    console.log("Animation de", card.id, "vers", targetContainer.id);
+
+    // --- lancer l'animation ---
+    await this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 2600, easing: "ease-in-out" }, targetContainer.lastElementChild ?? null);
+
+    // --- après animation : mettre la carte définitivement ---
+    if (targetContainer.classList.contains("building_card_container")) {
+      flyingCard.id = targetContainer.id.replace("container", "card");
+    } else {
+      // maison ou deck : conserver un ID unique
+      flyingCard.id = `${targetContainer.id}_card_${buildingNumber}`;
+    }
+
+    targetContainer.appendChild(flyingCard);
   }
 
   ///////////////////////////////////////////////////
@@ -1363,14 +1455,24 @@ export class Game {
     // attention car les cartes se positionnent sous celles qui sont en bas
     // ou sinon, on déplace vers le haut celles qui sont présentes et on place la dernière toujours en bas
 
+    this.animTakeCard(args.no_card);
+
     // cartes 1 2 3 4 on flipe le reroll si nécessaire
+    // TODO BESOIN de l'info sur le reroll
+    if (args.no_card < 5) {
+      // this.animFlipReroll(args.player_id);
+    }
     // carte 9 on gagne un clock, activé aussitôt
+    if (args.no_card == 9) {
+      this.animClockTower();
+    }
   }
 
   async notif_flipCards(args) {
     // on retourne les cartes dans une colonne
     // on récolte
     console.log("notif_flipCards", args);
+    this.animFlipStack();
 
     // cartes 1
     //  bonus flip9+   : on déplace dans le conteneur si on a des cartes 9+
@@ -1432,6 +1534,8 @@ export class Game {
     // on envoie vers le panel joueur et on incrémente
     // on décrémente les torches et le compteur
     console.log("notif_goToThePark", args);
+
+    this.animFlipPark();
   }
 
   async notif_drawGrimoire(args) {
@@ -1439,7 +1543,7 @@ export class Game {
     // on décrémente lecompteur
     console.log("notif_drawGrimoire", args);
 
-    this.flipGrimoire();
+    this.animFlipGrimoire();
 
     // un fantôme
     // une torche
@@ -1460,6 +1564,8 @@ export class Game {
     // pet      : on déplace dans le conteneur si 0 sur la table et 2 chez 2 joueurs différents
     //            sur la table, on envoie vers le panel joueur et on incrémente pet
     // reroll   : on flipe le reroll si nécessaire
+
+    this.animClockTower();
   }
 
   async notif_stealPet(args) {
@@ -1470,10 +1576,13 @@ export class Game {
 
   async notif_flipReroll(args) {
     console.log("notif_flipReroll", args);
+
+    this.animFlipReroll(args.player_id);
   }
 
   async notif_rollDice(args) {
     console.log("notif_rollDice", args);
+
     this.forcedFaces = args.roll;
     this.rollDiceMultiple();
   }
