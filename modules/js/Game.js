@@ -113,6 +113,17 @@ class NormalTurn {
             );
             break;
 
+          case "turn_clock_btn":
+          this.bga.statusBar.addActionButton(
+            _("Turn clock"),
+            () =>
+              this.bga.actions.performAction("actClock", {
+                arg1: key,
+              }),
+            { color: "primary" },
+          );
+          break;
+
           case "roll_dice_btn":
             this.bga.statusBar.addActionButton(
               _("Roll dice"),
@@ -136,8 +147,6 @@ class NormalTurn {
             break;
 
           case "take_card_btn":
-            console.log("key", key);
-            console.log("token", this.game.selected_token);
             this.bga.statusBar.addActionButton(
               _("Take Card"),
               () =>
@@ -145,9 +154,14 @@ class NormalTurn {
                   arg1: key,
                   arg2: this.game.selected_token,
                 }),
-              { color: "primary" },
+              {
+                //id: 'take_card_btn',
+                //disabled: true,
+                color: "primary" 
+              },
             );
             break;
+          
           case "flip_cards_btn":
             this.bga.statusBar.addActionButton(
               _("Flip Cards"),
@@ -1466,6 +1480,8 @@ export class Game {
     if (args.no_card == 9) {
       this.animClockTower();
     }
+
+    this.selected_token = "";
   }
 
   async notif_flipCards(args) {
@@ -1527,6 +1543,8 @@ export class Game {
 
     // cartes 12
     //  trois fantômes      : on envoie vers le panel joueur et on incrémente
+
+    this.selected_token = "";
   }
 
   async notif_goToThePark(args) {
