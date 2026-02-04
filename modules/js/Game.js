@@ -114,15 +114,15 @@ class NormalTurn {
             break;
 
           case "turn_clock_btn":
-          this.bga.statusBar.addActionButton(
-            _("Turn clock"),
-            () =>
-              this.bga.actions.performAction("actClock", {
-                arg1: key,
-              }),
-            { color: "primary" },
-          );
-          break;
+            this.bga.statusBar.addActionButton(
+              _("Turn clock"),
+              () =>
+                this.bga.actions.performAction("actClock", {
+                  arg1: key,
+                }),
+              { color: "primary" },
+            );
+            break;
 
           case "roll_dice_btn":
             this.bga.statusBar.addActionButton(
@@ -155,13 +155,16 @@ class NormalTurn {
                   arg2: this.game.selected_token,
                 }),
               {
-                //id: 'take_card_btn',
-                //disabled: true,
-                color: "primary" 
+                color: "primary",
+                id: "take_card_btn",
               },
             );
+            console.log("token_sel", this.game.selected_token);
+            if (this.game.selected_token == "") {
+              this.game.safeClass("take_card_btn", "add", "disabled");
+            }
             break;
-          
+
           case "flip_cards_btn":
             this.bga.statusBar.addActionButton(
               _("Flip Cards"),
@@ -398,6 +401,7 @@ export class Game {
       }
     });
     this.connections = [];
+    this.selected_token = "";
   }
 
   onSelectToken(token_id) {
@@ -415,6 +419,7 @@ export class Game {
     if (this.selected_token === "") {
       this.safeClass(token_elt, "add", "selected");
       this.selected_token = token_id;
+      this.safeClass("take_card_btn", "remove", "disabled");
     }
     // Si on clique sur une autre case
     else {
@@ -428,6 +433,7 @@ export class Game {
         this.selected_token = token_id;
       } else {
         this.selected_token = "";
+        this.safeClass("take_card_btn", "add", "disabled");
       }
     }
   }
@@ -536,6 +542,29 @@ export class Game {
           `,
       );
     });
+
+    const current_player_id = this.bga.players.getCurrentPlayerId();
+
+    if (current_player_id) {
+      const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
+
+      if (rerollIcon) {
+        rerollIcon.classList.add("clickable");
+        rerollIcon.addEventListener("click", () => this.onFlipReroll());
+      }
+    }
+  }
+
+  async onFlipReroll() {
+    const riverElt = document.getElementById("river_id");
+    if (!riverElt) return;
+
+    riverElt.classList.toggle("closed");
+  }
+
+  async onFlipStack(stackId) {
+    console.log("flipStack", stackId);
+    this.animFlipStack(stackId);
   }
 
   isMobileDevice() {
@@ -592,7 +621,7 @@ export class Game {
                     <div class="table_track_slot" id="dice_track" title="Dice Track"></div>
                     <div class="table_clock_slot" id="clock_tower" title="Clock Tower"></div>
                 </div>
-
+                <div id="river_id" class="river_container"></div>
                 <!-- CENTER GRID 5x3 TABLE -->
                 <div id="table_center_area">
                     <div id="table_central_grid">
@@ -612,6 +641,7 @@ export class Game {
 
     // =================== PETS ET BUILDINGS ===================
     this.setupTopRow();
+    this.setupRiver();
     this.setupPets(); // injecte les cartes pets
     this.setupBuildings(); // injecte les cartes buildings + div compteur
     this.setupHouses();
@@ -706,8 +736,8 @@ export class Game {
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const towerHTML = `
-        <div class="card_item building_cards" style="background-position: -1100% -500%;">
-          <div class="clock_tower" id="clock_tower_id">
+        <div class="card_item">
+          <div class="clock_tower" id="clock_sprite">
             <div class="clock_hand" id="clock_hand_sprite" style="transform: translate(-50%, -50%) rotate(${clockHourRot}deg);"></div>
           </div>
         </div>
@@ -769,6 +799,19 @@ export class Game {
     });
   }
 
+  setupRiver() {
+    const river = document.getElementById("river_id");
+    if (!river) return;
+
+    const icons = ["ic_reroll_1", "ic_artefact", "ic_clue", "ic_grimoire", "ic_clock", "ic_pet", "ic_flip8", "ic_draw_any"];
+
+    river.innerHTML = ""; // reset si nécessaire
+
+    icons.forEach((ic) => {
+      river.insertAdjacentHTML("beforeend", `<div class="river_icon ${ic}"></div>`);
+    });
+  }
+
   setupPets() {
     // Ordre haut → bas, exemple : "213"
     const order = this.petsOrder || "312";
@@ -825,13 +868,23 @@ export class Game {
         `
       <div class="player_board" id="player_board_${player.id}">
         <div class="building_columns">
-          ${[...Array(12)].map((_, i) => `<div class="building_stack empty" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
+          ${[...Array(12)].map((_, i) => `<div class="building_stack empty clickable" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
         </div>
         <div class="house_slot">
           <div class="house_cards" id="player_${player.id}_house_card"></div>
         </div>
       </div>`,
       );
+
+      const playerBoard = document.getElementById(`player_board_${player.id}`);
+      const playerStacks = playerBoard.querySelectorAll(".building_stack");
+
+      console.log("playerstacks", playerStacks); // devrait afficher 12 nodes
+      // Ajoute le listener à chacun
+      playerStacks.forEach((stack) => {
+        console.log("stack", stack);
+        stack.addEventListener("click", () => this.onFlipStack(stack.id));
+      });
 
       // maison
       const card = document.getElementById(`player_${player.id}_house_card`);
@@ -1227,55 +1280,89 @@ export class Game {
     delete grimoire.dataset.flipping;
   }
 
-  async animFlipStack(no_stack) {
-    // Récupère toutes les cartes du stack
-    const stack = document.querySelector(`#player_${no_stack}_stack_1`); // adapte le stackIndex si nécessaire
+  async animFlipStack(stackId) {
+    console.log("animFlipStack");
+    const stack = document.getElementById(stackId);
     if (!stack) return;
 
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
     if (cards.length === 0) return;
 
     const half = 200; // demi-flip en ms
-    const versoIndex = 1; // numéro de l'image verso dans le sprite, à adapter
-    const rectoIndex = 0; // numéro de l'image recto
+    const versoPos = "-300% -300%"; // face verso test
 
     // Empêcher les flips simultanés
     if (stack.dataset.flipping === "true") return;
     stack.dataset.flipping = "true";
 
-    // Parcours toutes les cartes et anime le flip
-    for (const card of cards) {
+    // Initialise chaque carte
+    cards.forEach((card, index) => {
+      const container = card.parentElement;
+      if (!card.dataset.rectoPos) card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
       if (!card.dataset.face) card.dataset.face = "recto";
 
-      // Premier demi-flip
-      card.style.transition = `transform ${half}ms ease-in-out`;
-      card.style.transform = "rotateY(90deg)";
+      // Inverse le z-index du container
+      container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
+    });
 
-      await new Promise((resolve) => setTimeout(resolve, half));
+    // Lance tous les flips avec un petit décalage
+    await Promise.all(
+      cards.map(
+        (card, i) =>
+          new Promise((resolve) => {
+            setTimeout(async () => {
+              // Premier demi-flip
+              card.style.transition = `transform ${half}ms ease-in-out`;
+              card.style.transform = "rotateY(90deg)";
+              await new Promise((r) => setTimeout(r, half));
 
-      // Toggle face
-      if (card.dataset.face === "recto") {
-        card.dataset.face = "verso";
-        card.style.backgroundPosition = `-${versoIndex}00% 0%`;
-      } else {
-        card.dataset.face = "recto";
-        card.style.backgroundPosition = `-${rectoIndex}00% 0%`;
-      }
+              // Toggle face
+              if (card.dataset.face === "recto") {
+                card.dataset.face = "verso";
+                card.style.backgroundPosition = versoPos;
+              } else {
+                card.dataset.face = "recto";
+                card.style.backgroundPosition = card.dataset.rectoPos;
+              }
 
-      // Deuxième demi-flip
-      card.style.transform = "rotateY(0deg)";
-      await new Promise((resolve) => setTimeout(resolve, half));
+              // Deuxième demi-flip
+              card.style.transform = "rotateY(0deg)";
+              await new Promise((r) => setTimeout(r, half));
 
-      // Reset
-      card.style.transition = "";
-      card.style.transform = "";
-    }
+              // Reset transition
+              card.style.transition = "";
+              card.style.transform = "";
+
+              resolve();
+            }, i * 50); // décalage de 50ms entre chaque carte
+          }),
+      ),
+    );
 
     delete stack.dataset.flipping;
   }
 
   async animClockTower() {
     // on fait tourner l'aiguille de 60°
+    const hand = document.getElementById("clock_hand_sprite");
+    if (!hand) return;
+
+    // récupérer la position actuelle depuis le style transform
+    const currentTransform = hand.style.transform;
+    const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
+    let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.clock * 60;
+
+    // calculer la nouvelle position
+    let nextDeg = (currentDeg + 60) % 360; // +60° pour passer à l'heure suivante
+
+    // appliquer la rotation : la transition CSS fait l'animation
+    hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
+
+    // mettre à jour la valeur du jeu
+    this.gamedatas.clock = (this.gamedatas.clock + 1) % 6;
+
+    // optionnel : attendre la fin de la transition si tu veux faire quelque chose ensuite
+    await new Promise((resolve) => setTimeout(resolve, 600));
   }
 
   async animTakeCard(no_card) {
@@ -1480,8 +1567,6 @@ export class Game {
     if (args.no_card == 9) {
       this.animClockTower();
     }
-
-    this.selected_token = "";
   }
 
   async notif_flipCards(args) {
@@ -1543,8 +1628,6 @@ export class Game {
 
     // cartes 12
     //  trois fantômes      : on envoie vers le panel joueur et on incrémente
-
-    this.selected_token = "";
   }
 
   async notif_goToThePark(args) {

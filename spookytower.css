@@ -81,6 +81,11 @@
   --card_h: calc(350px * var(--st_scale));
   --card_gap: calc(12px * var(--st_scale));
   --font-size: calc(16pt * var(--st_scale));
+
+background-image: url("img/ST_background2.jpg");
+background-size: auto 100%;
+background-position: top center;
+background-repeat: no-repeat;
 }
 
 .clickable {
@@ -238,7 +243,6 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   display: flex;
   flex-direction: column;
   transform-origin: top left;
-  background-color: gainsboro;
   gap: calc(2*var(--card_gap));
   align-items: center;
 }
@@ -254,8 +258,6 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .table_clock_slot {
   width: var(--card_w);
   height: var(--card_h);
-  /*border: 1px solid #444;*/
-  background: #ddd;
   position: relative; /* pour les cartes superposées */
 }
 
@@ -269,9 +271,22 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   width: calc(0.8 *var(--card_w));
   height: calc(0.8 *var(--card_w));
   position: relative;
-  top: 26%;
-  left: 10%;
   /*background-color: rgba(128, 0, 128, 0.7); /* violet avec alpha 30% */
+}
+
+#clock_sprite {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+   /* centré */
+  transform-origin: center center;               /* pivot pour rotation */
+
+  background-image: url('img/ST_clock.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: contain;                       /* l’image s’adapte au div */
 }
 
 #clock_hand_sprite {
@@ -290,6 +305,53 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
   transition: transform 0.6s ease-in-out;
 }
+
+/* ================= FLIP RIVER ================= */
+#river_id {
+  opacity: 1;
+  max-height: calc(150px * var(--st_scale));
+  height: calc(150px * var(--st_scale));
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+}
+
+#river_id.closed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.river_container {
+  display: flex;
+  flex-direction: row;
+  width : calc(40px + 5 *var(--card_w));
+  height: auto;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  background:
+    /* haut */
+    linear-gradient(to bottom, #364a93 0%, #364a93 3px),
+    /* bas */
+    linear-gradient(to top, #73c6ce 0%, #73c6ce 3px),
+    /* côtés gauche/droite */
+    linear-gradient(to bottom, #364a93, #73c6ce) left, 
+    linear-gradient(to bottom, #364a93, #73c6ce) right,
+    /* centre */
+    linear-gradient(to bottom, #f7eccb, #f8f4eb);
+
+  background-repeat: no-repeat;
+  background-size: 100% 3px, 100% 3px, 3px calc(100% - 6px), 3px calc(100% - 6px), 100% 100%;
+  background-position: top, bottom, left, right, center;
+}
+
+.river_icon {
+  width: calc(100px * var(--st_scale));
+  height: calc(100px * var(--st_scale));;
+  background-image: url("img/ST_icons.png");
+  background-size: 500% 300%;
+}
+
+
 
 /* ================= CENTER GRID 5x3 ================= */
 #table_central_grid {
@@ -422,6 +484,11 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+.building_card_container,
+.building_cards {
+  pointer-events: none; /* pour valider le click sur le stack */
 }
 
 /* ---------- MAISON ---------- */
@@ -644,8 +711,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 /* DICES */
 
 .scene {
-    width: 80px;
-    height: 80px;
+    width: calc(80px * var(--st_scale));
+    height: calc(80px * var(--st_scale));
     perspective: 1000px;
   }
 
@@ -674,8 +741,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .face {
   position: absolute;
-  width: 80px;
-  height: 80px;
+  width: calc(80px * var(--st_scale));
+  height: calc(80px * var(--st_scale));
   display: flex;
   justify-content: center;
   align-items: center;
@@ -683,9 +750,9 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   color: black;
 }
 
-.face1 { transform: rotateY(0deg) translateZ(40px); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: 0%; }
-.face2 { transform: rotateY(90deg) translateZ(40px); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -100%; }
-.face3 { transform: rotateY(180deg) translateZ(40px); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -200%; }
-.face4 { transform: rotateY(-90deg) translateZ(40px); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -300%; }
-.face5 { transform: rotateX(90deg) translateZ(40px); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -400%; }
-.face6 { transform: rotateX(-90deg) translateZ(40px); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -500%; }
+.face1 { transform: rotateY(0deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: 0%; }
+.face2 { transform: rotateY(90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -100%; }
+.face3 { transform: rotateY(180deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -200%; }
+.face4 { transform: rotateY(-90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -300%; }
+.face5 { transform: rotateX(90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -400%; }
+.face6 { transform: rotateX(-90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -500%; }
