@@ -152,15 +152,15 @@ class NormalTurn {
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
-                  arg2: this.game.selected_token,
+                  arg2: this.game.selected_building,
                 }),
               {
                 color: "primary",
                 id: "take_card_btn",
               },
             );
-            console.log("token_sel", this.game.selected_token);
-            if (this.game.selected_token == "") {
+
+            if (this.game.selected_building == "") {
               this.game.safeClass("take_card_btn", "add", "disabled");
             }
             break;
@@ -171,10 +171,14 @@ class NormalTurn {
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
-                  arg2: this.game.selected_token,
+                  arg2: this.game.selected_stack,
                 }),
-              { color: "primary" },
+              { color: "primary", id: "flip_cards_btn" },
             );
+
+            if (this.game.selected_stack == "") {
+              this.game.safeClass("flip_cards_btn", "add", "disabled");
+            }
             break;
         }
       }
@@ -263,6 +267,8 @@ export class Game {
     this.nb_players = Object.keys(this.players).length;
 
     this.selected_token = "";
+    this.selected_building = "";
+    this.selected_stack = "";
 
     // variable en local storage pour le zoom
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
@@ -364,7 +370,7 @@ export class Game {
       if (!element) return;
 
       // --- Carte table (building) ---
-      /*  if (elt_id.startsWith("table_building_card_")) {
+      if (elt_id.startsWith("table_building_card_")) {
         const clickHandler = () => this.onSelectBuilding(elt_id);
         element.addEventListener("click", clickHandler);
         this.connections.push({
@@ -373,16 +379,25 @@ export class Game {
           handler: clickHandler,
         });
         return;
-      }*/
-
-      // --- Cartes “token” ou autres éléments cliquables ---
-      const clickHandler = () => this.onSelectToken(elt_id);
-      element.addEventListener("click", clickHandler);
-      this.connections.push({
-        element,
-        event: "click",
-        handler: clickHandler,
-      });
+      } else if (elt_id.includes("_stack_")) {
+        // --- Cartes “token” ou autres éléments cliquables ---
+        const clickHandler = () => this.onSelectStack(elt_id);
+        element.addEventListener("click", clickHandler);
+        this.connections.push({
+          element,
+          event: "click",
+          handler: clickHandler,
+        });
+      } else {
+        // --- Cartes “token” ou autres éléments cliquables ---
+        const clickHandler = () => this.onSelectToken(elt_id);
+        element.addEventListener("click", clickHandler);
+        this.connections.push({
+          element,
+          event: "click",
+          handler: clickHandler,
+        });
+      }
     });
   }
 
@@ -402,6 +417,77 @@ export class Game {
     });
     this.connections = [];
     this.selected_token = "";
+    this.selected_building = "";
+    this.selected_stack = "";
+  }
+
+  onSelectBuilding(building_id) {
+    console.log("onSelectBuilding", building_id);
+
+    const building_elt = document.getElementById(building_id);
+    if (!building_elt) return;
+
+    // Retire 'selectable' uniquement si présent
+    if (building_elt.classList.contains("selectable")) {
+      this.safeClass(building_elt, "remove", "selectable");
+    }
+
+    // si aucun est sélectionné
+    if (this.selected_building === "") {
+      console.log("pas de selected building");
+      this.safeClass(building_elt, "add", "selected");
+      this.selected_building = building_id;
+      this.safeClass("take_card_btn", "remove", "disabled");
+    }
+    // Si on clique sur une autre case
+    else {
+      const old_elt = document.getElementById(this.selected_building);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+      if (this.selected_building != building_id) {
+        this.safeClass(building_elt, "add", "selected");
+        this.selected_building = building_id;
+      } else {
+        this.selected_building = "";
+        this.safeClass("take_card_btn", "add", "disabled");
+      }
+    }
+  }
+
+  onSelectStack(stack_id) {
+    console.log("onSelectStack", stack_id);
+
+    const stack_elt = document.getElementById(stack_id);
+    if (!stack_elt) return;
+
+    // Retire 'selectable' uniquement si présent
+    if (stack_elt.classList.contains("selectable")) {
+      this.safeClass(stack_elt, "remove", "selectable");
+    }
+
+    // si aucun est sélectionné
+    if (this.selected_stack === "") {
+      this.safeClass(stack_elt, "add", "selected");
+      this.selected_stack = stack_id;
+      this.safeClass("flip_cards_btn", "remove", "disabled");
+    }
+    // Si on clique sur une autre case
+    else {
+      const old_elt = document.getElementById(this.selected_stack);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+      if (this.selected_stack != stack_id) {
+        this.safeClass(stack_elt, "add", "selected");
+        this.selected_stack = stack_id;
+      } else {
+        this.selected_stack = "";
+        this.safeClass("flip_cards_btn", "add", "disabled");
+      }
+    }
   }
 
   onSelectToken(token_id) {
@@ -419,7 +505,6 @@ export class Game {
     if (this.selected_token === "") {
       this.safeClass(token_elt, "add", "selected");
       this.selected_token = token_id;
-      this.safeClass("take_card_btn", "remove", "disabled");
     }
     // Si on clique sur une autre case
     else {
@@ -433,7 +518,6 @@ export class Game {
         this.selected_token = token_id;
       } else {
         this.selected_token = "";
-        this.safeClass("take_card_btn", "add", "disabled");
       }
     }
   }
@@ -736,8 +820,8 @@ export class Game {
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const towerHTML = `
-        <div class="card_item">
-          <div class="clock_tower" id="clock_sprite">
+        <div class="card_item building_cards" style="background-position: -1100% -500%;">
+          <div class="clock_tower" id="clock_tower_id">
             <div class="clock_hand" id="clock_hand_sprite" style="transform: translate(-50%, -50%) rotate(${clockHourRot}deg);"></div>
           </div>
         </div>
@@ -830,7 +914,7 @@ export class Game {
       const container = petContainers[i];
 
       const petHTML = `
-          <div class="card_item pet_cards" 
+          <div id="card_pet_${petType - 1}" class="card_item pet_cards" 
                style="background-position: ${-(petType - 1) * 100}% 0%;">
           </div>
         `;
@@ -883,7 +967,7 @@ export class Game {
       // Ajoute le listener à chacun
       playerStacks.forEach((stack) => {
         console.log("stack", stack);
-        stack.addEventListener("click", () => this.onFlipStack(stack.id));
+        //stack.addEventListener("click", () => this.onFlipStack(stack.id));
       });
 
       // maison
@@ -1403,61 +1487,37 @@ export class Game {
   async moveBuildingToStack(card, stackOrDeck) {
     if (!card || !stackOrDeck) return;
 
-    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
+    // CRITIQUE
+    stackOrDeck.classList.remove("empty");
 
-    // --- créer la carte volante au même endroit que la source ---
     const flyingCard = card.cloneNode(true);
     flyingCard.style.width = "100%";
     flyingCard.style.height = "100%";
     flyingCard.style.position = "absolute";
 
-    // ajouter au même parent pour que le point de départ soit correct
     card.parentElement.appendChild(flyingCard);
 
-    // --- récupérer les containers du stack ---
     const containers = stackOrDeck.querySelectorAll(".building_card_container");
-    if (containers.length === 0) {
-      console.error("Pas de containers dans le stack");
-      return;
-    }
+    if (containers.length === 0) return;
 
-    // --- cartes existantes dans le stack ---
     const existingCards = [];
-    containers.forEach((container) => {
-      if (container.children.length > 0) existingCards.push(container.children[0]);
+    containers.forEach((c) => {
+      if (c.children.length > 0) existingCards.push(c.children[0]);
     });
 
     const animations = [];
 
-    // cartes existantes : décalage vers le haut
     existingCards.forEach((c, i) => {
       const nextContainer = containers[i + 1];
       if (!nextContainer) return;
 
-      animations.push(() =>
-        this.animationManager.slideAndAttach(c, nextContainer, { duration: 600, easing: "ease-in-out" }, nextContainer.lastElementChild ?? null).then(() => {
-          c.id = nextContainer.id.replace("container", "card");
-          c.style.zIndex = 6 - (i + 1);
-          nextContainer.appendChild(c);
-        }),
-      );
+      animations.push(() => this.animationManager.slideAndAttach(c, nextContainer, { duration: 600 }));
     });
 
-    // nouvelle carte : arrive en bas (container 1)
     const targetContainer = containers[0];
-    animations.push(() =>
-      this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600, easing: "ease-in-out" }, null).then(() => {
-        flyingCard.id = targetContainer.id.replace("container", "card");
-        flyingCard.style.zIndex = 6 - 0;
-        targetContainer.appendChild(flyingCard);
-      }),
-    );
+    animations.push(() => this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600 }).then(() => targetContainer.appendChild(flyingCard)));
 
-    // --- lancer toutes les animations en parallèle ---
     await this.animationManager.playParallel(animations);
-
-    // --- rendre visible la stack si elle était cachée ---
-    stackOrDeck.classList.remove("empty");
   }
 
   async moveBuildingToStackOld(card, stackOrDeck) {

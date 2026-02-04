@@ -258,6 +258,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .table_clock_slot {
   width: var(--card_w);
   height: var(--card_h);
+  /*border: 1px solid #444;*/
+  background: #ddd;
   position: relative; /* pour les cartes superposées */
 }
 
@@ -271,6 +273,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   width: calc(0.8 *var(--card_w));
   height: calc(0.8 *var(--card_w));
   position: relative;
+  top: 26%;
+  left: 10%;
   /*background-color: rgba(128, 0, 128, 0.7); /* violet avec alpha 30% */
 }
 
@@ -750,9 +754,9 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   color: black;
 }
 
-.face1 { transform: rotateY(0deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: 0%; }
-.face2 { transform: rotateY(90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -100%; }
-.face3 { transform: rotateY(180deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -200%; }
-.face4 { transform: rotateY(-90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -300%; }
-.face5 { transform: rotateX(90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -400%; }
-.face6 { transform: rotateX(-90deg) translateZ(calc(40px* var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -500%; }
+.face1 { transform: rotateY(0deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: 0%; }
+.face2 { transform: rotateY(90deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -100%; }
+.face3 { transform: rotateY(180deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -200%; }
+.face4 { transform: rotateY(-90deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -300%; }
+.face5 { transform: rotateX(90deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -400%; }
+.face6 { transform: rotateX(-90deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -500%; }

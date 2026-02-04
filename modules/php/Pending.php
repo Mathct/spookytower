@@ -78,7 +78,7 @@ class Pending extends APP_GameClass
         );
 
        
-        game::$instance->addPending($this->player_id, "ChooseAction", $rand_dice1, $rand_dice2);
+        game::$instance->addPending($this->player_id, "ChooseAction");
         
         
     }
@@ -93,27 +93,37 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('${actplayer} must choose an action');
         $ret['titleyou'] = clienttranslate('${you} must choose an action');
 
-        $addition = $parg1 + $parg2;
+        $dice1 = intval(game::$instance->getUniqueValueFromDB("SELECT dice1 FROM other WHERE id=1"));
+        $dice2 = intval(game::$instance->getUniqueValueFromDB("SELECT dice2 FROM other WHERE id=1"));
+        $addition = $dice1 + $dice2;
+
         $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id={$this->player_id}");
 
         //COMPTEUR DE CARTES BUILDING RESTANTES
-        $count_deck1 = game::$instance->{'deck_'.$parg1}->get();
-        $count_deck2 = game::$instance->{'deck_'.$parg2}->get();
+        $count_deck1 = game::$instance->{'deck_'.$dice1}->get();
+        $count_deck2 = game::$instance->{'deck_'.$dice2}->get();
         $count_addition = game::$instance->{'deck_'.$addition}->get();
+
+        //COMPTEUR DE HOUSES
+        $count_house1 = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$dice1}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
+        $count_house2 = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$dice2}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
+        $count_houseaddition = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$addition}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
 
         //POSSIBLE BUTTON TAKE
         $btn_take = 0;
+        //POSSIBLE BUTTON FLIP
+        $btn_flip = 0;
        
 
         //SELECT BUILDING
         if($count_deck1 >= 1)
         {
-            $ret["selectable"][] = 'table_building_card_'.$parg1;
+            $ret["selectable"][] = 'table_building_card_'.$dice1;
             $btn_take = 1;
         }
-        if($count_deck2 >=1 && $parg1 != $parg2)
+        if($count_deck2 >=1 && $dice1 != $dice2)
         {
-            $ret["selectable"][] = 'table_building_card_'.$parg2;
+            $ret["selectable"][] = 'table_building_card_'.$dice2;
             $btn_take = 1;
         }
         if($count_addition >= 1)
@@ -127,11 +137,42 @@ class Pending extends APP_GameClass
             $ret['buttons'][] = 'take_card_btn';
         }
         
-       
+        
+        //SELECT HOUSE
+        if($count_house1 >= 1)
+        {
+            $ret["selectable"][] = 'player_'.$this->player_id.'_stack_'.$dice1;
+            $btn_flip = 1;
+        }
+        if($count_house2 >=1 && $dice1 != $dice2)
+        {
+            $ret["selectable"][] = 'player_'.$this->player_id.'_stack_'.$dice2;
+            $btn_flip = 1;
+        }
+        if($count_houseaddition >= 1)
+        {
+            $ret["selectable"][] = 'player_'.$this->player_id.'_stack_'.$addition;
+            $btn_flip = 1;
+        }
+        
+        if($btn_flip == 1)
+        {
+            $ret['buttons'][] = 'flip_cards_btn';
+        }
+
+        
+        //REROLL DICE
         if($reroll == 1)
         {
             $ret['buttons'][] = 'reroll_dice_btn';
         }
+
+        //CLOCK SI RIEN N'EST POSSIBLE
+        if($btn_take == 0 && $btn_flip == 0 && $reroll == 0)
+        {
+           $ret['buttons'][] = 'turn_clock_btn'; 
+        }
+
     
         return $ret;
     }
@@ -143,7 +184,7 @@ class Pending extends APP_GameClass
         
         if(($varg1 == 'flip_cards_btn' || $varg1 == 'take_card_btn') && $varg2 == '')
         {
-            game::$instance->addPending($this->player_id, "ChooseAction", $parg1, $parg2);
+            game::$instance->addPending($this->player_id, "ChooseAction");
         }
 
         elseif($varg1 == 'reroll_dice_btn')
@@ -179,14 +220,14 @@ class Pending extends APP_GameClass
                 ]
             );
          
-            game::$instance->addPending($this->player_id, "ChooseAction", $rand_dice1, $rand_dice2);
+            game::$instance->addPending($this->player_id, "ChooseAction");
 
         }
 
         else
         {
             
-            //on recupree le numero du deck
+            //on recupere le numero du deck
             [, , , $no_deck] = explode('_', $varg2);
             $deck = 'deck'.$no_deck;
 
@@ -201,7 +242,7 @@ class Pending extends APP_GameClass
             $card =  game::$instance->getObjectFromDB( "SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'" );
 
 
-            $txt = clienttranslate('${player_name} take card ${no_card}');
+            $txt = clienttranslate('${player_name} takes card ${no_card}');
                 game::$instance->notify->all(
                     "takeCard",
                     $txt,
@@ -215,6 +256,9 @@ class Pending extends APP_GameClass
             
             //je change le compteur du deck
             game::$instance->{'deck_'.$no_deck}->inc(-1);
+
+
+
 
             game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
 
