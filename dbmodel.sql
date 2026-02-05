@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `other` (
 --   `dice1`     valeur actuelle du dé 1
 --   `dice2`     valeur actuelle du dé 2
 --   `clock`     position actuelle de l'horloge ( de 0 à 5 ... 0 étant midi)
+--   `pet (position)`       numeroPet_table ou numeroPet_idplayer
 
 ALTER TABLE `player` ADD `reroll` int(5) NOT NULL DEFAULT 1;
 --   `reroll`     1 reroll OK, 0 reroll NOK

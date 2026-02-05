@@ -180,6 +180,26 @@ class NormalTurn {
               this.game.safeClass("flip_cards_btn", "add", "disabled");
             }
             break;
+
+            case "take_pet_btn":
+            this.bga.statusBar.addActionButton(
+              _("Take Pet"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                  arg2: this.game.selected_pet,
+                }),
+              {
+                color: "primary",
+                id: "take_pet_btn",
+              },
+            );
+
+            if (this.game.selected_pet == "") {
+              this.game.safeClass("take_pet_btn", "add", "disabled");
+            }
+            break;
+
         }
       }
     }
@@ -269,6 +289,9 @@ export class Game {
     this.selected_token = "";
     this.selected_building = "";
     this.selected_stack = "";
+    this.selected_pet = "";
+
+    this.petsOrder = gamedatas.pets;
 
     // variable en local storage pour le zoom
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
@@ -388,6 +411,15 @@ export class Game {
           event: "click",
           handler: clickHandler,
         });
+      } else if (elt_id.startsWith("card_pet_")) {
+        const clickHandler = () => this.onSelectPet(elt_id);
+        element.addEventListener("click", clickHandler);
+        this.connections.push({
+          element,
+          event: "click",
+          handler: clickHandler,
+        });
+        return;
       } else {
         // --- Cartes “token” ou autres éléments cliquables ---
         const clickHandler = () => this.onSelectToken(elt_id);
@@ -419,6 +451,7 @@ export class Game {
     this.selected_token = "";
     this.selected_building = "";
     this.selected_stack = "";
+    this.selected_pet = "";
   }
 
   onSelectBuilding(building_id) {
@@ -490,6 +523,41 @@ export class Game {
     }
   }
 
+  onSelectPet(pet_id) {
+    console.log("onSelectPet", pet_id);
+
+    const pet_elt = document.getElementById(pet_id);
+    if (!pet_elt) return;
+
+    // Retire 'selectable' uniquement si présent
+    if (pet_elt.classList.contains("selectable")) {
+      this.safeClass(pet_elt, "remove", "selectable");
+    }
+
+    // si aucun est sélectionné
+    if (this.selected_pet === "") {
+      console.log("pas de selected pet");
+      this.safeClass(pet_elt, "add", "selected");
+      this.selected_pet = pet_id;
+      this.safeClass("take_pet_btn", "remove", "disabled");
+    }
+    // Si on clique sur une autre case
+    else {
+      const old_elt = document.getElementById(this.selected_pet);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+      if (this.selected_pet != pet_id) {
+        this.safeClass(pet_elt, "add", "selected");
+        this.selected_pet = pet_id;
+      } else {
+        this.selected_pet = "";
+        this.safeClass("take_pet_btn", "add", "disabled");
+      }
+    }
+  }
+
   onSelectToken(token_id) {
     console.log("onSelectToken", token_id);
 
@@ -528,6 +596,8 @@ export class Game {
     // Setting up player boards
     Object.values(this.gamedatas.players).forEach((player) => {
       // example of setting up players boards
+
+      console.log("player", player);
       this.bga.playerPanels.getElement(player.id).insertAdjacentHTML(
         "beforeend",
         `
@@ -627,7 +697,7 @@ export class Game {
       );
     });
 
-    const current_player_id = this.bga.players.getCurrentPlayerId();
+    /*  const current_player_id = this.bga.players.getCurrentPlayerId();
 
     if (current_player_id) {
       const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
@@ -636,7 +706,7 @@ export class Game {
         rerollIcon.classList.add("clickable");
         rerollIcon.addEventListener("click", () => this.onFlipReroll());
       }
-    }
+    }*/
   }
 
   async onFlipReroll() {
@@ -644,11 +714,6 @@ export class Game {
     if (!riverElt) return;
 
     riverElt.classList.toggle("closed");
-  }
-
-  async onFlipStack(stackId) {
-    console.log("flipStack", stackId);
-    this.animFlipStack(stackId);
   }
 
   isMobileDevice() {
@@ -820,13 +885,10 @@ export class Game {
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const towerHTML = `
-        <div class="card_item building_cards" style="background-position: -1100% -500%;">
-          <div class="clock_tower" id="clock_tower_id">
+           <div class="clock_tower" id="clock_tower_id">
             <div class="clock_hand" id="clock_hand_sprite" style="transform: translate(-50%, -50%) rotate(${clockHourRot}deg);"></div>
           </div>
-        </div>
     `;
-
     clockTowerSlot.insertAdjacentHTML("beforeend", towerHTML);
   }
 
@@ -898,7 +960,11 @@ export class Game {
 
   setupPets() {
     // Ordre haut → bas, exemple : "213"
-    const order = this.petsOrder || "312";
+
+    const order = this.petsOrder
+    .map(item => item.split('_')[0]) // prend la partie avant _
+    .join(''); 
+    
 
     // Conteneurs table fixes pour les pets
     const petContainers = [document.getElementById("table_pet_slot_1"), document.getElementById("table_pet_slot_2"), document.getElementById("table_pet_slot_3")];
@@ -914,7 +980,7 @@ export class Game {
       const container = petContainers[i];
 
       const petHTML = `
-          <div id="card_pet_${petType - 1}" class="card_item pet_cards" 
+          <div id="card_pet_${petType}" class="card_item pet_cards" 
                style="background-position: ${-(petType - 1) * 100}% 0%;">
           </div>
         `;
@@ -960,25 +1026,9 @@ export class Game {
       </div>`,
       );
 
-      const playerBoard = document.getElementById(`player_board_${player.id}`);
-      const playerStacks = playerBoard.querySelectorAll(".building_stack");
-
-      console.log("playerstacks", playerStacks); // devrait afficher 12 nodes
-      // Ajoute le listener à chacun
-      playerStacks.forEach((stack) => {
-        console.log("stack", stack);
-        //stack.addEventListener("click", () => this.onFlipStack(stack.id));
-      });
-
       // maison
       const card = document.getElementById(`player_${player.id}_house_card`);
       card.style.backgroundPosition = `-${houseIndex}00% 0%`;
-
-      // placeholders
-      /*const boardSlot = document.getElementById(`player_board_${player.id}`);
-      for (let i = 0; i < 3; i++) {
-        boardSlot.insertAdjacentHTML("afterBegin", `<div class="house_empty_slot" id="player_${player.id}_house_placeholder_${i}"></div>`);
-      }*/
 
       // containers vides pour toutes les stacks
       for (let stackIndex = 1; stackIndex <= 12; stackIndex++) {
@@ -1251,6 +1301,20 @@ export class Game {
     const icon = document.getElementById(`icon_reroll_${playerId}`);
     if (!icon) return;
 
+    // ⚡ Mode instantané : état final direct
+    if (this.instantaneousMode) {
+      icon.style.transition = "";
+      icon.style.transform = "";
+
+      icon.classList.toggle("ic_reroll_0");
+      icon.classList.toggle("ic_reroll_1");
+
+      delete icon.dataset.flipping;
+      return;
+    }
+
+    // 🎞️ Mode animé normal
+
     if (icon.dataset.flipping === "true") return;
     icon.dataset.flipping = "true";
 
@@ -1285,6 +1349,31 @@ export class Game {
   async animFlipPark(nb_parks) {
     const park = document.querySelector("#deck_park .parkgrim_cards");
     if (!park) return;
+
+    // ⚡ Mode instantané : état final immédiat
+    if (this.instantaneousMode) {
+      // Init face si nécessaire
+      if (!park.dataset.face) {
+        park.dataset.face = "recto";
+      }
+
+      if (park.dataset.face === "recto") {
+        park.dataset.face = "verso";
+        const versoCol = nb_parks - 1;
+        park.style.backgroundPosition = `-${versoCol}00% 0%`;
+      } else {
+        park.dataset.face = "recto";
+        park.style.backgroundPosition = "-0% 0%";
+      }
+
+      // Nettoyage sécurité
+      park.style.transition = "";
+      park.style.transform = "";
+      delete park.dataset.flipping;
+      return;
+    }
+
+    // 🎞️ Mode animé
 
     if (park.dataset.flipping === "true") return;
     park.dataset.flipping = "true";
@@ -1329,6 +1418,32 @@ export class Game {
   async animFlipGrimoire() {
     const grimoire = document.querySelector("#deck_grimoire .parkgrim_cards");
     if (!grimoire) return;
+
+    // ⚡ Mode instantané
+    if (this.instantaneousMode) {
+      if (!grimoire.dataset.face) {
+        grimoire.dataset.face = "recto";
+      }
+
+      const grimoireVerso = 3;
+      const n = grimoireVerso - 1;
+
+      if (grimoire.dataset.face === "recto") {
+        grimoire.dataset.face = "verso";
+        grimoire.style.backgroundPosition = `-${n}00% -100%`;
+      } else {
+        grimoire.dataset.face = "recto";
+        grimoire.style.backgroundPosition = `-700% -100%`;
+      }
+
+      // Nettoyage sécurité
+      grimoire.style.transition = "";
+      grimoire.style.transform = "";
+      delete grimoire.dataset.flipping;
+      return;
+    }
+
+    // 🎞️ Mode animé
 
     if (grimoire.dataset.flipping === "true") return;
     grimoire.dataset.flipping = "true";
@@ -1515,58 +1630,9 @@ export class Game {
     });
 
     const targetContainer = containers[0];
-    animations.push(() => this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600 }).then(() => targetContainer.appendChild(flyingCard)));
+    animations.push(() => this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600 }));
 
     await this.animationManager.playParallel(animations);
-  }
-
-  async moveBuildingToStackOld(card, stackOrDeck) {
-    if (!card || !stackOrDeck) return;
-
-    const buildingNumber = parseInt(card.id.split("_").pop(), 10);
-
-    // --- créer la carte volante ---
-    const flyingCard = card.cloneNode(true);
-    flyingCard.style.width = "100%";
-    flyingCard.style.height = "100%";
-    flyingCard.style.position = "absolute"; // essentiel pour slideAndAttach
-
-    // ajouter au DOM à côté de la carte source
-    card.parentElement.appendChild(flyingCard);
-
-    // --- déterminer la cible ---
-    let targetContainer = null;
-
-    const containers = stackOrDeck.querySelectorAll(".building_card_container");
-    for (const container of containers) {
-      if (container.children.length === 0) {
-        targetContainer = container;
-        break;
-      }
-    }
-
-    if (!targetContainer) {
-      console.error("Aucun container disponible dans la stack");
-      return;
-    }
-
-    // rendre visible la stack si elle était cachée
-    stackOrDeck.classList.remove("empty");
-
-    console.log("Animation de", card.id, "vers", targetContainer.id);
-
-    // --- lancer l'animation ---
-    await this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 2600, easing: "ease-in-out" }, targetContainer.lastElementChild ?? null);
-
-    // --- après animation : mettre la carte définitivement ---
-    if (targetContainer.classList.contains("building_card_container")) {
-      flyingCard.id = targetContainer.id.replace("container", "card");
-    } else {
-      // maison ou deck : conserver un ID unique
-      flyingCard.id = `${targetContainer.id}_card_${buildingNumber}`;
-    }
-
-    targetContainer.appendChild(flyingCard);
   }
 
   ///////////////////////////////////////////////////

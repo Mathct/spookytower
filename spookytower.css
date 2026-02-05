@@ -254,12 +254,15 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 .table_deck_slot,
-.table_track_slot,
-.table_clock_slot {
+.table_track_slot {
   width: var(--card_w);
   height: var(--card_h);
-  /*border: 1px solid #444;*/
-  background: #ddd;
+  position: relative; /* pour les cartes superposées */
+}
+
+.table_clock_slot {
+  width: var(--card_h);
+  height: var(--card_h);
   position: relative; /* pour les cartes superposées */
 }
 
@@ -270,12 +273,27 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 .clock_tower {
-  width: calc(0.8 *var(--card_w));
-  height: calc(0.8 *var(--card_w));
   position: relative;
-  top: 26%;
-  left: 10%;
+  background-image: url('img/ST_clock.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: contain;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--card_h);
+  height: var(--card_h);
+
   /*background-color: rgba(128, 0, 128, 0.7); /* violet avec alpha 30% */
+}
+
+#clock_tower_id {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--card_h);
+  height: var(--card_h);
 }
 
 #clock_sprite {
@@ -449,6 +467,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .player_board {
   display: flex;
   align-items: flex-end;
+  justify-content: flex-end;
   gap: var(--card_gap);
 }
 
@@ -463,7 +482,19 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   height: calc(var(--card_h) * 1.8);
   position: relative;
   overflow: visible;
+
+    /* contour avec gradients pour toutes les stacks visibles */
+  background: 
+    linear-gradient(to bottom, #364a93 0%, #364a93 1px), /* haut */
+    linear-gradient(to top, #73c6ce 0%, #73c6ce 1px),    /* bas */
+    linear-gradient(to bottom, #364a93, #73c6ce) left,   /* gauche */
+    linear-gradient(to bottom, #364a93, #73c6ce) right;  /* droite */
+    
+  background-repeat: no-repeat;
+  background-size: 100% 1px, 100% 3px, 1px 100%, 1px 100%;
+  background-position: top, bottom, left, right;
 }
+
 
 /* stack vide : invisible */
 .building_stack.empty {

@@ -97,7 +97,7 @@ class Pending extends APP_GameClass
         $dice2 = intval(game::$instance->getUniqueValueFromDB("SELECT dice2 FROM other WHERE id=1"));
         $addition = $dice1 + $dice2;
 
-        $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id={$this->player_id}");
+        $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
 
         //COMPTEUR DE CARTES BUILDING RESTANTES
         $count_deck1 = game::$instance->{'deck_'.$dice1}->get();
@@ -181,12 +181,16 @@ class Pending extends APP_GameClass
 
     function ChooseAction($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
-        
+        //SI POUR X RAISONS LE JOUEUR ARRIVE A CLICKER SUR UN DES BOUTONS SANS SELECTION (en modifiant sur l'inspecteur)
         if(($varg1 == 'flip_cards_btn' || $varg1 == 'take_card_btn') && $varg2 == '')
         {
             game::$instance->addPending($this->player_id, "ChooseAction");
         }
 
+        ///////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
+
+        //REROLL DICE TOKEN SI TOKEN OK
         elseif($varg1 == 'reroll_dice_btn')
         {
             game::$instance->DbQuery("UPDATE player set reroll = 0 WHERE player_id='{$this->player_id}'");
@@ -224,7 +228,90 @@ class Pending extends APP_GameClass
 
         }
 
-        else
+        ///////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
+
+        //TURN CLOCK SI LE JOUEUR N'A PAS DE CHOIX POSSIBLE
+        elseif($varg1 == 'turn_clock_btn')
+        {
+            $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+            if($clock != 5)
+            {
+                game::$instance->DbQuery("UPDATE clock set clock = clock + 1 WHERE id=1");
+            }
+            else
+            {
+                game::$instance->DbQuery("UPDATE clock set clock = 0 WHERE id=1");
+            }
+
+            $newclock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+
+            game::$instance->notify->all(
+                    "activateClockTower",
+                    '',
+                    [
+                        'player_id' => $this->player_id,
+                        'clock' => $newclock,
+                        
+                    ]
+            );
+
+            //Position Artefact
+            if($newclock == 0 || $newclock == 3)
+            {
+                game::$instance->player_artefacts->inc($this->player_id, 1);
+                $count_artefact = game::$instance->player_artefacts->get($this->player_id);
+                if($count_artefact == 3)
+                {
+                    game::$instance->addPending($this->player_id, "EndGame");
+                }
+
+                else
+                {
+                    game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+                }
+            }
+
+            // Position Turn reroll token
+            if($newclock == 2 || $newclock == 5)
+            {
+                $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                if($reroll == 0)
+                {
+                    game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                    game::$instance->notify->all(
+                        "flipReroll",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            
+                        ]
+                    );
+
+                }
+
+                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+
+            }
+
+            // Position pet
+            if($newclock == 1 || $newclock == 4)
+            {
+                
+                game::$instance->addPending($this->player_id, "ChoosePet");
+
+            }
+           
+            
+
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
+
+        // LE JOUEUR TAKE UNE CARTE
+        elseif($varg1 == 'take_card_btn')
         {
             
             //on recupere le numero du deck
@@ -258,12 +345,206 @@ class Pending extends APP_GameClass
             game::$instance->{'deck_'.$no_deck}->inc(-1);
 
 
+            // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
+            if($no_deck >= 1 && $no_deck <= 4)
+            {
+                $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                if($reroll == 0)
+                {
+                    game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
 
+                    game::$instance->notify->all(
+                        "flipReroll",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            
+                        ]
+                    );
+
+                }
+
+                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+
+            }
+
+            // ACTION IMMEDIATE SUR UN TAKE: turn clock
+            elseif($no_deck == 9)
+            {
+                $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+                if($clock != 5)
+                {
+                    game::$instance->DbQuery("UPDATE clock set clock = clock + 1 WHERE id=1");
+                }
+                else
+                {
+                    game::$instance->DbQuery("UPDATE clock set clock = 0 WHERE id=1");
+                }
+
+                $newclock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+
+                game::$instance->notify->all(
+                        "activateClockTower",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            'clock' => $newclock,
+                            
+                        ]
+                );
+
+                //Position Artefact
+                if($newclock == 0 || $newclock == 3)
+                {
+                    game::$instance->player_artefacts->inc($this->player_id, 1);
+                    $count_artefact = game::$instance->player_artefacts->get($this->player_id);
+                    if($count_artefact == 3)
+                    {
+                        game::$instance->addPending($this->player_id, "EndGame");
+                    }
+
+                    else
+                    {
+                        game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+                    }
+                }
+
+                // Position Turn reroll token
+                if($newclock == 2 || $newclock == 5)
+                {
+                    $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                    if($reroll == 0)
+                    {
+                        game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                        game::$instance->notify->all(
+                            "flipReroll",
+                            '',
+                            [
+                                'player_id' => $this->player_id,
+                                
+                            ]
+                        );
+
+                    }
+
+                    game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+
+                }
+
+                // Position pet
+                if($newclock == 1 || $newclock == 4)
+                {
+                    
+                    game::$instance->addPending($this->player_id, "ChoosePet");
+
+                }
+
+            }
+
+            // AUCUNE ACTION IMMEDIATE SUR UN TAKE
+            else
+            {
+                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+            }
+    
+
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
+
+        // LE JOUEUR FLIP UNE MAISON
+        elseif($varg1 == 'flip_cards_btn')
+        {
+            //on recupere le numero de la maison
+            [, , , $no_house] = explode('_', $varg2);
+
+            $cards = game::$instance->getObjectListFromDB( "SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type ='{$no_house}'" );
+
+            $txt = clienttranslate('${player_name} flips house ${no_house}');
+                game::$instance->notify->all(
+                    "flipCards",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'no_house' => $no_house,
+                        'cards' => $cards,
+                    ]
+                );
+
+            // POUR LE MOMENT JE DISCARD LES CARDS (mais on pourra les mettre en location 'hand' ou autre pour les garder visible sur le verso)
+            foreach($cards as $card)
+            {
+                game::$instance->building_DB->moveCard($card['id'], 'discard', $this->player_id);
+            }
 
             game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
 
         }
         
+    }
+
+
+    function argChoosePet($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "PlayerTurn";
+        $ret['title'] = clienttranslate('${actplayer} must choose a pet');
+        $ret['titleyou'] = clienttranslate('${you} must choose a pet');
+
+        $ret["selectable"][] = 'card_pet_1';
+        $ret["selectable"][] = 'card_pet_2';
+        $ret["selectable"][] = 'card_pet_3';
+
+        $ret['buttons'][] = 'take_pet_btn';
+       
+    
+        return $ret;
+    }
+
+
+
+    function ChoosePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {
+        game::$instance->addPending($this->player_id, "ChoosePet");
+
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+
+    //FONCTION TRANSITOIRE POUR LA FIN DE PARTIE (tourne en boucle)
+    function argEndGame($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "PlayerTurn";
+        $ret['title'] = clienttranslate('End of game');
+        $ret['titleyou'] = clienttranslate('End of game');
+
+             
+        $ret['buttons'][] = 'yes_btn';
+       
+    
+        return $ret;
+    }
+
+
+
+    function EndGame($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {
+        game::$instance->addPending($this->player_id, "EndGame");
+
     }
 
 

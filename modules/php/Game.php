@@ -255,9 +255,9 @@ class Game extends \Bga\GameFramework\Table
         $tab = [1, 2, 3];
         shuffle($tab);          // Mélange le tableau
         // Prépare les valeurs
-        $pet1 = 'table_' . $tab[0];
-        $pet2 = 'table_' . $tab[1];
-        $pet3 = 'table_' . $tab[2];
+        $pet1 = $tab[0].'_table';
+        $pet2 = $tab[1].'_table';
+        $pet3 = $tab[2].'_table';
         // INSERT
         game::$instance->DbQuery("
             INSERT INTO other (pet1, pet2, pet3)
