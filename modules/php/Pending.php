@@ -181,16 +181,19 @@ class Pending extends APP_GameClass
 
     function ChooseAction($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
+        ///////////////////////////////////////////////////////////////////////////////////////
         //SI POUR X RAISONS LE JOUEUR ARRIVE A CLICKER SUR UN DES BOUTONS SANS SELECTION (en modifiant sur l'inspecteur)
+        ///////////////////////////////////////////////////////////////////////////////////////
+        
         if(($varg1 == 'flip_cards_btn' || $varg1 == 'take_card_btn') && $varg2 == '')
         {
             game::$instance->addPending($this->player_id, "ChooseAction");
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////
-
         //REROLL DICE TOKEN SI TOKEN OK
+        ///////////////////////////////////////////////////////////////////////////////////////
+       
         elseif($varg1 == 'reroll_dice_btn')
         {
             game::$instance->DbQuery("UPDATE player set reroll = 0 WHERE player_id='{$this->player_id}'");
@@ -229,9 +232,9 @@ class Pending extends APP_GameClass
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////
-
         //TURN CLOCK SI LE JOUEUR N'A PAS DE CHOIX POSSIBLE
+        ///////////////////////////////////////////////////////////////////////////////////////
+        
         elseif($varg1 == 'turn_clock_btn')
         {
             $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
@@ -308,9 +311,9 @@ class Pending extends APP_GameClass
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
+        // LE JOUEUR TAKE UNE CARTE
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        // LE JOUEUR TAKE UNE CARTE
         elseif($varg1 == 'take_card_btn')
         {
             
@@ -452,9 +455,9 @@ class Pending extends APP_GameClass
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
+        // LE JOUEUR FLIP UNE MAISON
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        // LE JOUEUR FLIP UNE MAISON
         elseif($varg1 == 'flip_cards_btn')
         {
             //on recupere le numero de la maison
@@ -473,7 +476,10 @@ class Pending extends APP_GameClass
                     ]
                 );
 
+            ///////////////////////////////////////////////////////////////////////////////////////
             // POUR LE MOMENT JE DISCARD LES CARDS (mais on pourra les mettre en location 'hand' ou autre pour les garder visible sur le verso)
+            ///////////////////////////////////////////////////////////////////////////////////////
+            
             foreach($cards as $card)
             {
                 game::$instance->building_DB->moveCard($card['id'], 'discard', $this->player_id);
@@ -484,7 +490,6 @@ class Pending extends APP_GameClass
         }
         
     }
-
 
     function argChoosePet($parg1, $parg2)
     {
@@ -506,8 +511,6 @@ class Pending extends APP_GameClass
         return $ret;
     }
 
-
-
     function ChoosePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         game::$instance->addPending($this->player_id, "ChoosePet");
@@ -515,13 +518,19 @@ class Pending extends APP_GameClass
     }
 
 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
+
+
+
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////
     //FONCTION TRANSITOIRE POUR LA FIN DE PARTIE (tourne en boucle)
+    ///////////////////////////////////////////////////////////////////////////////////////
+    
     function argEndGame($parg1, $parg2)
     {
         $ret = [];
