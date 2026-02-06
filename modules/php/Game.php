@@ -27,7 +27,7 @@ use Bga\GameFramework\Components\Counters\TableCounter;
 class Game extends \Bga\GameFramework\Table
 {
     // material
-    //public static array $CARD_TYPES;
+    public array $_BUILDING_CARD;
 
     // counters table
     public TableCounter $deck_1;
@@ -136,7 +136,7 @@ class Game extends \Bga\GameFramework\Table
 
         $this->notify->addDecorator(function (string $message, array $args) {
             if (isset($args['player_id']) && !isset($args['player_name']) && str_contains($message, '${player_name}')) {
-                $args['player_name'] = $this->getPlayerNameById($args['player_id']);
+                $args['player_name'] = $this->getPlayerNameById((int) $args['player_id']);
                 // no need to add player_name.
             }
             return $args;
@@ -255,9 +255,9 @@ class Game extends \Bga\GameFramework\Table
         $tab = [1, 2, 3];
         shuffle($tab);          // Mélange le tableau
         // Prépare les valeurs
-        $pet1 = $tab[0].'_table';
-        $pet2 = $tab[1].'_table';
-        $pet3 = $tab[2].'_table';
+        $pet1 = $tab[0] . '_table';
+        $pet2 = $tab[1] . '_table';
+        $pet3 = $tab[2] . '_table';
         // INSERT
         game::$instance->DbQuery("
             INSERT INTO other (pet1, pet2, pet3)
@@ -367,8 +367,11 @@ class Game extends \Bga\GameFramework\Table
         foreach ($result["players"] as $player_id => $player) {
 
             $result["house_cards"][$player_id] = game::$instance->getObjectListFromDB("SELECT card_type type, position position FROM building WHERE card_location ='house' AND card_location_arg ='{$player_id}'");
-            
         }
+
+        $result["other"] = game::$instance->getObjectFromDb("SELECT * FROM other WHERE 1");
+
+        $result["building_cards"] = $this->_BUILDING_CARD;
 
         //counters
         $this->deck_1->fillResult($result);
@@ -392,21 +395,6 @@ class Game extends \Bga\GameFramework\Table
         $this->player_clues->fillResult($result);
         $this->player_grimoires->fillResult($result);
         $this->player_clocks->fillResult($result);
-
-        //pets
-        $pet1 = game::$instance->getUniqueValueFromDB("SELECT pet1 FROM other WHERE id=1");
-        $pet2 = game::$instance->getUniqueValueFromDB("SELECT pet2 FROM other WHERE id=1");
-        $pet3 = game::$instance->getUniqueValueFromDB("SELECT pet3 FROM other WHERE id=1");
-        $result["pets"] = [$pet1, $pet2, $pet3];
-
-        //clock
-        $result["clock"] = game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1");
-
-        //dices
-        $dice1 = game::$instance->getUniqueValueFromDB("SELECT dice1 FROM other WHERE id=1");
-        $dice2 = game::$instance->getUniqueValueFromDB("SELECT dice2 FROM other WHERE id=1");
-        $result["dices"] = [$dice1, $dice2];
-
 
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).

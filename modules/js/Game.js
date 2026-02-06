@@ -181,7 +181,7 @@ class NormalTurn {
             }
             break;
 
-            case "take_pet_btn":
+          case "take_pet_btn":
             this.bga.statusBar.addActionButton(
               _("Take Pet"),
               () =>
@@ -199,7 +199,6 @@ class NormalTurn {
               this.game.safeClass("take_pet_btn", "add", "disabled");
             }
             break;
-
         }
       }
     }
@@ -291,10 +290,10 @@ export class Game {
     this.selected_stack = "";
     this.selected_pet = "";
 
-    this.petsOrder = gamedatas.pets;
-
     // variable en local storage pour le zoom
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
+
+    this.icons = ["reroll_1", "reroll_0", "artefact", "ghost", "clue", "grimoire", "clock", "pet", "replay", "flip8", "flip9", "draw8", "draw_any"];
 
     this.setupPlayersBoard();
     this.setupBoard();
@@ -697,23 +696,16 @@ export class Game {
       );
     });
 
-    /*  const current_player_id = this.bga.players.getCurrentPlayerId();
+    const current_player_id = this.bga.players.getCurrentPlayerId();
 
     if (current_player_id) {
       const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
 
       if (rerollIcon) {
         rerollIcon.classList.add("clickable");
-        rerollIcon.addEventListener("click", () => this.onFlipReroll());
+        rerollIcon.addEventListener("click", () => this.animClockTower());
       }
-    }*/
-  }
-
-  async onFlipReroll() {
-    const riverElt = document.getElementById("river_id");
-    if (!riverElt) return;
-
-    riverElt.classList.toggle("closed");
+    }
   }
 
   isMobileDevice() {
@@ -770,7 +762,7 @@ export class Game {
                     <div class="table_track_slot" id="dice_track" title="Dice Track"></div>
                     <div class="table_clock_slot" id="clock_tower" title="Clock Tower"></div>
                 </div>
-                <div id="river_id" class="river_container"></div>
+                <div id="river_id" class="river_container closed"></div>
                 <!-- CENTER GRID 5x3 TABLE -->
                 <div id="table_center_area">
                     <div id="table_central_grid">
@@ -906,7 +898,7 @@ export class Game {
       6: { x: 90, y: 0 },
     };
 
-    this.forcedFaces = [this.gamedatas.dices[0], this.gamedatas.dices[1]];
+    this.forcedFaces = [this.gamedatas.other.dice1, this.gamedatas.other.dice2];
 
     // Initial display of dice faces
     this.diceElements.forEach((dice, index) => {
@@ -949,40 +941,27 @@ export class Game {
     const river = document.getElementById("river_id");
     if (!river) return;
 
-    const icons = ["ic_reroll_1", "ic_artefact", "ic_clue", "ic_grimoire", "ic_clock", "ic_pet", "ic_flip8", "ic_draw_any"];
+    /*const icons = ["ic_reroll_1", "ic_artefact", "ic_clue", "ic_grimoire", "ic_clock", "ic_pet", "ic_flip8", "ic_draw_any"];
 
     river.innerHTML = ""; // reset si nécessaire
 
     icons.forEach((ic) => {
       river.insertAdjacentHTML("beforeend", `<div class="river_icon ${ic}"></div>`);
-    });
+    });*/
   }
 
   setupPets() {
     // Ordre haut → bas, exemple : "213"
 
-    const order = this.petsOrder
-    .map(item => item.split('_')[0]) // prend la partie avant _
-    .join(''); 
-    
-
-    // Conteneurs table fixes pour les pets
-    const petContainers = [document.getElementById("table_pet_slot_1"), document.getElementById("table_pet_slot_2"), document.getElementById("table_pet_slot_3")];
-
-    // Vider tous les conteneurs avant insertion
-    petContainers.forEach((c) => (c.innerHTML = ""));
-
     // Parcourir l'ordre et injecter le HTML directement
-    for (let i = 0; i < 3; i++) {
-      const petType = parseInt(order[i], 10);
-      if (![1, 2, 3].includes(petType)) continue;
+    for (let i = 1; i < 4; i++) {
+      // la table du pet i+1
+      const containerType = this.gamedatas.other[`pet${i}`].split("_")[1];
 
-      const container = petContainers[i];
+      const container = document.getElementById(`table_pet_slot_${containerType}`);
 
       const petHTML = `
-          <div id="card_pet_${petType}" class="card_item pet_cards" 
-               style="background-position: ${-(petType - 1) * 100}% 0%;">
-          </div>
+          <div id="card_pet_${i}" class="card_item pet_cards" style="background-position: ${-(i - 1) * 100}% 0%;"></div>
         `;
       container.insertAdjacentHTML("beforeend", petHTML);
     }
@@ -1479,36 +1458,38 @@ export class Game {
     delete grimoire.dataset.flipping;
   }
 
-  async animFlipStack(stackId) {
-    console.log("animFlipStack");
-    const stack = document.getElementById(stackId);
+  async animFlipStack(stackId, cardsInfos, playerId) {
+    const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
     if (!stack) return;
 
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
-    if (cards.length === 0) return;
-
-    const half = 200; // demi-flip en ms
-    const versoPos = "-300% -300%"; // face verso test
+    if (!cards.length) return;
 
     // Empêcher les flips simultanés
     if (stack.dataset.flipping === "true") return;
     stack.dataset.flipping = "true";
 
-    // Initialise chaque carte
-    cards.forEach((card, index) => {
-      const container = card.parentElement;
-      if (!card.dataset.rectoPos) card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
-      if (!card.dataset.face) card.dataset.face = "recto";
+    const half = 200; // demi-flip en ms
 
-      // Inverse le z-index du container
+    // Trier les cartes par position (bas → haut)
+    cardsInfos.sort((a, b) => a.position - b.position);
+
+    // Initialiser chaque carte et inverser z-index du container
+    cards.forEach((card) => {
+      if (!card.dataset.face) card.dataset.face = "recto";
+      if (!card.dataset.rectoPos) card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
+
+      const container = card.parentElement;
       container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
     });
 
-    // Lance tous les flips avec un petit décalage
     await Promise.all(
       cards.map(
         (card, i) =>
           new Promise((resolve) => {
+            const info = cardsInfos[i];
+            if (!info) return resolve();
+
             setTimeout(async () => {
               // Premier demi-flip
               card.style.transition = `transform ${half}ms ease-in-out`;
@@ -1518,7 +1499,12 @@ export class Game {
               // Toggle face
               if (card.dataset.face === "recto") {
                 card.dataset.face = "verso";
-                card.style.backgroundPosition = versoPos;
+
+                // Calcul du backgroundPosition pour le verso
+                const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
+                const col = card_offset % 12;
+                const row = 1 + Math.floor(card_offset / 12);
+                card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
               } else {
                 card.dataset.face = "recto";
                 card.style.backgroundPosition = card.dataset.rectoPos;
@@ -1533,7 +1519,7 @@ export class Game {
               card.style.transform = "";
 
               resolve();
-            }, i * 50); // décalage de 50ms entre chaque carte
+            }, i * 50); // décalage entre les cartes
           }),
       ),
     );
@@ -1549,16 +1535,16 @@ export class Game {
     // récupérer la position actuelle depuis le style transform
     const currentTransform = hand.style.transform;
     const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
-    let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.clock * 60;
+    let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.other.clock * 60;
 
     // calculer la nouvelle position
-    let nextDeg = (currentDeg + 60) % 360; // +60° pour passer à l'heure suivante
+    let nextDeg = currentDeg + 60; // +60° pour passer à l'heure suivante
 
     // appliquer la rotation : la transition CSS fait l'animation
     hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
 
     // mettre à jour la valeur du jeu
-    this.gamedatas.clock = (this.gamedatas.clock + 1) % 6;
+    this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
 
     // optionnel : attendre la fin de la transition si tu veux faire quelque chose ensuite
     await new Promise((resolve) => setTimeout(resolve, 600));
@@ -1635,6 +1621,147 @@ export class Game {
     await this.animationManager.playParallel(animations);
   }
 
+  async toggleRiver() {
+    const riverElt = document.getElementById("river_id");
+    if (!riverElt) return;
+
+    riverElt.classList.toggle("closed");
+  }
+
+  async animGetRewards(no_house, cardsInfos, playerId) {
+    const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
+    if (!stack) return;
+
+    const cards = Array.from(stack.querySelectorAll(".building_cards"));
+    if (!cards.length) {
+      stack.classList.add("empty");
+      return;
+    }
+
+    // Empêcher l'animation simultanée
+    if (stack.dataset.animating === "true") return;
+    stack.dataset.animating = "true";
+
+    // Trier les cartes par position (bas → haut)
+    cardsInfos.sort((a, b) => a.position - b.position);
+
+    const river = document.getElementById("river_id");
+    if (!river) {
+      console.warn("River element not found!");
+      delete stack.dataset.animating;
+      return;
+    }
+
+    // Parcours décroissant pour supprimer du bas vers le haut visuellement
+    for (let i = cards.length - 1; i >= 0; i--) {
+      const cardEl = cards[i];
+      const info = cardsInfos[i];
+      if (!info) continue;
+
+      // Récupérer les bonus pour cette carte
+      const card_idx = info.type + info.type_arg;
+      const bonuses = this.gamedatas.building_cards[card_idx] || [];
+      const parent = cardEl.parentElement;
+
+      // 1️⃣ Animation disparition
+      cardEl.style.transition = "transform 400ms ease, opacity 400ms ease";
+      cardEl.style.transform = "scale(0)";
+      cardEl.style.opacity = "0";
+      await new Promise((r) => setTimeout(r, 400));
+
+      cardEl.remove();
+
+      // 2️⃣ Création et animation des icônes pour chaque bonus
+      for (let j = 0; j < bonuses.length; j++) {
+        const bonus = bonuses[j];
+        const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
+        if (!ic) continue;
+
+        const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
+        const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
+        parent.insertAdjacentHTML("beforeend", html);
+
+        const iconEl = document.getElementById(iconId);
+        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+          console.warn("Skip animation: invalid node", iconId, iconEl);
+          continue;
+        }
+
+        // Animation slide vers la rivière
+        this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
+        await new Promise((r) => setTimeout(r, 80));
+      }
+
+      // Petit délai avant la carte suivante pour éviter overlap visuel
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
+    // 3️⃣ Marquer la pile comme vide
+    stack.classList.add("empty");
+    delete stack.dataset.animating;
+  }
+
+  async animGetRewardsOld(no_house, cardsInfos, playerId) {
+    const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
+    if (!stack) return;
+
+    const cards = Array.from(stack.querySelectorAll(".building_cards"));
+    if (!cards.length) return;
+
+    // Empêcher animation simultanée
+    if (stack.dataset.animating === "true") return;
+    stack.dataset.animating = "true";
+
+    const duration = 500;
+
+    // Même ordre que le flip
+    cardsInfos.sort((a, b) => a.position - b.position);
+
+    await Promise.all(
+      cards.map(
+        (cardEl, i) =>
+          new Promise((resolve) => {
+            const info = cardsInfos[i];
+            if (!info) return resolve();
+
+            // === RÉCUPÉRATION DES BONUS (ON NE SUPPRIME RIEN) ===
+            const card_idx = info.type + info.type_arg;
+            const bonuses = this.gamedatas.building_cards[card_idx] || [];
+
+            setTimeout(() => {
+              // === ANIMATION DISPARITION ===
+              cardEl.style.transition = `transform ${duration}ms ease-in-out, opacity ${duration}ms ease-in-out`;
+              cardEl.style.transform = "scale(0)";
+              cardEl.style.opacity = "0";
+
+              setTimeout(() => {
+                const parent = cardEl.parentElement;
+
+                // === CRÉATION DES ICÔNES (HTML UNIQUEMENT) ===
+                bonuses.forEach((bonus) => {
+                  let ic = bonus;
+
+                  // ghost_n → ghost
+                  if (bonus.includes("_")) {
+                    ic = bonus.split("_")[0];
+                  }
+
+                  const html = `<div class="river_icon ic_${ic}"></div>`;
+                  parent.insertAdjacentHTML("beforeend", html);
+                });
+
+                // Suppression carte
+                cardEl.remove();
+                resolve();
+              }, duration);
+            }, i * 50);
+          }),
+      ),
+    );
+
+    delete stack.dataset.animating;
+  }
+
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications
 
@@ -1699,7 +1826,11 @@ export class Game {
     // on retourne les cartes dans une colonne
     // on récolte
     console.log("notif_flipCards", args);
-    this.animFlipStack();
+    await this.animFlipStack(args.no_house, args.cards, args.player_id);
+
+    await this.toggleRiver();
+
+    await this.animGetRewards(args.no_house, args.cards, args.player_id);
 
     // cartes 1
     //  bonus flip9+   : on déplace dans le conteneur si on a des cartes 9+

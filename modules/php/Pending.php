@@ -29,8 +29,6 @@ class Pending extends APP_GameClass
         /// PREFERENCE DE CONFIRMATION
         $sql = "SELECT pgp_value FROM bga_user_preferences WHERE pgp_player = '{$this->player_id}' AND pgp_preference_id = 100";
         $this->player_pref_confirm = game::$instance->getUniqueValueFromDB($sql);
-
-        
     }
 
 
@@ -46,10 +44,10 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('${actplayer} must roll the dice');
         $ret['titleyou'] = clienttranslate('${you} must roll the dice');
 
-             
+
         $ret['buttons'][] = 'roll_dice_btn';
-       
-    
+
+
         return $ret;
     }
 
@@ -77,10 +75,8 @@ class Pending extends APP_GameClass
             ]
         );
 
-       
+
         game::$instance->addPending($this->player_id, "ChooseAction");
-        
-        
     }
 
     function argChooseAction($parg1, $parg2)
@@ -100,80 +96,70 @@ class Pending extends APP_GameClass
         $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
 
         //COMPTEUR DE CARTES BUILDING RESTANTES
-        $count_deck1 = game::$instance->{'deck_'.$dice1}->get();
-        $count_deck2 = game::$instance->{'deck_'.$dice2}->get();
-        $count_addition = game::$instance->{'deck_'.$addition}->get();
+        $count_deck1 = game::$instance->{'deck_' . $dice1}->get();
+        $count_deck2 = game::$instance->{'deck_' . $dice2}->get();
+        $count_addition = game::$instance->{'deck_' . $addition}->get();
 
         //COMPTEUR DE HOUSES
-        $count_house1 = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$dice1}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
-        $count_house2 = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$dice2}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
-        $count_houseaddition = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$addition}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
+        $count_house1 = count(game::$instance->getObjectListFromDB("SELECT card_id id FROM building WHERE card_type = '{$dice1}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true));
+        $count_house2 = count(game::$instance->getObjectListFromDB("SELECT card_id id FROM building WHERE card_type = '{$dice2}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true));
+        $count_houseaddition = count(game::$instance->getObjectListFromDB("SELECT card_id id FROM building WHERE card_type = '{$addition}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true));
 
         //POSSIBLE BUTTON TAKE
         $btn_take = 0;
         //POSSIBLE BUTTON FLIP
         $btn_flip = 0;
-       
+
 
         //SELECT BUILDING
-        if($count_deck1 >= 1)
-        {
-            $ret["selectable"][] = 'table_building_card_'.$dice1;
+        if ($count_deck1 >= 1) {
+            $ret["selectable"][] = 'table_building_card_' . $dice1;
             $btn_take = 1;
         }
-        if($count_deck2 >=1 && $dice1 != $dice2)
-        {
-            $ret["selectable"][] = 'table_building_card_'.$dice2;
+        if ($count_deck2 >= 1 && $dice1 != $dice2) {
+            $ret["selectable"][] = 'table_building_card_' . $dice2;
             $btn_take = 1;
         }
-        if($count_addition >= 1)
-        {
-            $ret["selectable"][] = 'table_building_card_'.$addition;
+        if ($count_addition >= 1) {
+            $ret["selectable"][] = 'table_building_card_' . $addition;
             $btn_take = 1;
         }
-        
-        if($btn_take == 1)
-        {
+
+        if ($btn_take == 1) {
             $ret['buttons'][] = 'take_card_btn';
         }
-        
-        
+
+
         //SELECT HOUSE
-        if($count_house1 >= 1)
-        {
-            $ret["selectable"][] = 'player_'.$this->player_id.'_stack_'.$dice1;
+        if ($count_house1 >= 1) {
+            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $dice1;
             $btn_flip = 1;
         }
-        if($count_house2 >=1 && $dice1 != $dice2)
-        {
-            $ret["selectable"][] = 'player_'.$this->player_id.'_stack_'.$dice2;
+        if ($count_house2 >= 1 && $dice1 != $dice2) {
+            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $dice2;
             $btn_flip = 1;
         }
-        if($count_houseaddition >= 1)
-        {
-            $ret["selectable"][] = 'player_'.$this->player_id.'_stack_'.$addition;
+        if ($count_houseaddition >= 1) {
+            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $addition;
             $btn_flip = 1;
         }
-        
-        if($btn_flip == 1)
-        {
+
+        if ($btn_flip == 1) {
             $ret['buttons'][] = 'flip_cards_btn';
         }
 
-        
+
         //REROLL DICE
-        if($reroll == 1)
-        {
+        if ($reroll == 1) {
             $ret['buttons'][] = 'reroll_dice_btn';
         }
 
         //CLOCK SI RIEN N'EST POSSIBLE
-        if($btn_take == 0 && $btn_flip == 0 && $reroll == 0)
-        {
-           $ret['buttons'][] = 'turn_clock_btn'; 
+        if ($btn_take == 0 && $btn_flip == 0 && $reroll == 0) {
+            $ret['buttons'][] = 'turn_clock_btn';
         }
 
-    
+
         return $ret;
     }
 
@@ -184,18 +170,16 @@ class Pending extends APP_GameClass
         ///////////////////////////////////////////////////////////////////////////////////////
         //SI POUR X RAISONS LE JOUEUR ARRIVE A CLICKER SUR UN DES BOUTONS SANS SELECTION (en modifiant sur l'inspecteur)
         ///////////////////////////////////////////////////////////////////////////////////////
-        
-        if(($varg1 == 'flip_cards_btn' || $varg1 == 'take_card_btn') && $varg2 == '')
-        {
+
+        if (($varg1 == 'flip_cards_btn' || $varg1 == 'take_card_btn') && $varg2 == '') {
             game::$instance->addPending($this->player_id, "ChooseAction");
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
         //REROLL DICE TOKEN SI TOKEN OK
         ///////////////////////////////////////////////////////////////////////////////////////
-       
-        elseif($varg1 == 'reroll_dice_btn')
-        {
+
+        elseif ($varg1 == 'reroll_dice_btn') {
             game::$instance->DbQuery("UPDATE player set reroll = 0 WHERE player_id='{$this->player_id}'");
 
             game::$instance->notify->all(
@@ -203,7 +187,7 @@ class Pending extends APP_GameClass
                 '',
                 [
                     'player_id' => $this->player_id,
-                    
+
                 ]
             );
 
@@ -226,61 +210,49 @@ class Pending extends APP_GameClass
                     'roll' => $roll
                 ]
             );
-         
-            game::$instance->addPending($this->player_id, "ChooseAction");
 
+            game::$instance->addPending($this->player_id, "ChooseAction");
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
         //TURN CLOCK SI LE JOUEUR N'A PAS DE CHOIX POSSIBLE
         ///////////////////////////////////////////////////////////////////////////////////////
-        
-        elseif($varg1 == 'turn_clock_btn')
-        {
+
+        elseif ($varg1 == 'turn_clock_btn') {
             $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
-            if($clock != 5)
-            {
+            if ($clock != 5) {
                 game::$instance->DbQuery("UPDATE clock set clock = clock + 1 WHERE id=1");
-            }
-            else
-            {
+            } else {
                 game::$instance->DbQuery("UPDATE clock set clock = 0 WHERE id=1");
             }
 
             $newclock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
 
             game::$instance->notify->all(
-                    "activateClockTower",
-                    '',
-                    [
-                        'player_id' => $this->player_id,
-                        'clock' => $newclock,
-                        
-                    ]
+                "activateClockTower",
+                '',
+                [
+                    'player_id' => $this->player_id,
+                    'clock' => $newclock,
+
+                ]
             );
 
             //Position Artefact
-            if($newclock == 0 || $newclock == 3)
-            {
+            if ($newclock == 0 || $newclock == 3) {
                 game::$instance->player_artefacts->inc($this->player_id, 1);
                 $count_artefact = game::$instance->player_artefacts->get($this->player_id);
-                if($count_artefact == 3)
-                {
+                if ($count_artefact == 3) {
                     game::$instance->addPending($this->player_id, "EndGame");
-                }
-
-                else
-                {
+                } else {
                     game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
                 }
             }
 
             // Position Turn reroll token
-            if($newclock == 2 || $newclock == 5)
-            {
+            if ($newclock == 2 || $newclock == 5) {
                 $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
-                if($reroll == 0)
-                {
+                if ($reroll == 0) {
                     game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
 
                     game::$instance->notify->all(
@@ -288,72 +260,62 @@ class Pending extends APP_GameClass
                         '',
                         [
                             'player_id' => $this->player_id,
-                            
+
                         ]
                     );
-
                 }
 
                 game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
-
             }
 
             // Position pet
-            if($newclock == 1 || $newclock == 4)
-            {
-                
+            if ($newclock == 1 || $newclock == 4) {
+
                 game::$instance->addPending($this->player_id, "ChoosePet");
-
             }
-           
-            
-
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
         // LE JOUEUR TAKE UNE CARTE
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        elseif($varg1 == 'take_card_btn')
-        {
-            
+        elseif ($varg1 == 'take_card_btn') {
+
             //on recupere le numero du deck
-            [, , , $no_deck] = explode('_', $varg2);
-            $deck = 'deck'.$no_deck;
+            [,,, $no_deck] = explode('_', $varg2);
+            $deck = 'deck' . $no_deck;
 
             //on pick la carte et on recupere les info du pickcard (pour la card_id)
-            $card_pick = game::$instance->building_DB->pickCardForLocation( $deck, 'house', $this->player_id);
+            $card_pick = game::$instance->building_DB->pickCardForLocation($deck, 'house', $this->player_id);
 
             //on met a jour sa position
-            $count_card = count(game::$instance->getObjectListFromDB( "SELECT card_id id FROM building WHERE card_type = '{$no_deck}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true ));
+            $count_card = count(game::$instance->getObjectListFromDB("SELECT card_id id FROM building WHERE card_type = '{$no_deck}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true));
             game::$instance->DbQuery("UPDATE building set position = $count_card WHERE card_id ='{$card_pick['id']}'");
 
             //on recupere les info pour le front
-            $card =  game::$instance->getObjectFromDB( "SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'" );
+            $card =  game::$instance->getObjectFromDB("SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'");
 
 
             $txt = clienttranslate('${player_name} takes card ${no_card}');
-                game::$instance->notify->all(
-                    "takeCard",
-                    $txt,
-                    [
-                        'player_id' => $this->player_id,
-                        'no_card' => $no_deck,
-                        'card' => $card,
-                    ]
-                );
-        
-            
+            game::$instance->notify->all(
+                "takeCard",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'no_card' => $no_deck,
+                    'card' => $card,
+                ]
+            );
+
+
             //je change le compteur du deck
-            game::$instance->{'deck_'.$no_deck}->inc(-1);
+            game::$instance->{'deck_' . $no_deck}->inc(-1);
 
 
             // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
-            if($no_deck >= 1 && $no_deck <= 4)
-            {
+            if ($no_deck >= 1 && $no_deck <= 4) {
                 $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
-                if($reroll == 0)
-                {
+                if ($reroll == 0) {
                     game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
 
                     game::$instance->notify->all(
@@ -361,63 +323,50 @@ class Pending extends APP_GameClass
                         '',
                         [
                             'player_id' => $this->player_id,
-                            
+
                         ]
                     );
-
                 }
 
                 game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
-
             }
 
             // ACTION IMMEDIATE SUR UN TAKE: turn clock
-            elseif($no_deck == 9)
-            {
+            elseif ($no_deck == 9) {
                 $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
-                if($clock != 5)
-                {
+                if ($clock != 5) {
                     game::$instance->DbQuery("UPDATE clock set clock = clock + 1 WHERE id=1");
-                }
-                else
-                {
+                } else {
                     game::$instance->DbQuery("UPDATE clock set clock = 0 WHERE id=1");
                 }
 
                 $newclock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
 
                 game::$instance->notify->all(
-                        "activateClockTower",
-                        '',
-                        [
-                            'player_id' => $this->player_id,
-                            'clock' => $newclock,
-                            
-                        ]
+                    "activateClockTower",
+                    '',
+                    [
+                        'player_id' => $this->player_id,
+                        'clock' => $newclock,
+
+                    ]
                 );
 
                 //Position Artefact
-                if($newclock == 0 || $newclock == 3)
-                {
+                if ($newclock == 0 || $newclock == 3) {
                     game::$instance->player_artefacts->inc($this->player_id, 1);
                     $count_artefact = game::$instance->player_artefacts->get($this->player_id);
-                    if($count_artefact == 3)
-                    {
+                    if ($count_artefact == 3) {
                         game::$instance->addPending($this->player_id, "EndGame");
-                    }
-
-                    else
-                    {
+                    } else {
                         game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
                     }
                 }
 
                 // Position Turn reroll token
-                if($newclock == 2 || $newclock == 5)
-                {
+                if ($newclock == 2 || $newclock == 5) {
                     $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
-                    if($reroll == 0)
-                    {
+                    if ($reroll == 0) {
                         game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
 
                         game::$instance->notify->all(
@@ -425,70 +374,58 @@ class Pending extends APP_GameClass
                             '',
                             [
                                 'player_id' => $this->player_id,
-                                
+
                             ]
                         );
-
                     }
 
                     game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
-
                 }
 
                 // Position pet
-                if($newclock == 1 || $newclock == 4)
-                {
-                    
+                if ($newclock == 1 || $newclock == 4) {
+
                     game::$instance->addPending($this->player_id, "ChoosePet");
-
                 }
-
             }
 
             // AUCUNE ACTION IMMEDIATE SUR UN TAKE
-            else
-            {
+            else {
                 game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
             }
-    
-
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
         // LE JOUEUR FLIP UNE MAISON
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        elseif($varg1 == 'flip_cards_btn')
-        {
+        elseif ($varg1 == 'flip_cards_btn') {
             //on recupere le numero de la maison
-            [, , , $no_house] = explode('_', $varg2);
+            [,,, $no_house] = explode('_', $varg2);
 
-            $cards = game::$instance->getObjectListFromDB( "SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type ='{$no_house}'" );
+            $cards = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type ='{$no_house}'");
 
             $txt = clienttranslate('${player_name} flips house ${no_house}');
-                game::$instance->notify->all(
-                    "flipCards",
-                    $txt,
-                    [
-                        'player_id' => $this->player_id,
-                        'no_house' => $no_house,
-                        'cards' => $cards,
-                    ]
-                );
+            game::$instance->notify->all(
+                "flipCards",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'no_house' => $no_house,
+                    'cards' => $cards,
+                ]
+            );
 
             ///////////////////////////////////////////////////////////////////////////////////////
             // POUR LE MOMENT JE DISCARD LES CARDS (mais on pourra les mettre en location 'hand' ou autre pour les garder visible sur le verso)
             ///////////////////////////////////////////////////////////////////////////////////////
-            
-            foreach($cards as $card)
-            {
+
+            foreach ($cards as $card) {
                 game::$instance->building_DB->moveCard($card['id'], 'discard', $this->player_id);
             }
 
             game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
-
         }
-        
     }
 
     function argChoosePet($parg1, $parg2)
@@ -506,15 +443,14 @@ class Pending extends APP_GameClass
         $ret["selectable"][] = 'card_pet_3';
 
         $ret['buttons'][] = 'take_pet_btn';
-       
-    
+
+
         return $ret;
     }
 
     function ChoosePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         game::$instance->addPending($this->player_id, "ChoosePet");
-
     }
 
 
@@ -530,7 +466,7 @@ class Pending extends APP_GameClass
     ///////////////////////////////////////////////////////////////////////////////////////
     //FONCTION TRANSITOIRE POUR LA FIN DE PARTIE (tourne en boucle)
     ///////////////////////////////////////////////////////////////////////////////////////
-    
+
     function argEndGame($parg1, $parg2)
     {
         $ret = [];
@@ -541,10 +477,10 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('End of game');
         $ret['titleyou'] = clienttranslate('End of game');
 
-             
+
         $ret['buttons'][] = 'yes_btn';
-       
-    
+
+
         return $ret;
     }
 
@@ -553,9 +489,5 @@ class Pending extends APP_GameClass
     function EndGame($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         game::$instance->addPending($this->player_id, "EndGame");
-
     }
-
-
-
 }
