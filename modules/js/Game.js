@@ -956,7 +956,8 @@ export class Game {
     // Parcourir l'ordre et injecter le HTML directement
     for (let i = 1; i < 4; i++) {
       // la table du pet i+1
-      const containerType = this.gamedatas.other[`pet${i}`].split("_")[1];
+      const containerType = this.gamedatas.other[`pet${i}`].split("_")[0];
+      console.log("containerType", this.gamedatas.other[`pet${i}`]);
 
       const container = document.getElementById(`table_pet_slot_${containerType}`);
 
