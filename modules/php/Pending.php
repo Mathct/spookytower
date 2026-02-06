@@ -221,9 +221,9 @@ class Pending extends APP_GameClass
         elseif ($varg1 == 'turn_clock_btn') {
             $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
             if ($clock != 5) {
-                game::$instance->DbQuery("UPDATE clock set clock = clock + 1 WHERE id=1");
+                game::$instance->DbQuery("UPDATE other set clock = clock + 1 WHERE id=1");
             } else {
-                game::$instance->DbQuery("UPDATE clock set clock = 0 WHERE id=1");
+                game::$instance->DbQuery("UPDATE other set clock = 0 WHERE id=1");
             }
 
             $newclock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
@@ -335,9 +335,9 @@ class Pending extends APP_GameClass
             elseif ($no_deck == 9) {
                 $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
                 if ($clock != 5) {
-                    game::$instance->DbQuery("UPDATE clock set clock = clock + 1 WHERE id=1");
+                    game::$instance->DbQuery("UPDATE other set clock = clock + 1 WHERE id=1");
                 } else {
-                    game::$instance->DbQuery("UPDATE clock set clock = 0 WHERE id=1");
+                    game::$instance->DbQuery("UPDATE other set clock = 0 WHERE id=1");
                 }
 
                 $newclock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
