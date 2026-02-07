@@ -873,7 +873,7 @@ export class Game {
     const clockTowerSlot = document.getElementById("clock_tower");
     if (!clockTowerSlot) return;
 
-    const clockHourRot = 2 * 60;
+    const clockHourRot = 60 * this.gamedatas.other.clock;
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const towerHTML = `
@@ -1819,7 +1819,7 @@ export class Game {
     }
     // carte 9 on gagne un clock, activé aussitôt
     if (args.no_card == 9) {
-      this.animClockTower();
+      //this.animClockTower();
     }
   }
 

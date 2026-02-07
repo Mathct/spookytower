@@ -428,6 +428,13 @@ class Pending extends APP_GameClass
         }
     }
 
+
+
+
+
+
+
+
     function argChoosePet($parg1, $parg2)
     {
         $ret = [];
@@ -438,11 +445,37 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('${actplayer} must choose a pet');
         $ret['titleyou'] = clienttranslate('${you} must choose a pet');
 
-        $ret["selectable"][] = 'card_pet_1';
-        $ret["selectable"][] = 'card_pet_2';
-        $ret["selectable"][] = 'card_pet_3';
+        $pets = game::$instance->getObjectFromDB( "SELECT pet1 pet1, pet2 pet2, pet3 pet3 FROM other WHERE id=1" );
 
-        $ret['buttons'][] = 'take_pet_btn';
+        for ($i=1 ; $i<=3 ; $i++)
+        {
+            [$no_pet, $position] = explode('_', $pets['pet'.$i]);
+            if($position == 'table')
+            {
+                $ret["selectable"][] = 'card_pet_'.$no_pet;
+            }
+        }
+
+        if(count($ret["selectable"]) == 0)
+        {
+            for ($i=1 ; $i<=3 ; $i++)
+            {
+                [$no_pet, $position] = explode('_', $pets['pet'.$i]);
+                if($position != $this->player_id)
+                {
+                    $ret["selectable"][] = 'card_pet_'.$no_pet;
+                }
+            }
+
+        }
+
+        if(count($ret["selectable"]) != 0)
+        {
+            $ret['buttons'][] = 'take_pet_btn';
+        }
+
+
+        
 
 
         return $ret;
@@ -450,14 +483,95 @@ class Pending extends APP_GameClass
 
     function ChoosePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
-        game::$instance->addPending($this->player_id, "ChoosePet");
+        if($varg1 == null)
+        {
+            game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+        }
+
+        else
+        {
+            [,, $no_pet] = explode('_', $varg2);
+
+            $no_pet = intval($no_pet);
+
+            // je recupere le nom de la colonne a modifier
+            $pattern = $no_pet . '\_%';
+
+            $sql = "
+            SELECT 
+                CASE
+                    WHEN pet1 LIKE '{$pattern}' THEN 'pet1'
+                    WHEN pet2 LIKE '{$pattern}' THEN 'pet2'
+                    WHEN pet3 LIKE '{$pattern}' THEN 'pet3'
+                END AS pet_column
+            FROM other
+            WHERE id = 1
+            ";
+
+            $result = game::$instance->DbQuery($sql);
+            $row = $result->fetch_assoc();
+            $pet_column = $row['pet_column'];
+
+            //je recupere l'etat de la position du pet avant modif (pour savoir si c'est take ou steal)
+            $detail_pet = game::$instance->getUniqueValueFromDB("SELECT $pet_column FROM other WHERE id=1");
+            [,$position] = explode('_', $detail_pet);
+
+            //je modifie l'etat de la position pet
+            if ($pet_column !== null) {
+                $newposition = $no_pet . '_' . $this->player_id;
+                game::$instance->DbQuery("
+                    UPDATE other 
+                    SET {$pet_column} = '{$newposition}' 
+                    WHERE id = 1
+                ");
+            }
+
+            // je lances les notifs (take ou steal)
+            if($position == 'table')
+            {
+                $txt = clienttranslate('${player_name} takes a pet');
+                game::$instance->notify->all(
+                "stealPet",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'pet_id' => $varg2,
+                ]
+            );
+            }
+
+            else
+            {
+                $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
+                $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
+                $txt = clienttranslate('${player_name} steals a pet from ${opponent}');
+                game::$instance->notify->all(
+                "stealPet",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'pet_id' => $varg2,
+                    'opponent' =>    [
+                        'log' => '<b style="color: #${color};">${opponent_name}</b>',
+                        'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
+                    ],
+                ]
+            );
+            }
+
+            //j'inc le compteur ghosts
+
+            game::$instance->player_ghosts->inc($this->player_id, 1);
+            $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
+            if ($count_ghosts == 5) {
+                game::$instance->addPending($this->player_id, "EndGame");
+            } else {
+                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+            }
+
+        }
+        
     }
-
-
-
-
-
-
 
 
 
