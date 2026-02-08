@@ -31,8 +31,16 @@ class Pending extends APP_GameClass
         $this->player_pref_confirm = game::$instance->getUniqueValueFromDB($sql);
     }
 
+    /*
+     _______               
+    |__   __|              
+        | |_   _ _ __ _ __  
+        | | | | | '__| '_ \ 
+        | | |_| | |  | | | |
+        |_|\__,_|_|  |_| |_|
 
-
+    */                       
+                        
 
     function argPlayerTurn($parg1, $parg2)
     {
@@ -78,6 +86,16 @@ class Pending extends APP_GameClass
 
         game::$instance->addPending($this->player_id, "ChooseAction");
     }
+
+    /*
+      _____ _                                         _   _             
+     / ____| |                              /\       | | (_)            
+    | |    | |__   ___   ___  ___  ___     /  \   ___| |_ _  ___  _ __  
+    | |    | '_ \ / _ \ / _ \/ __|/ _ \   / /\ \ / __| __| |/ _ \| '_ \ 
+    | |____| | | | (_) | (_) \__ \  __/  / ____ \ (__| |_| | (_) | | | |
+     \_____|_| |_|\___/ \___/|___/\___| /_/    \_\___|\__|_|\___/|_| |_|
+                                                                        
+    */                                                                
 
     function argChooseAction($parg1, $parg2)
     {
@@ -271,7 +289,7 @@ class Pending extends APP_GameClass
             // Position pet
             if ($newclock == 1 || $newclock == 4) {
 
-                game::$instance->addPending($this->player_id, "ChoosePet");
+                game::$instance->addPending($this->player_id, "ClockChoosePet");
             }
         }
 
@@ -385,7 +403,7 @@ class Pending extends APP_GameClass
                 // Position pet
                 if ($newclock == 1 || $newclock == 4) {
 
-                    game::$instance->addPending($this->player_id, "ChoosePet");
+                    game::$instance->addPending($this->player_id, "ClockChoosePet");
                 }
             }
 
@@ -416,6 +434,86 @@ class Pending extends APP_GameClass
                 ]
             );
 
+            // je mets toutes les actions recupérées par le flip dans la table actionpending et j'incremente les compteurs ghosts et torches
+
+            $actions = game::$instance->getObjectListFromDB( "SELECT card_id id, card_type type, card_type_arg type_arg FROM building WHERE card_location = 'house' AND card_location_arg = '{$this->player_id}' AND card_type = '{$no_house}'");
+            
+            foreach($actions as $action)
+            {
+                $type_card = $action['type'].$action['type_arg'];
+                $bonus = game::$instance->_BUILDING_CARD[$type_card];
+                foreach($bonus as $name)
+                {
+                    if($name == 'flip8')
+                    {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if($name == 'flip9')
+                    {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if($name == 'draw8')
+                    {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if($name == 'clock')
+                    {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if($name == 'pet')
+                    {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if($name == 'grimoire')
+                    {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if(str_starts_with($name, "ghost"))
+                    {
+                        if($type_card == 121 || $type_card == 122 || $type_card == 123)
+                        {
+                            game::$instance->DbQuery("UPDATE actionpending set count = count + 2 WHERE name = 'ghost'");
+                        }
+                        else
+                        {
+                            game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
+                        }
+                    }
+                    if($name == 'clue')
+                    {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                }
+            
+            }
+
+            //je gere les compteurs des ghosts et clues
+
+            $ghosts = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'ghost'");
+            $clues = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
+        
+            if($ghosts >= 1)
+            {
+                for($i = 1 ; $i <= $ghosts; $i++)
+                {
+                    game::$instance->player_ghosts->inc($this->player_id, 1);
+                }
+
+
+            }
+
+            if($clues >= 1)
+            {
+                for($i = 1 ; $i <= $clues; $i++)
+                {
+                    game::$instance->player_clues->inc($this->player_id, 1);
+                }
+
+                
+            }
+
+
+
             ///////////////////////////////////////////////////////////////////////////////////////
             // POUR LE MOMENT JE DISCARD LES CARDS (mais on pourra les mettre en location 'hand' ou autre pour les garder visible sur le verso)
             ///////////////////////////////////////////////////////////////////////////////////////
@@ -424,24 +522,75 @@ class Pending extends APP_GameClass
                 game::$instance->building_DB->moveCard($card['id'], 'discard', $this->player_id);
             }
 
-            game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+
+            // si y a eu des ghosts dans le fliphouse on teste la fin de partie
+
+            $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
+            if ($count_ghosts == 5) {
+                game::$instance->addPending($this->player_id, "EndGame");
+            } else {
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+            }
+
+           
         }
     }
 
 
 
+    /*
+                  _   _                   ____                        
+        /\       | | (_)                 |  _ \                       
+       /  \   ___| |_ _  ___  _ __  ___  | |_) | ___  _ __  _   _ ___ 
+      / /\ \ / __| __| |/ _ \| '_ \/ __| |  _ < / _ \| '_ \| | | / __|
+     / ____ \ (__| |_| | (_) | | | \__ \ | |_) | (_) | | | | |_| \__ \
+    /_/    \_\___|\__|_|\___/|_| |_|___/ |____/ \___/|_| |_|\__,_|___/
+                                                                    
+    */                                                                  
 
-
-
-
-
-    function argChoosePet($parg1, $parg2)
+    function argActionsBonus($parg1, $parg2)
     {
         $ret = [];
         $ret["selectable"] = [];
         $ret["selected"] = [];
         $ret['buttons'] = [];
-        $ret["function"] = "PlayerTurn";
+        $ret["function"] = "ActionsBonus";
+        $ret['title'] = clienttranslate('${actplayer} must choose an action');
+        $ret['titleyou'] = clienttranslate('${you} must choose an action');
+
+        $ret['buttons'][] = 'yes_btn';
+
+        return $ret;
+    }
+
+
+
+    function ActionsBonus($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {
+        game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+    }
+
+
+
+
+    /*
+      _____ _            _       _____ _                            _____     _   
+     / ____| |          | |     / ____| |                          |  __ \   | |  
+    | |    | | ___   ___| | __ | |    | |__   ___   ___  ___  ___  | |__) |__| |_ 
+    | |    | |/ _ \ / __| |/ / | |    | '_ \ / _ \ / _ \/ __|/ _ \ |  ___/ _ \ __|
+    | |____| | (_) | (__|   <  | |____| | | | (_) | (_) \__ \  __/ | |  |  __/ |_ 
+     \_____|_|\___/ \___|_|\_\  \_____|_| |_|\___/ \___/|___/\___| |_|   \___|\__|
+                                                                               
+    */                                                                          
+
+
+    function argClockChoosePet($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "ClockChoosePet";
         $ret['title'] = clienttranslate('${actplayer} must choose a pet');
         $ret['titleyou'] = clienttranslate('${you} must choose a pet');
 
@@ -481,7 +630,7 @@ class Pending extends APP_GameClass
         return $ret;
     }
 
-    function ChoosePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    function ClockChoosePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         if($varg1 == null)
         {
@@ -574,7 +723,15 @@ class Pending extends APP_GameClass
     }
 
 
-
+    /*
+     ______           _    _____                      
+    |  ____|         | |  / ____|                     
+    | |__   _ __   __| | | |  __  __ _ _ __ ___   ___ 
+    |  __| | '_ \ / _` | | | |_ |/ _` | '_ ` _ \ / _ \
+    | |____| | | | (_| | | |__| | (_| | | | | | |  __/
+    |______|_| |_|\__,_|  \_____|\__,_|_| |_| |_|\___|
+                                                   
+    */                                              
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -587,7 +744,7 @@ class Pending extends APP_GameClass
         $ret["selectable"] = [];
         $ret["selected"] = [];
         $ret['buttons'] = [];
-        $ret["function"] = "PlayerTurn";
+        $ret["function"] = "EndGame";
         $ret['title'] = clienttranslate('End of game');
         $ret['titleyou'] = clienttranslate('End of game');
 

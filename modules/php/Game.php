@@ -79,8 +79,8 @@ class Game extends \Bga\GameFramework\Table
         $this->initGameStateLabels([
 
             // GSV
-            //"pets"              => 10,
-            //"super_bonus_action"          => 11,
+            "replay" => 10,
+            "park_order" => 11,
 
             // options
             //'game_mode'            => 100,
@@ -159,8 +159,16 @@ class Game extends \Bga\GameFramework\Table
      */
     protected function setupNewGame($players, $options = [])
     {
-        //counters
 
+        //gsv
+        $this->setGameStateInitialValue("replay", 0);
+
+        $park = ['2', '3', '4'];
+        shuffle($park);          // Mélange le tableau
+        $park_order = intval('1'.$park[0].$park[1].$park[2].'5');
+        $this->setGameStateInitialValue("park_order", $park_order);
+
+        //counters
         $this->deck_1->initDb(5);
         $this->deck_2->initDb(5);
         $this->deck_3->initDb(5);
@@ -263,6 +271,19 @@ class Game extends \Bga\GameFramework\Table
             INSERT INTO other (pet1, pet2, pet3)
             VALUES ('$pet1', '$pet2', '$pet3')
         ");
+
+        // INIT ACTIONPENDING
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('flip8')");
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('flip9')");
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('draw8')");
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('clock')");
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('pet')");
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('grimoire')");
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('ghost')");
+        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('clue')");
+        
+        
+
 
 
         // Init global values with their initial values.
@@ -396,7 +417,9 @@ class Game extends \Bga\GameFramework\Table
         $this->player_grimoires->fillResult($result);
         $this->player_clocks->fillResult($result);
 
+        $result["park_order"] = $this->getGameStateValue('park_order');
 
+        
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
         return $result;

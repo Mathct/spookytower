@@ -97,5 +97,12 @@ CREATE TABLE IF NOT EXISTS `other` (
 --   `clock`          position actuelle de l'horloge ( de 0 à 5 ... 0 étant midi)
 --   `pet(position)`  NumeroDuPet_table ou NumeroDuPet_idplayer
 
+CREATE TABLE IF NOT EXISTS `actionpending` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `name` varchar(16) NULL,
+  `count` int(2) unsigned DEFAULT 0, 
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
 ALTER TABLE `player` ADD `reroll` int(5) NOT NULL DEFAULT 1;
 --   `reroll`     1 reroll OK, 0 reroll NOK

@@ -112,18 +112,6 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-
-          case "turn_clock_btn":
-            this.bga.statusBar.addActionButton(
-              _("Turn clock"),
-              () =>
-                this.bga.actions.performAction("actClock", {
-                  arg1: key,
-                }),
-              { color: "primary" },
-            );
-            break;
-
           case "roll_dice_btn":
             this.bga.statusBar.addActionButton(
               _("Roll dice"),
@@ -152,7 +140,7 @@ class NormalTurn {
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
-                  arg2: this.game.selected_building,
+                  arg2: this.game.selected_token,
                 }),
               {
                 color: "primary",
@@ -164,14 +152,13 @@ class NormalTurn {
               this.game.safeClass("take_card_btn", "add", "disabled");
             }
             break;
-
           case "flip_cards_btn":
             this.bga.statusBar.addActionButton(
               _("Flip Cards"),
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
-                  arg2: this.game.selected_stack,
+                  arg2: this.game.selected_token,
                 }),
               { color: "primary", id: "flip_cards_btn" },
             );
@@ -180,7 +167,6 @@ class NormalTurn {
               this.game.safeClass("flip_cards_btn", "add", "disabled");
             }
             break;
-
           case "take_pet_btn":
             this.bga.statusBar.addActionButton(
               _("Take Pet"),
@@ -199,16 +185,105 @@ class NormalTurn {
               this.game.safeClass("take_pet_btn", "add", "disabled");
             }
             break;
+
+          case "turn_clock_btn":
+            this.bga.statusBar.addActionButton(
+              _("Turn clock"),
+              () =>
+                this.bga.actions.performAction("actClock", {
+                  arg1: key,
+                }),
+              { color: "primary" },
+            );
+            break;
+          case "reveal_grimoire_btn":
+            this.bga.statusBar.addActionButton(
+              _("Reveal Grimoire"),
+              () =>
+                this.bga.actions.performAction("actGrimoire", {
+                  arg1: key,
+                }),
+              { color: "primary" },
+            );
+            break;
+          case "take_card8_btn":
+            this.bga.statusBar.addActionButton(
+              _("Take a 8- Card"),
+              () =>
+                this.bga.actions.performAction("actTakeCard8", {
+                  arg1: key,
+                  arg2: this.game.selected_building,
+                }),
+              { color: "primary", id: "take_card8_btn" },
+            );
+
+            if (this.game.selected_building == "") {
+              this.game.safeClass("take_card8_btn", "add", "disabled");
+            }
+            break;
+          case "take_card_any_btn":
+            this.bga.statusBar.addActionButton(
+              _("Take any Card"),
+              () =>
+                this.bga.actions.performAction("actTakeCardAny", {
+                  arg1: key,
+                  arg2: this.game.selected_building,
+                }),
+              { color: "primary", id: "take_card_any_btn" },
+            );
+
+            if (this.game.selected_building == "") {
+              this.game.safeClass("take_card_any_btn", "add", "disabled");
+            }
+            break;
+          case "flip_flip8_btn":
+            this.bga.statusBar.addActionButton(
+              _("Flip a 8- Card"),
+              () =>
+                this.bga.actions.performAction("actFlipCard8", {
+                  arg1: key,
+                  arg2: this.game.selected_stack,
+                }),
+              { color: "primary", id: "flip_card8_btn" },
+            );
+
+            if (this.game.selected_stack == "") {
+              this.game.safeClass("flip_card8_btn", "add", "disabled");
+            }
+            break;
+          case "flip_card9_btn":
+            this.bga.statusBar.addActionButton(
+              _("Flip a 9+ Card"),
+              () =>
+                this.bga.actions.performAction("actFlipCard9", {
+                  arg1: key,
+                  arg2: this.game.selected_stack,
+                }),
+              { color: "primary", id: "flip_card9_btn" },
+            );
+
+            if (this.game.selected_stack == "") {
+              this.game.safeClass("flip_card9_btn", "add", "disabled");
+            }
+            break;
+          case "validate_bonus_btn":
+            this.bga.statusBar.addActionButton(
+              _("Validate Bonus"),
+              () =>
+                this.bga.actions.performAction("actValidateBonus", {
+                  arg1: key,
+                  arg2: this.game.selected_token,
+                }),
+              { color: "primary", id: "validate_bonus_btn" },
+            );
+
+            if (this.game.selected_token == "") {
+              this.game.safeClass("validate_bonus_btn", "add", "disabled");
+            }
+            break;
         }
       }
     }
-
-    //const playableCardsIds = args.playableCardsIds; // returned by the PlayerTurn::getArgs
-
-    // Add test action buttons in the action status bar, simulating a card click:
-    //playableCardsIds.forEach((cardId) => this.bga.statusBar.addActionButton(_("Play card with id ${card_id}").replace("${card_id}", cardId), () => this.onCardClick(cardId)));
-
-    //this.bga.statusBar.addActionButton(_("Pass"), () => this.bga.actions.performAction("actPass"), { color: "secondary" });
   }
 
   /**
@@ -220,14 +295,7 @@ class NormalTurn {
     this.game.removeConnections();
   }
 
-  /**
-   * This method is called each time the current player becomes active or inactive in a MULTIPLE_ACTIVE_PLAYER state. You can use this method to perform some user interface changes at this moment.
-   * on MULTIPLE_ACTIVE_PLAYER states, you may want to call this function in onEnteringState using `this.onPlayerActivationChange(args, isCurrentPlayerActive)` at the end of onEnteringState.
-   * If your state is not a MULTIPLE_ACTIVE_PLAYER one, you can delete this function.
-   */
-  onPlayerActivationChange(args, isCurrentPlayerActive) {}
-
-  onCardClick(card_id) {
+  /*  onCardClick(card_id) {
     console.log("onCardClick", card_id);
 
     this.bga.actions
@@ -238,7 +306,7 @@ class NormalTurn {
         // What to do after the server call if it succeeded
         // (most of the time, nothing, as the game will react to notifs / change of state instead, so you can delete the `then`)
       });
-  }
+  }*/
 }
 
 export class Game {
@@ -410,6 +478,7 @@ export class Game {
           event: "click",
           handler: clickHandler,
         });
+        return;
       } else if (elt_id.startsWith("card_pet_")) {
         const clickHandler = () => this.onSelectPet(elt_id);
         element.addEventListener("click", clickHandler);
@@ -428,6 +497,7 @@ export class Game {
           event: "click",
           handler: clickHandler,
         });
+        return;
       }
     });
   }
@@ -453,72 +523,102 @@ export class Game {
     this.selected_pet = "";
   }
 
+  // Gestion de la sélection d'un building
   onSelectBuilding(building_id) {
-    console.log("onSelectBuilding", building_id);
-
     const building_elt = document.getElementById(building_id);
     if (!building_elt) return;
 
-    // Retire 'selectable' uniquement si présent
     if (building_elt.classList.contains("selectable")) {
       this.safeClass(building_elt, "remove", "selectable");
     }
 
-    // si aucun est sélectionné
-    if (this.selected_building === "") {
-      console.log("pas de selected building");
-      this.safeClass(building_elt, "add", "selected");
-      this.selected_building = building_id;
-      this.safeClass("take_card_btn", "remove", "disabled");
-    }
-    // Si on clique sur une autre case
-    else {
+    // retire l'ancien building sélectionné
+    if (this.selected_building && this.selected_building !== building_id) {
       const old_elt = document.getElementById(this.selected_building);
       if (old_elt) {
         this.safeClass(old_elt, "remove", "selected");
         this.safeClass(old_elt, "add", "selectable");
       }
-      if (this.selected_building != building_id) {
-        this.safeClass(building_elt, "add", "selected");
-        this.selected_building = building_id;
-      } else {
-        this.selected_building = "";
-        this.safeClass("take_card_btn", "add", "disabled");
+    }
+
+    // retire l'ancien stack sélectionné
+    if (this.selected_stack) {
+      const oldStack = document.getElementById(this.selected_stack);
+      if (oldStack) {
+        this.safeClass(oldStack, "remove", "selected");
+        this.safeClass(oldStack, "add", "selectable");
       }
+      this.selected_stack = "";
+      this.safeClass("flip_cards_btn", "add", "disabled");
+      this.safeClass("flip_card8_btn", "add", "disabled");
+      this.safeClass("flip_card9_btn", "add", "disabled");
+    }
+
+    // toggle building
+    if (this.selected_building !== building_id) {
+      this.safeClass(building_elt, "add", "selected");
+      this.selected_building = building_id;
+      this.selected_token = building_id;
+      this.safeClass("take_card_btn", "remove", "disabled");
+      this.safeClass("take_card8_btn", "remove", "disabled");
+      this.safeClass("take_card_any_btn", "remove", "disabled");
+    } else {
+      this.safeClass(building_elt, "remove", "selected");
+      this.safeClass(building_elt, "add", "selectable");
+      this.selected_building = "";
+      this.selected_token = "";
+      this.safeClass("take_card_btn", "add", "disabled");
+      this.safeClass("take_card8_btn", "add", "disabled");
+      this.safeClass("take_card_any_btn", "add", "disabled");
     }
   }
 
   onSelectStack(stack_id) {
-    console.log("onSelectStack", stack_id);
-
     const stack_elt = document.getElementById(stack_id);
     if (!stack_elt) return;
 
-    // Retire 'selectable' uniquement si présent
     if (stack_elt.classList.contains("selectable")) {
       this.safeClass(stack_elt, "remove", "selectable");
     }
 
-    // si aucun est sélectionné
-    if (this.selected_stack === "") {
-      this.safeClass(stack_elt, "add", "selected");
-      this.selected_stack = stack_id;
-      this.safeClass("flip_cards_btn", "remove", "disabled");
-    }
-    // Si on clique sur une autre case
-    else {
+    // retire l'ancien stack sélectionné
+    if (this.selected_stack && this.selected_stack !== stack_id) {
       const old_elt = document.getElementById(this.selected_stack);
       if (old_elt) {
         this.safeClass(old_elt, "remove", "selected");
         this.safeClass(old_elt, "add", "selectable");
       }
-      if (this.selected_stack != stack_id) {
-        this.safeClass(stack_elt, "add", "selected");
-        this.selected_stack = stack_id;
-      } else {
-        this.selected_stack = "";
-        this.safeClass("flip_cards_btn", "add", "disabled");
+    }
+
+    // retire l'ancien building sélectionné
+    if (this.selected_building) {
+      const oldBuilding = document.getElementById(this.selected_building);
+      if (oldBuilding) {
+        this.safeClass(oldBuilding, "remove", "selected");
+        this.safeClass(oldBuilding, "add", "selectable");
       }
+      this.selected_building = "";
+      this.safeClass("take_card_btn", "add", "disabled");
+      this.safeClass("take_card8_btn", "add", "disabled");
+      this.safeClass("take_card_any_btn", "add", "disabled");
+    }
+
+    // toggle stack
+    if (this.selected_stack !== stack_id) {
+      this.safeClass(stack_elt, "add", "selected");
+      this.selected_stack = stack_id;
+      this.selected_token = stack_id;
+      this.safeClass("flip_cards_btn", "remove", "disabled");
+      this.safeClass("flip_card8_btn", "remove", "disabled");
+      this.safeClass("flip_card9_btn", "remove", "disabled");
+    } else {
+      this.safeClass(stack_elt, "remove", "selected");
+      this.safeClass(stack_elt, "add", "selectable");
+      this.selected_stack = "";
+      this.selected_token = "";
+      this.safeClass("flip_cards_btn", "add", "disabled");
+      this.safeClass("flip_card8_btn", "add", "disabled");
+      this.safeClass("flip_card9_btn", "add", "disabled");
     }
   }
 
@@ -615,19 +715,7 @@ export class Game {
               ></span>
             </div>
 
-            <!-- Pet icon + counter -->
-            <div class="icon-group">
-              <div
-                class="icon ic_pet"
-                id="icon_pet_${player.id}"
-                title="${_("Pets")}"
-              ></div>
-              <span
-                class="icon-text"
-                id="pet_counter_${player.id}"
-              ></span>
-            </div>
-            
+          
             <!-- Artefact icon + counter -->
             <div class="icon-group">
               <div
@@ -640,10 +728,8 @@ export class Game {
                 id="artefact_counter_${player.id}"
               ></span>
             </div>
-          </div>
 
-          <div class="a-board" id="middle_board_${player.id}">
-          <!-- Clue icon + counter -->
+            <!-- Clue icon + counter -->
             <div class="icon-group">
               <div
                 class="icon ic_clue"
@@ -655,32 +741,9 @@ export class Game {
                 id="clue_counter_${player.id}"
               ></span>
             </div>
-          
-            <!-- Grimoire icon + counter -->
-            <div class="icon-group">
-              <div
-                class="icon ic_grimoire"
-                id="icon_grimoire_${player.id}"
-                title="${_("Grimoire")}"
-              ></div>
-              <span
-                class="icon-text"
-                id="grimoire_counter_${player.id}"
-              ></span>
-            </div>
+          </div>
 
-            <!-- Clock icon + counter -->
-            <div class="icon-group">
-              <div
-                class="icon ic_clock"
-                id="icon_clock_${player.id}"
-                title="${_("Clocks")}"
-              ></div>
-              <span
-                class="icon-text"
-                id="clock_counter_${player.id}"
-              ></span>
-            </div>
+          <div class="a-board" id="middle_board_${player.id}">
           </div>
 
           <div class="b-board" id="bottom_board_${player.id}">
@@ -834,7 +897,7 @@ export class Game {
     // ---- Injecter la carte + compteur à l'intérieur ----
     const diceHTML = `
         <div class="card_item building_cards" 
-             style="background-position: -1000% -500%;" title="Dice Track">
+             style="background-position: -1100% -500%;" title="Dice Track">
         </div>
     `;
 
@@ -882,59 +945,6 @@ export class Game {
           </div>
     `;
     clockTowerSlot.insertAdjacentHTML("beforeend", towerHTML);
-  }
-
-  /// INIT AND ROLL DICE
-
-  initDice() {
-    this.diceElements = [document.getElementById("dice1"), document.getElementById("dice2")];
-
-    this.faceRotations = {
-      1: { x: 0, y: 0 },
-      2: { x: 0, y: -90 },
-      3: { x: 0, y: -180 },
-      4: { x: 0, y: 90 },
-      5: { x: -90, y: 0 },
-      6: { x: 90, y: 0 },
-    };
-
-    this.forcedFaces = [this.gamedatas.other.dice1, this.gamedatas.other.dice2];
-
-    // Initial display of dice faces
-    this.diceElements.forEach((dice, index) => {
-      const face = this.forcedFaces[index];
-      const rotation = this.faceRotations[face];
-
-      // Apply the rotation instantly without animation
-      dice.style.transition = "none";
-      dice.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
-    });
-  }
-
-  rollDiceMultiple() {
-    //pour lancer les dés plusieurs fois et ainsi éviter que les dés ne tournent pas si le résultat est inchangé ou proche
-    this.rollDice(); // Premier lancer
-    setTimeout(() => {
-      this.rollDice(); // Deuxième lancer
-    }, 100);
-    setTimeout(() => {
-      this.rollDice(); // 3eme lancer
-    }, 200);
-  }
-
-  rollDice() {
-    this.diceElements.forEach((dice, index) => {
-      const face = this.forcedFaces[index];
-      const target = this.faceRotations[face];
-
-      const fullTurnsX = Math.floor(Math.random() * 10 + 10) * 360;
-      const fullTurnsY = Math.floor(Math.random() * 10 + 10) * 360;
-      const finalX = fullTurnsX + target.x;
-      const finalY = fullTurnsY + target.y;
-
-      dice.style.transition = "transform 2s cubic-bezier(0.23, 1, 0.32, 1)";
-      dice.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
-    });
   }
 
   setupRiver() {
@@ -1000,9 +1010,11 @@ export class Game {
         <div class="building_columns">
           ${[...Array(12)].map((_, i) => `<div class="building_stack empty clickable" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
         </div>
-        <div class="house_slot">
-          <div class="house_cards" id="player_${player.id}_house_card"></div>
+        <div class="house_slot" id="player_${player.id}_house_slot">
+          <div class="house_clues" id="player_${player.id}_house_clues" title="Clues"></div>
+          <div class="house_cards" id="player_${player.id}_house_card" ></div>
         </div>
+        <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="Ghosts Captured"></div>
       </div>`,
       );
 
@@ -1079,12 +1091,12 @@ export class Game {
         playerId: player.id,
       });
 
-      const pet_counter = new ebg.counter();
+      /*  const pet_counter = new ebg.counter();
       pet_counter.create(`pet_counter_${player.id}`, {
         value: player.pet,
         playerCounter: "player_pets",
         playerId: player.id,
-      });
+      });*/
 
       const artefact_counter = new ebg.counter();
       artefact_counter.create(`artefact_counter_${player.id}`, {
@@ -1100,19 +1112,19 @@ export class Game {
         playerId: player.id,
       });
 
-      const grimoire_counter = new ebg.counter();
+      /*  const grimoire_counter = new ebg.counter();
       grimoire_counter.create(`grimoire_counter_${player.id}`, {
         value: player.grimoire,
         playerCounter: "player_grimoires",
         playerId: player.id,
-      });
+      });*/
 
-      const clock_counter = new ebg.counter();
+      /*  const clock_counter = new ebg.counter();
       clock_counter.create(`clock_counter_${player.id}`, {
         value: player.clock,
         playerCounter: "player_clocks",
         playerId: player.id,
-      });
+      });*/
     });
 
     // --- Counters top row ---
@@ -1146,6 +1158,59 @@ export class Game {
 
       this.tableBuildingCounters[i] = counter;
     }
+  }
+
+  /// INIT AND ROLL DICE
+
+  initDice() {
+    this.diceElements = [document.getElementById("dice1"), document.getElementById("dice2")];
+
+    this.faceRotations = {
+      1: { x: 0, y: 0 },
+      2: { x: 0, y: -90 },
+      3: { x: 0, y: -180 },
+      4: { x: 0, y: 90 },
+      5: { x: -90, y: 0 },
+      6: { x: 90, y: 0 },
+    };
+
+    this.forcedFaces = [this.gamedatas.other.dice1, this.gamedatas.other.dice2];
+
+    // Initial display of dice faces
+    this.diceElements.forEach((dice, index) => {
+      const face = this.forcedFaces[index];
+      const rotation = this.faceRotations[face];
+
+      // Apply the rotation instantly without animation
+      dice.style.transition = "none";
+      dice.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
+    });
+  }
+
+  rollDiceMultiple() {
+    //pour lancer les dés plusieurs fois et ainsi éviter que les dés ne tournent pas si le résultat est inchangé ou proche
+    this.rollDice(); // Premier lancer
+    setTimeout(() => {
+      this.rollDice(); // Deuxième lancer
+    }, 100);
+    setTimeout(() => {
+      this.rollDice(); // 3eme lancer
+    }, 200);
+  }
+
+  rollDice() {
+    this.diceElements.forEach((dice, index) => {
+      const face = this.forcedFaces[index];
+      const target = this.faceRotations[face];
+
+      const fullTurnsX = Math.floor(Math.random() * 10 + 10) * 360;
+      const fullTurnsY = Math.floor(Math.random() * 10 + 10) * 360;
+      const finalX = fullTurnsX + target.x;
+      const finalY = fullTurnsY + target.y;
+
+      dice.style.transition = "transform 2s cubic-bezier(0.23, 1, 0.32, 1)";
+      dice.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
+    });
   }
 
   addSideButtons() {
@@ -1459,6 +1524,133 @@ export class Game {
     delete grimoire.dataset.flipping;
   }
 
+  async animClockTower() {
+    const hand = document.getElementById("clock_hand_sprite");
+    if (!hand) return;
+
+    // récupérer la position actuelle
+    const currentTransform = hand.style.transform;
+    const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
+    let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.other.clock * 60;
+
+    // calculer la nouvelle position
+    let nextDeg = currentDeg + 60;
+
+    // ⚡ Mode instantané : état final direct
+    if (this.instantaneousMode) {
+      hand.style.transition = "";
+      hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
+
+      // mise à jour de la valeur du jeu
+      this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
+      return;
+    }
+
+    // 🎞️ Mode animé normal
+
+    const duration = 600;
+
+    hand.style.transition = `transform ${duration}ms ease-in-out`;
+    hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
+
+    await new Promise((resolve) => setTimeout(resolve, duration));
+
+    // reset final
+    hand.style.transition = "";
+
+    // mise à jour de la valeur du jeu
+    this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
+  }
+
+  async animTakeCard(buildingNumber) {
+    const elt_id = `table_building_card_${buildingNumber}`;
+    const sourceCard = document.getElementById(elt_id);
+    if (!sourceCard) return;
+
+    const playerId = this.bga.players.getActivePlayerId();
+
+    // Stack cible
+    const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
+    if (!stack) return;
+
+    // Counter
+    const counter = this.tableBuildingCounters[buildingNumber];
+    if (!counter) return;
+
+    // Appeler la fonction de déplacement
+    await this.moveBuildingToStack(sourceCard, stack, counter);
+  }
+
+  async moveBuildingToStack(card, stackOrDeck) {
+    if (!card || !stackOrDeck) return;
+
+    const playerId = this.bga.players.getActivePlayerId();
+    const stackId = card.id.split("_").pop();
+
+    // on révèle le stack
+    stackOrDeck.classList.remove("empty");
+
+    const containers = stackOrDeck.querySelectorAll(".building_card_container");
+    if (containers.length === 0) return;
+
+    const existingCards = [];
+    containers.forEach((container) => {
+      if (container.children.length > 0) {
+        existingCards.push(container.children[0]);
+      }
+    });
+
+    // ⚡ Mode instantané : état final direct
+    if (this.instantaneousMode) {
+      // déplacer les cartes existantes (du bas vers le haut)
+      existingCards.forEach((cardElement, i) => {
+        const nextContainer = containers[i + 1];
+        if (!nextContainer) return;
+
+        nextContainer.appendChild(cardElement);
+        cardElement.id = `player_${playerId}_stack_${stackId}_card_${i + 2}`;
+      });
+
+      // placer la nouvelle carte en première position
+      containers[0].appendChild(card);
+      card.id = `player_${playerId}_stack_${stackId}_card_1`;
+
+      return;
+    }
+
+    // 🎞️ Mode animé normal
+
+    // on créé une copie de la carte
+    const flyingCard = card.cloneNode(true);
+    flyingCard.style.width = "100%";
+    flyingCard.style.height = "100%";
+    flyingCard.style.position = "absolute";
+    card.parentElement.appendChild(flyingCard);
+
+    const animations = [];
+
+    existingCards.forEach((cardElement, i) => {
+      const nextContainer = containers[i + 1];
+      if (!nextContainer) return;
+
+      // on envoie chaque carte existante dans le container suivant
+      animations.push(() =>
+        this.animationManager.slideAndAttach(cardElement, nextContainer, { duration: 600 }).then(() => {
+          cardElement.id = `player_${playerId}_stack_${stackId}_card_${i + 2}`;
+        }),
+      );
+    });
+
+    const targetContainer = containers[0];
+    animations.push(() =>
+      this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600 }).then(() => {
+        flyingCard.id = `player_${playerId}_stack_${stackId}_card_1`;
+      }),
+    );
+
+    await this.animationManager.playParallel(animations);
+  }
+
   async animFlipStack(stackId, cardsInfos, playerId) {
     const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
     if (!stack) return;
@@ -1470,15 +1662,56 @@ export class Game {
     if (stack.dataset.flipping === "true") return;
     stack.dataset.flipping = "true";
 
-    const half = 200; // demi-flip en ms
-
     // Trier les cartes par position (bas → haut)
     cardsInfos.sort((a, b) => a.position - b.position);
+
+    // ⚡ Mode instantané : état final direct
+    if (this.instantaneousMode) {
+      cards.forEach((card, i) => {
+        const info = cardsInfos[i];
+        if (!info) return;
+
+        if (!card.dataset.face) card.dataset.face = "recto";
+        if (!card.dataset.rectoPos) {
+          card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
+        }
+
+        // Toggle face sans animation
+        if (card.dataset.face === "recto") {
+          card.dataset.face = "verso";
+
+          const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
+          const col = card_offset % 12;
+          const row = 1 + Math.floor(card_offset / 12);
+          card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
+        } else {
+          card.dataset.face = "recto";
+          card.style.backgroundPosition = card.dataset.rectoPos;
+        }
+
+        // Reset styles
+        card.style.transition = "";
+        card.style.transform = "";
+
+        // Z-index identique au mode animé
+        const container = card.parentElement;
+        container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
+      });
+
+      delete stack.dataset.flipping;
+      return;
+    }
+
+    // 🎞️ Mode animé normal
+
+    const half = 200; // demi-flip en ms
 
     // Initialiser chaque carte et inverser z-index du container
     cards.forEach((card) => {
       if (!card.dataset.face) card.dataset.face = "recto";
-      if (!card.dataset.rectoPos) card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
+      if (!card.dataset.rectoPos) {
+        card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
+      }
 
       const container = card.parentElement;
       container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
@@ -1501,7 +1734,6 @@ export class Game {
               if (card.dataset.face === "recto") {
                 card.dataset.face = "verso";
 
-                // Calcul du backgroundPosition pour le verso
                 const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
                 const col = card_offset % 12;
                 const row = 1 + Math.floor(card_offset / 12);
@@ -1528,105 +1760,21 @@ export class Game {
     delete stack.dataset.flipping;
   }
 
-  async animClockTower() {
-    // on fait tourner l'aiguille de 60°
-    const hand = document.getElementById("clock_hand_sprite");
-    if (!hand) return;
-
-    // récupérer la position actuelle depuis le style transform
-    const currentTransform = hand.style.transform;
-    const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
-    let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.other.clock * 60;
-
-    // calculer la nouvelle position
-    let nextDeg = currentDeg + 60; // +60° pour passer à l'heure suivante
-
-    // appliquer la rotation : la transition CSS fait l'animation
-    hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
-
-    // mettre à jour la valeur du jeu
-    this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
-
-    // optionnel : attendre la fin de la transition si tu veux faire quelque chose ensuite
-    await new Promise((resolve) => setTimeout(resolve, 600));
-  }
-
-  async animTakeCard(no_card) {
-    const elt_id = `table_building_card_${no_card}`;
-    console.log("=== onSelectBuilding START ===");
-    console.log("Elt ID:", elt_id);
-
-    const sourceCard = document.getElementById(elt_id);
-
-    console.log("sourceCard", sourceCard);
-    if (!sourceCard) return;
-
-    // Ex: table_building_card_3 → 3
-    const buildingNumber = parseInt(elt_id.split("_").pop(), 10);
-
-    // Joueur actif
-    const playerId = this.bga.players.getActivePlayerId();
-
-    // Stack cible
-    const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
-    if (!stack) {
-      console.error("Stack not found", playerId, buildingNumber);
-      return;
-    }
-
-    // Counter
-    const counter = this.tableBuildingCounters[buildingNumber];
-    if (!counter) {
-      console.error("Counter not found for building", buildingNumber);
-      return;
-    }
-
-    // Appeler la fonction de déplacement
-    await this.moveBuildingToStack(sourceCard, stack, counter);
-    console.log("=== onSelectBuilding END ===");
-  }
-
-  async moveBuildingToStack(card, stackOrDeck) {
-    if (!card || !stackOrDeck) return;
-
-    // CRITIQUE
-    stackOrDeck.classList.remove("empty");
-
-    const flyingCard = card.cloneNode(true);
-    flyingCard.style.width = "100%";
-    flyingCard.style.height = "100%";
-    flyingCard.style.position = "absolute";
-
-    card.parentElement.appendChild(flyingCard);
-
-    const containers = stackOrDeck.querySelectorAll(".building_card_container");
-    if (containers.length === 0) return;
-
-    const existingCards = [];
-    containers.forEach((c) => {
-      if (c.children.length > 0) existingCards.push(c.children[0]);
-    });
-
-    const animations = [];
-
-    existingCards.forEach((c, i) => {
-      const nextContainer = containers[i + 1];
-      if (!nextContainer) return;
-
-      animations.push(() => this.animationManager.slideAndAttach(c, nextContainer, { duration: 600 }));
-    });
-
-    const targetContainer = containers[0];
-    animations.push(() => this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600 }));
-
-    await this.animationManager.playParallel(animations);
-  }
-
   async toggleRiver() {
     const riverElt = document.getElementById("river_id");
     if (!riverElt) return;
 
+    // ⚡ Mode instantané : état final direct
+    if (this.instantaneousMode) {
+      riverElt.style.transition = "";
+      riverElt.classList.toggle("closed");
+      return;
+    }
+
+    // 🎞️ Mode animé normal
     riverElt.classList.toggle("closed");
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
   }
 
   async animGetRewards(no_house, cardsInfos, playerId) {
@@ -1653,6 +1801,37 @@ export class Game {
       return;
     }
 
+    // ⚡ Mode instantané : état final direct
+    if (this.instantaneousMode) {
+      for (let i = cards.length - 1; i >= 0; i--) {
+        const cardEl = cards[i];
+        const info = cardsInfos[i];
+        if (!info) continue;
+
+        const card_idx = info.type + info.type_arg;
+        const bonuses = this.gamedatas.building_cards[card_idx] || [];
+
+        // supprimer la carte immédiatement
+        cardEl.remove();
+
+        // créer et attacher directement les icônes dans la rivière
+        bonuses.forEach((bonus) => {
+          const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
+          if (!ic) return;
+
+          const icon = document.createElement("div");
+          icon.className = `river_icon ic_${ic}`;
+          river.appendChild(icon);
+        });
+      }
+
+      stack.classList.add("empty");
+      delete stack.dataset.animating;
+      return;
+    }
+
+    // 🎞️ Mode animé normal
+
     // Parcours décroissant pour supprimer du bas vers le haut visuellement
     for (let i = cards.length - 1; i >= 0; i--) {
       const cardEl = cards[i];
@@ -1678,19 +1857,67 @@ export class Game {
         const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
         if (!ic) continue;
 
-        const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
-        const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
-        parent.insertAdjacentHTML("beforeend", html);
+        console.log("IC", ic);
 
-        const iconEl = document.getElementById(iconId);
-        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-          console.warn("Skip animation: invalid node", iconId, iconEl);
-          continue;
+        if (["grimoire", "clock", "flip8", "flip9", "draw8"].includes(ic)) {
+          const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
+          const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
+          parent.insertAdjacentHTML("beforeend", html);
+
+          const iconEl = document.getElementById(iconId);
+          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+            console.warn("Skip animation: invalid node", iconId, iconEl);
+            continue;
+          }
+
+          // Animation slide vers la rivière
+          this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
+          await new Promise((r) => setTimeout(r, 80));
+        } else if (ic == "replay") {
+          const iconId = `panel_ic_replay`;
+          const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
+          parent.insertAdjacentHTML("beforeend", html);
+
+          const iconEl = document.getElementById(iconId);
+          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+            console.warn("Skip animation: invalid node", iconId, iconEl);
+            continue;
+          }
+          const panel = document.getElementById(`bottom_board_${playerId}`);
+          // Animation slide vers la rivière
+          this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
+          await new Promise((r) => setTimeout(r, 80));
+        } else if (ic == "clue") {
+          const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
+          const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
+          parent.insertAdjacentHTML("beforeend", html);
+
+          const iconEl = document.getElementById(iconId);
+          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+            console.warn("Skip animation: invalid node", iconId, iconEl);
+            continue;
+          }
+          const house_clues = document.getElementById(`player_${playerId}_house_clues`);
+
+          // Animation slide vers la rivière
+          this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
+          await new Promise((r) => setTimeout(r, 80));
+        } else if (ic == "ghost") {
+          const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
+          const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
+          parent.insertAdjacentHTML("beforeend", html);
+
+          const iconEl = document.getElementById(iconId);
+          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+            console.warn("Skip animation: invalid node", iconId, iconEl);
+            continue;
+          }
+          const house_ghosts = document.getElementById(`player_${playerId}_house_ghosts`);
+
+          // Animation slide vers la rivière
+          this.animationManager.slideAndAttach(iconEl, house_ghosts, 600, 0, null);
+          await new Promise((r) => setTimeout(r, 80));
         }
-
-        // Animation slide vers la rivière
-        this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
-        await new Promise((r) => setTimeout(r, 80));
       }
 
       // Petit délai avant la carte suivante pour éviter overlap visuel
@@ -1699,67 +1926,6 @@ export class Game {
 
     // 3️⃣ Marquer la pile comme vide
     stack.classList.add("empty");
-    delete stack.dataset.animating;
-  }
-
-  async animGetRewardsOld(no_house, cardsInfos, playerId) {
-    const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
-    if (!stack) return;
-
-    const cards = Array.from(stack.querySelectorAll(".building_cards"));
-    if (!cards.length) return;
-
-    // Empêcher animation simultanée
-    if (stack.dataset.animating === "true") return;
-    stack.dataset.animating = "true";
-
-    const duration = 500;
-
-    // Même ordre que le flip
-    cardsInfos.sort((a, b) => a.position - b.position);
-
-    await Promise.all(
-      cards.map(
-        (cardEl, i) =>
-          new Promise((resolve) => {
-            const info = cardsInfos[i];
-            if (!info) return resolve();
-
-            // === RÉCUPÉRATION DES BONUS (ON NE SUPPRIME RIEN) ===
-            const card_idx = info.type + info.type_arg;
-            const bonuses = this.gamedatas.building_cards[card_idx] || [];
-
-            setTimeout(() => {
-              // === ANIMATION DISPARITION ===
-              cardEl.style.transition = `transform ${duration}ms ease-in-out, opacity ${duration}ms ease-in-out`;
-              cardEl.style.transform = "scale(0)";
-              cardEl.style.opacity = "0";
-
-              setTimeout(() => {
-                const parent = cardEl.parentElement;
-
-                // === CRÉATION DES ICÔNES (HTML UNIQUEMENT) ===
-                bonuses.forEach((bonus) => {
-                  let ic = bonus;
-
-                  // ghost_n → ghost
-                  if (bonus.includes("_")) {
-                    ic = bonus.split("_")[0];
-                  }
-
-                  const html = `<div class="river_icon ic_${ic}"></div>`;
-                  parent.insertAdjacentHTML("beforeend", html);
-                });
-
-                // Suppression carte
-                cardEl.remove();
-                resolve();
-              }, duration);
-            }, i * 50);
-          }),
-      ),
-    );
-
     delete stack.dataset.animating;
   }
 

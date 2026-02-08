@@ -96,6 +96,19 @@ background-repeat: no-repeat;
   opacity: 0.3;
 }
 
+.player-board {
+  background-color: #aba7e2;
+}
+
+#page-title {
+  background-color: #aba7e2;
+}
+
+.roundedbox {
+  outline: 5px solid #aba7e2;
+  background: #aba7e2;
+  border-radius: 4px;
+}
 /*////////////////////////////
 //|  ___|__  _ __ | |_ ___  //
 //| |_ / _ \| '_ \| __/ __| //
@@ -240,6 +253,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 #board_id {
   position: relative;
+  margin: 5px 0;
   display: flex;
   flex-direction: column;
   transform-origin: top left;
@@ -493,6 +507,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   background-repeat: no-repeat;
   background-size: 100% 1px, 100% 3px, 1px 100%, 1px 100%;
   background-position: top, bottom, left, right;
+  border-radius: 4px;
 }
 
 
@@ -526,11 +541,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   pointer-events: none; /* pour valider le click sur le stack */
 }
 
-/* ---------- MAISON ---------- */
-.house_slot {
-  width: calc(var(--card_w)/312*316);
-  height: calc(var(--card_h)/350*500);
-}
+
 
 
 
@@ -567,13 +578,44 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .house_slot {
   width: calc(var(--card_w) * 1.41);
-  height: calc(var(--card_h) * 1.43);
+  height: calc(var(--card_h) * 1.8);
   position: relative;
+      /* contour avec gradients pour toutes les stacks visibles */
+  background: 
+    linear-gradient(to bottom, #364a93 0%, #364a93 1px), /* haut */
+    linear-gradient(to top, #73c6ce 0%, #73c6ce 1px),    /* bas */
+    linear-gradient(to bottom, #364a93, #73c6ce) left,   /* gauche */
+    linear-gradient(to bottom, #364a93, #73c6ce) right;  /* droite */
+    
+  background-repeat: no-repeat;
+  background-size: 100% 1px, 100% 3px, 1px 100%, 1px 100%;
+  background-position: top, bottom, left, right;
+  border-radius: 4px;
+}
+
+.house_slot .house_clues {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(var(--card_h) * 0.37);
+        /* contour avec gradients pour toutes les stacks visibles */
+  background: 
+    linear-gradient(to bottom, #317872 0%, #317872 1px), /* haut */
+    linear-gradient(to top, #aae0c6 0%, #aae0c6 1px),    /* bas */
+    linear-gradient(to bottom, #317872, #aae0c6) left,   /* gauche */
+    linear-gradient(to bottom, #317872, #aae0c6) right;  /* droite */
+    
+  background-repeat: no-repeat;
+  background-size: 100% 1px, 100% 3px, 1px 100%, 1px 100%;
+  background-position: top, bottom, left, right;
 }
 
 .house_slot .house_cards {
   width: 100%;
-  height: 100%;
+  height: calc(var(--card_h) * 1.43);
   position: absolute;
   bottom: 0;
   left: 50%;

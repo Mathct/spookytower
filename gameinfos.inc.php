@@ -11,16 +11,16 @@
 
 $gameinfos = [
     // Name of the game in English (will serve as the basis for translation)
-    'game_name' => "My Great Game",
+    'game_name' => "Spooky Tower",
 
     // Game publisher (use empty string if there is no publisher)
-    'publisher' => 'My Publishing Company',
+    'publisher' => 'Repos Production',
 
     // Url of game publisher website
-    'publisher_website' => 'http://www.mypublishingcompany.com/',
+    'publisher_website' => 'https://www.rprod.com/en',
 
     // Board Game Geek ID of the publisher
-    'publisher_bgg_id' => 1234,
+    'publisher_bgg_id' => 4384,
 
     // Board game geek ID of the game
     'bgg_id' => 0,
@@ -72,7 +72,7 @@ $gameinfos = [
     'language_dependency' => false,
 
     // Colors attributed to players
-    'player_colors' => ['ff0000', '008000', '0000ff', 'ffa500', 'e94190', '982fff', '72c3b1', 'f07f16', 'bdd002', '7b7b7b', '000000', 'ffffff'],                       
+    'player_colors' => ['ff0000', '008000', '0000ff', 'ffa500', 'e94190', '982fff', '72c3b1', 'f07f16', 'bdd002', '7b7b7b', '000000', 'ffffff'],
 
     // Favorite colors support : if set to "true", support attribution of favorite colors based on player's preferences (see reattributeColorsBasedOnPreferences PHP method)
     // NB: this parameter is used only to flag games supporting this feature; you must use (or not use) reattributeColorsBasedOnPreferences PHP method to actually enable or disable the feature.
