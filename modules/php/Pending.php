@@ -240,10 +240,10 @@ class Pending extends APP_GameClass
             $newclock = ($clock + 1) % 6;
             game::$instance->DbQuery("UPDATE other set clock = $newclock WHERE id=1");
 
-
+            $txt = clienttranslate('${player_name} moves the clock forward');
             game::$instance->notify->all(
                 "activateClockTower",
-                '',
+                $txt,
                 [
                     'player_id' => $this->player_id,
                     'clock' => $newclock,
@@ -350,9 +350,10 @@ class Pending extends APP_GameClass
                 $newclock = ($clock + 1) % 6;
                 game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
 
+                $txt = clienttranslate('${player_name} moves the clock forward');
                 game::$instance->notify->all(
                     "activateClockTower",
-                    '',
+                    $txt,
                     [
                         'player_id' => $this->player_id,
                         'clock' => $newclock,
