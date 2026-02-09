@@ -613,6 +613,14 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   background-position: top, bottom, left, right;
 }
 
+.house_slot .house_ghosts {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
 .house_slot .house_cards {
   width: 100%;
   height: calc(var(--card_h) * 1.43);

@@ -857,7 +857,7 @@ export class Game {
     if (!deckParkSlot) return;
 
     // Déterminer la position dans le sprite en fonction de nb_parks
-    const nb_parks = this.gamedatas.deck_park; // exemple, à adapter selon ton état
+    const nb_parks = this.gamedatas.deck_park;
     let col;
 
     if (nb_parks >= 5) col = 5;
@@ -1391,67 +1391,37 @@ export class Game {
     delete icon.dataset.flipping;
   }
 
-  async animFlipPark(nb_parks) {
+  async animFlipPark() {
     const park = document.querySelector("#deck_park .parkgrim_cards");
     if (!park) return;
 
+    const nb_cards = parseInt(this.gamedatas.deck_park);
+    const versoCol = this.gamedatas.park_order[5 - nb_cards];
+
     // ⚡ Mode instantané : état final immédiat
     if (this.instantaneousMode) {
-      // Init face si nécessaire
-      if (!park.dataset.face) {
-        park.dataset.face = "recto";
-      }
-
-      if (park.dataset.face === "recto") {
-        park.dataset.face = "verso";
-        const versoCol = nb_parks - 1;
-        park.style.backgroundPosition = `-${versoCol}00% 0%`;
-      } else {
-        park.dataset.face = "recto";
-        park.style.backgroundPosition = "-0% 0%";
-      }
-
-      // Nettoyage sécurité
       park.style.transition = "";
       park.style.transform = "";
-      delete park.dataset.flipping;
+      park.style.backgroundPosition = `-${versoCol}00% 0%`;
       return;
     }
 
     // 🎞️ Mode animé
-
     if (park.dataset.flipping === "true") return;
     park.dataset.flipping = "true";
-
-    // Initialisation du recto si nécessaire
-    if (!park.dataset.face) {
-      park.dataset.face = "recto";
-      park.style.backgroundPosition = park.style.backgroundPosition; // garde la position actuelle comme recto
-    }
 
     const half = 200; // demi-flip en ms
 
     // Premier demi-flip : rotation + léger pop
     park.style.transition = `transform ${half}ms ease-in-out`;
     park.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
-
     await new Promise((resolve) => setTimeout(resolve, half));
 
-    // Toggle background-position
-    if (park.dataset.face === "recto") {
-      park.dataset.face = "verso";
-      const versoCol = nb_parks - 1; // numéro de colonne pour le verso
-      park.style.backgroundPosition = `-${versoCol}00% 0%`;
-    } else {
-      park.dataset.face = "recto";
-      // recto = position initiale au moment de l’injection
-      const rectoStyle = park.getAttribute("style").match(/background-position:\s*([^;]+)/);
-      park.style.backgroundPosition = rectoStyle ? rectoStyle[1] : "-0% 0%";
-    }
+    // Changement visuel : verso
+    park.style.backgroundPosition = `-${versoCol}00% 0%`;
 
     // Deuxième demi-flip : retour à la position normale
     park.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
-
     await new Promise((resolve) => setTimeout(resolve, half));
 
     // Reset final
@@ -1464,61 +1434,36 @@ export class Game {
     const grimoire = document.querySelector("#deck_grimoire .parkgrim_cards");
     if (!grimoire) return;
 
-    // ⚡ Mode instantané
+    const grimoireVerso = 3;
+    const n = grimoireVerso - 1;
+
+    // ⚡ Mode instantané : état final immédiat
     if (this.instantaneousMode) {
-      if (!grimoire.dataset.face) {
-        grimoire.dataset.face = "recto";
-      }
-
-      const grimoireVerso = 3;
-      const n = grimoireVerso - 1;
-
-      if (grimoire.dataset.face === "recto") {
-        grimoire.dataset.face = "verso";
-        grimoire.style.backgroundPosition = `-${n}00% -100%`;
-      } else {
-        grimoire.dataset.face = "recto";
-        grimoire.style.backgroundPosition = `-700% -100%`;
-      }
-
-      // Nettoyage sécurité
       grimoire.style.transition = "";
       grimoire.style.transform = "";
-      delete grimoire.dataset.flipping;
+      grimoire.style.backgroundPosition = `-${n}00% -100%`;
       return;
     }
 
     // 🎞️ Mode animé
-
     if (grimoire.dataset.flipping === "true") return;
     grimoire.dataset.flipping = "true";
 
-    if (!grimoire.dataset.face) grimoire.dataset.face = "recto";
-
     const half = 200; // demi-flip en ms
-    const grimoireVerso = 3;
-    const n = grimoireVerso - 1;
 
-    // Premier demi-flip
+    // Premier demi-flip : rotation + léger pop
     grimoire.style.transition = `transform ${half}ms ease-in-out`;
     grimoire.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
-
     await new Promise((resolve) => setTimeout(resolve, half));
 
-    // Toggle background-position
-    if (grimoire.dataset.face === "recto") {
-      grimoire.dataset.face = "verso";
-      grimoire.style.backgroundPosition = `-${n}00% -100%`;
-    } else {
-      grimoire.dataset.face = "recto";
-      grimoire.style.backgroundPosition = `-700% -100%`;
-    }
+    // Changement visuel : verso
+    grimoire.style.backgroundPosition = `-${n}00% -100%`;
 
-    // Deuxième demi-flip
+    // Deuxième demi-flip : retour à 0°
     grimoire.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
     await new Promise((resolve) => setTimeout(resolve, half));
 
-    // Reset
+    // Reset final
     grimoire.style.transition = "";
     grimoire.style.transform = "";
     delete grimoire.dataset.flipping;
@@ -1528,38 +1473,62 @@ export class Game {
     const hand = document.getElementById("clock_hand_sprite");
     if (!hand) return;
 
-    // récupérer la position actuelle
+    const playerId = this.bga.players.getActivePlayerId();
+
     const currentTransform = hand.style.transform;
     const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
     let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.other.clock * 60;
 
-    // calculer la nouvelle position
-    let nextDeg = currentDeg + 60;
+    const nextDeg = currentDeg + 60;
 
-    // ⚡ Mode instantané : état final direct
+    // ⚡ Mode instantané
     if (this.instantaneousMode) {
       hand.style.transition = "";
       hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
-
-      // mise à jour de la valeur du jeu
       this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
-      return;
+    } else {
+      hand.style.transition = `transform 600ms ease-in-out`;
+      hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
+
+      // attendre la fin de l'animation
+      await new Promise((resolve) => {
+        const onTransitionEnd = (event) => {
+          if (event.propertyName === "transform") {
+            hand.removeEventListener("transitionend", onTransitionEnd);
+            hand.style.transition = "";
+            resolve();
+          }
+        };
+        hand.addEventListener("transitionend", onTransitionEnd);
+      });
+
+      this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
     }
 
-    // 🎞️ Mode animé normal
+    // ⚡ Animation des artefacts si clock = 0 ou 3
+    if (this.gamedatas.other.clock === 0 || this.gamedatas.other.clock === 3) {
+      //  artefact
+      const iconId = `house_ic_artefact_${Math.floor(Math.random() * 1000)}`;
+      const html = `<div id="${iconId}" class="icon ic_artefact"></div>`;
+      const parent = document.getElementById("clock_hand_sprite");
 
-    const duration = 600;
+      parent.insertAdjacentHTML("beforeend", html);
 
-    hand.style.transition = `transform ${duration}ms ease-in-out`;
-    hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
+      const iconEl = document.getElementById(iconId);
+      const panel_artefacts = document.getElementById(`icon_artefact_${playerId}`);
 
-    await new Promise((resolve) => setTimeout(resolve, duration));
+      // Animation slide vers le panel joueur + destruction
+      await new Promise((resolve) => {
+        this.animationManager.slideOutAndDestroy(iconEl, panel_artefacts, 600, 0, resolve);
+      });
 
-    // reset final
-    hand.style.transition = "";
-
-    // mise à jour de la valeur du jeu
-    this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
+      // petit délai si nécessaire
+      await new Promise((r) => setTimeout(r, 80));
+    } else if (this.gamedatas.other.clock === 1 || this.gamedatas.other.clock === 4) {
+      // PET
+    } else if (this.gamedatas.other.clock === 2 || this.gamedatas.other.clock === 5) {
+      this.animFlipReroll(playerId);
+    }
   }
 
   async animTakeCard(buildingNumber) {
@@ -1658,42 +1627,25 @@ export class Game {
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
     if (!cards.length) return;
 
-    // Empêcher les flips simultanés
     if (stack.dataset.flipping === "true") return;
     stack.dataset.flipping = "true";
 
     // Trier les cartes par position (bas → haut)
     cardsInfos.sort((a, b) => a.position - b.position);
 
-    // ⚡ Mode instantané : état final direct
+    // ⚡ Mode instantané
     if (this.instantaneousMode) {
       cards.forEach((card, i) => {
         const info = cardsInfos[i];
         if (!info) return;
 
-        if (!card.dataset.face) card.dataset.face = "recto";
-        if (!card.dataset.rectoPos) {
-          card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
-        }
-
-        // Toggle face sans animation
-        if (card.dataset.face === "recto") {
-          card.dataset.face = "verso";
-
-          const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
-          const col = card_offset % 12;
-          const row = 1 + Math.floor(card_offset / 12);
-          card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
-        } else {
-          card.dataset.face = "recto";
-          card.style.backgroundPosition = card.dataset.rectoPos;
-        }
-
-        // Reset styles
+        const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
+        const col = card_offset % 12;
+        const row = 1 + Math.floor(card_offset / 12);
+        card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
         card.style.transition = "";
         card.style.transform = "";
 
-        // Z-index identique au mode animé
         const container = card.parentElement;
         container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
       });
@@ -1702,17 +1654,11 @@ export class Game {
       return;
     }
 
-    // 🎞️ Mode animé normal
+    // 🎞️ Mode animé
+    const half = 200;
 
-    const half = 200; // demi-flip en ms
-
-    // Initialiser chaque carte et inverser z-index du container
+    // Définir z-index des conteneurs
     cards.forEach((card) => {
-      if (!card.dataset.face) card.dataset.face = "recto";
-      if (!card.dataset.rectoPos) {
-        card.dataset.rectoPos = card.style.backgroundPosition || "0% 0%";
-      }
-
       const container = card.parentElement;
       container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
     });
@@ -1720,39 +1666,32 @@ export class Game {
     await Promise.all(
       cards.map(
         (card, i) =>
-          new Promise((resolve) => {
+          new Promise(async (resolve) => {
             const info = cardsInfos[i];
             if (!info) return resolve();
 
-            setTimeout(async () => {
-              // Premier demi-flip
-              card.style.transition = `transform ${half}ms ease-in-out`;
-              card.style.transform = "rotateY(90deg)";
-              await new Promise((r) => setTimeout(r, half));
+            await new Promise((r) => setTimeout(r, i * 50)); // décalage entre cartes
 
-              // Toggle face
-              if (card.dataset.face === "recto") {
-                card.dataset.face = "verso";
+            // Premier demi-flip
+            card.style.transition = `transform ${half}ms ease-in-out`;
+            card.style.transform = "rotateY(90deg)";
+            await new Promise((r) => setTimeout(r, half));
 
-                const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
-                const col = card_offset % 12;
-                const row = 1 + Math.floor(card_offset / 12);
-                card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
-              } else {
-                card.dataset.face = "recto";
-                card.style.backgroundPosition = card.dataset.rectoPos;
-              }
+            // Appliquer le verso
+            const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
+            const col = card_offset % 12;
+            const row = 1 + Math.floor(card_offset / 12);
+            card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
 
-              // Deuxième demi-flip
-              card.style.transform = "rotateY(0deg)";
-              await new Promise((r) => setTimeout(r, half));
+            // Deuxième demi-flip
+            card.style.transform = "rotateY(0deg)";
+            await new Promise((r) => setTimeout(r, half));
 
-              // Reset transition
-              card.style.transition = "";
-              card.style.transform = "";
+            // Reset transition
+            card.style.transition = "";
+            card.style.transform = "";
 
-              resolve();
-            }, i * 50); // décalage entre les cartes
+            resolve();
           }),
       ),
     );
@@ -1903,7 +1842,7 @@ export class Game {
           this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
           await new Promise((r) => setTimeout(r, 80));
         } else if (ic == "ghost") {
-          const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
+          const iconId = `house_ic_ghost_${Math.floor(Math.random() * 1000)}`;
           const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
           parent.insertAdjacentHTML("beforeend", html);
 

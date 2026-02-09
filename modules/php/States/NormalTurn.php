@@ -79,7 +79,7 @@ class NormalTurn extends GameState
     }
 
     #[PossibleAction]
-    public function actButton(string $arg1, string $arg2)
+    public function actButton(string $arg1, string $arg2 = NULL)
     {
         $pending =  $this->game->getObjectFromDB("SELECT * FROM pending ORDER BY id DESC LIMIT 1");
         $this->game->callPending($pending, true, $arg1, $arg2);
@@ -88,10 +88,10 @@ class NormalTurn extends GameState
     }
 
     #[PossibleAction]
-    public function actClock(string $arg1, string $arg2)
+    public function actClock(string $arg1)
     {
         $pending =  $this->game->getObjectFromDB("SELECT * FROM pending ORDER BY id DESC LIMIT 1");
-        $this->game->callPending($pending, true, $arg1, $arg2);
+        $this->game->callPending($pending, true, $arg1);
         $this->game->DbQuery("DELETE FROM pending WHERE id = " . $pending['id']);
         return Pending::class;
     }

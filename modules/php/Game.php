@@ -165,7 +165,7 @@ class Game extends \Bga\GameFramework\Table
 
         $park = ['2', '3', '4'];
         shuffle($park);          // Mélange le tableau
-        $park_order = intval('1'.$park[0].$park[1].$park[2].'5');
+        $park_order = intval('1' . $park[0] . $park[1] . $park[2] . '5');
         $this->setGameStateInitialValue("park_order", $park_order);
 
         //counters
@@ -273,16 +273,12 @@ class Game extends \Bga\GameFramework\Table
         ");
 
         // INIT ACTIONPENDING
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('flip8')");
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('flip9')");
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('draw8')");
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('clock')");
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('pet')");
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('grimoire')");
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('ghost')");
-        game::$instance->DbQuery("INSERT INTO actionpending (name) VALUES ('clue')");
-        
-        
+        game::$instance->DbQuery("
+            INSERT INTO actionpending (name) VALUES
+                ('flip8'), ('flip9'), ('draw8'), ('clock'),
+                ('pet'), ('grimoire'), ('ghost'), ('clue')
+        ");
+
 
 
 
@@ -419,7 +415,7 @@ class Game extends \Bga\GameFramework\Table
 
         $result["park_order"] = $this->getGameStateValue('park_order');
 
-        
+
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
         return $result;
