@@ -625,6 +625,16 @@ class Pending extends APP_GameClass
     {
         if($varg1 == null)
         {
+
+            game::$instance->notify->all(
+            "endBonus",
+            '',
+            [
+                'player_id' => $this->player_id,
+
+            ]
+            );
+
             $clue = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
             if($clue >=1)
             {
