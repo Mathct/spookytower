@@ -454,45 +454,25 @@ class Pending extends APP_GameClass
                     if (str_starts_with($name, "ghost")) {
                         if ($type_card == 121 || $type_card == 122 || $type_card == 123) {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 2 WHERE name = 'ghost'");
+                            game::$instance->player_ghosts->inc($this->player_id, 2);
                         } else {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
+                            game::$instance->player_ghosts->inc($this->player_id, 1);
                         }
                     }
                     if ($name == 'clue') {
                         game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                        game::$instance->player_clues->inc($this->player_id, 1);
                     }
                 }
             }
 
-            //je gere les compteurs des ghosts et clues et je mettrai les valeurs de la BD à 0 plus tard
-
-            $ghosts = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'ghost'");
-            $clues = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
-
-            if ($ghosts >= 1) {
-                for ($i = 1; $i <= $ghosts; $i++) {
-                    game::$instance->player_ghosts->inc($this->player_id, 1);
-                }
-            }
-
-            if ($clues >= 1) {
-                for ($i = 1; $i <= $clues; $i++) {
-                    game::$instance->player_clues->inc($this->player_id, 1);
-                }
-            }
-
-
-
-            ///////////////////////////////////////////////////////////////////////////////////////
-            // POUR LE MOMENT JE DISCARD LES CARDS (mais on pourra les mettre en location 'hand' ou autre pour les garder visible sur le verso)
-            ///////////////////////////////////////////////////////////////////////////////////////
-
+            // je discard les cards
             foreach ($cards as $card) {
                 game::$instance->building_DB->moveCard($card['id'], 'discard', $this->player_id);
             }
 
-
-            // si y a eu des ghosts dans le fliphouse on teste la fin de partie
+            // verif nombre de ghosts
 
             $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
             if ($count_ghosts == 5) {
@@ -525,7 +505,116 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('${actplayer} must choose an action');
         $ret['titleyou'] = clienttranslate('${you} must choose an action');
 
-        $ret['buttons'][] = 'yes_btn';
+
+        $flip8 = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'flip8'");
+        $flip9 = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'flip9'");
+        $draw8 = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'draw8'");
+        $clock = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clock'");
+        $pet = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'pet'");
+        $grimoire = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'grimoire'");
+
+        
+
+        if($flip8 >= 1)
+        {
+            $cards_8 = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type <= 8");
+            if(count($cards_8) >= 1)
+            {
+                foreach($cards_8 as $card_8)
+                {
+                    $value = 'player_' . $this->player_id . '_stack_' . $card_8['type'];
+
+                    if (!in_array($value, $ret["selectable"], true)) {
+                    $ret["selectable"][] = $value;
+                    }
+                }
+                
+            }
+            
+
+        }
+
+        if($flip9 >= 1)
+        {
+            $cards_9 = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type >= 9");
+            if(count($cards_9) >= 1)
+            {
+                foreach($cards_9 as $card_9)
+                {
+                    $value = 'player_' . $this->player_id . '_stack_' . $card_9['type'];
+
+                    if (!in_array($value, $ret["selectable"], true)) {
+                    $ret["selectable"][] = $value;
+                    }
+
+                }
+                
+            }
+        }
+
+        if($draw8 >= 1)
+        {
+            for ($i = 1; $i <= 8; $i++)
+            {
+                $count = game::$instance->{'deck_' . $i}->get();
+                if($count >= 1)
+                {
+                    $ret["selectable"][] = 'table_building_card_' . $i;
+                }
+
+            }
+            
+        }
+
+        if($clock >= 1)
+        {
+            $ret["selectable"][] = 'clock_hand_sprite';
+            
+        }
+
+        if($pet>= 1)
+        {
+            
+            $pets = game::$instance->getObjectFromDB("SELECT pet1 pet1, pet2 pet2, pet3 pet3 FROM other WHERE id=1");
+
+            for ($i = 1; $i <= 3; $i++) {
+                [,$position] = explode('_', $pets['pet' . $i]);
+                if ($position == 'table') {
+                    $ret["selectable"][] = 'card_pet_' . $i;
+                }
+            }
+
+            if (count($ret["selectable"]) == 0) {
+                for ($i = 1; $i <= 3; $i++) {
+                    [,$position] = explode('_', $pets['pet' . $i]);
+                    if ($position != $this->player_id) {
+                        $ret["selectable"][] = 'card_pet_' . $i;
+                    }
+                }
+            }
+
+
+        }
+
+        if($grimoire >= 1)
+        {
+            $deck_grimoire = game::$instance->deck_grimoire->get();
+
+            if($deck_grimoire >= 1)
+            {
+                $ret["selectable"][] = 'deck_grimoire';
+            }
+
+        }
+
+
+
+        if(count($ret["selectable"]) >= 1)
+        {
+            $ret['buttons'][] = 'validate_bonus_btn';
+        }
+
+        
 
         return $ret;
     }
@@ -534,7 +623,484 @@ class Pending extends APP_GameClass
 
     function ActionsBonus($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
+        if($varg1 == null)
+        {
+            $clue = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
+            if($clue >=1)
+            {
+                game::$instance->addPending($this->player_id, "Park");
+            }
 
+            else
+            {
+                game::$instance->DbQuery("UPDATE actionpending set count = 0");
+                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+            }
+
+        }
+
+        else
+        {
+            ///////////////////////////////////////////////////////////////////////////////////////
+            // FLIP CARD 8- ou 9+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            if (str_starts_with($varg2, 'player_')) {
+
+                [,,, $no_house] = explode('_', $varg2);
+
+                $card = game::$instance->getObjectFromDB("
+                SELECT 
+                    card_id id,
+                    card_type type,
+                    card_type_arg type_arg,
+                    card_location location,
+                    card_location_arg location_arg,
+                    position position
+                FROM building
+                WHERE card_location = 'house'
+                AND card_location_arg = '{$this->player_id}'
+                AND card_type = '{$no_house}'
+                ORDER BY position DESC
+                LIMIT 1
+                ");
+
+                $txt = clienttranslate('${player_name} flips a card');
+                game::$instance->notify->all(
+                    "flipCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'no_house' => $no_house,
+                        'cards' => $card,
+                    ]
+                );
+
+                if($no_house <= 8)
+                {  
+                    // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
+                    game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'flip8'");
+                    // Notif pour enlever l'icone
+                    game::$instance->notify->all(
+                        "removeBonus",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            'bonus' => 'flip8'
+                            
+                        ]
+                    );
+                }
+                else
+                {  
+                    // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
+                    game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'flip9'");
+                    // Notif pour enlever l'icone
+                    game::$instance->notify->all(
+                        "removeBonus",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            'bonus' => 'flip9'
+                            
+                        ]
+                    );
+                }
+
+                // je mets toutes les actions recupérées par le flip dans la table actionpending et j'incremente les compteurs ghosts et torches
+                $type_card = $card['type'] . $card['type_arg'];
+                $bonus = game::$instance->_BUILDING_CARD[$type_card];
+                foreach ($bonus as $name) {
+                    if ($name == 'flip8') {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if ($name == 'flip9') {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if ($name == 'draw8') {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if ($name == 'clock') {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if ($name == 'pet') {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if ($name == 'grimoire') {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                    }
+                    if (str_starts_with($name, "ghost")) {
+                        if ($type_card == 121 || $type_card == 122 || $type_card == 123) {
+                            game::$instance->DbQuery("UPDATE actionpending set count = count + 2 WHERE name = 'ghost'");
+                            game::$instance->player_ghosts->inc($this->player_id, 2);
+                        } else {
+                            game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
+                            game::$instance->player_ghosts->inc($this->player_id, 1);
+                        }
+                    }
+                    if ($name == 'clue') {
+                        game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
+                        game::$instance->player_clues->inc($this->player_id, 1);
+                    }
+                }
+                
+
+                // je discard la card
+                game::$instance->building_DB->moveCard($card['id'], 'discard', $this->player_id);
+                
+                // verif nombre de ghosts
+
+                $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
+                if ($count_ghosts == 5) {
+                    game::$instance->addPending($this->player_id, "EndGame");
+                } else {
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+
+    
+            }
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            // TAKE CARD 8-
+            ///////////////////////////////////////////////////////////////////////////////////////
+            if (str_starts_with($varg2, 'table_building_')) {
+
+                //on recupere le numero du deck
+                [,,, $no_deck] = explode('_', $varg2);
+                $deck = 'deck' . $no_deck;
+
+                //on pick la carte et on recupere les info du pickcard (pour la card_id)
+                $card_pick = game::$instance->building_DB->pickCardForLocation($deck, 'house', $this->player_id);
+
+                //on met a jour sa position
+                $count_card = count(game::$instance->getObjectListFromDB("SELECT card_id id FROM building WHERE card_type = '{$no_deck}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true));
+                game::$instance->DbQuery("UPDATE building SET position = $count_card WHERE card_id ='{$card_pick['id']}'");
+
+                //on recupere les info pour le front
+                $card =  game::$instance->getObjectFromDB("SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'");
+
+
+                $txt = clienttranslate('${player_name} takes card ${no_card}');
+                game::$instance->notify->all(
+                    "takeCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'no_card' => $no_deck,
+                        'card' => $card,
+                    ]
+                );
+
+
+                //je change le compteur du deck
+                game::$instance->{'deck_' . $no_deck}->inc(-1);
+
+                // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
+                game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'draw8'");
+
+                // Notif pour enlever l'icone
+                    game::$instance->notify->all(
+                        "removeBonus",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            'bonus' => 'draw8'
+                            
+                        ]
+                    );
+
+
+                // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
+                if ($no_deck >= 1 && $no_deck <= 4) {
+                    $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                    if ($reroll == 0) {
+                        game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                        game::$instance->notify->all(
+                            "flipReroll",
+                            '',
+                            [
+                                'player_id' => $this->player_id,
+
+                            ]
+                        );
+                    }
+
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+
+                // ACTION IMMEDIATE SUR UN TAKE: turn clock
+                elseif ($no_deck == 9) {
+                    $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+                    $newclock = ($clock + 1) % 6;
+                    game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
+
+                    $txt = clienttranslate('${player_name} moves the clock forward');
+                    game::$instance->notify->all(
+                        "activateClockTower",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'clock' => $newclock,
+
+                        ]
+                    );
+
+                    //Position Artefact
+                    if ($newclock == 0 || $newclock == 3) {
+                        game::$instance->player_artefacts->inc($this->player_id, 1);
+                        $count_artefact = game::$instance->player_artefacts->get($this->player_id);
+                        if ($count_artefact == 3) {
+                            game::$instance->addPending($this->player_id, "EndGame");
+                        } else {
+                            game::$instance->addPending($this->player_id, "ActionsBonus");
+                        }
+                    }
+
+                    // Position Turn reroll token
+                    if ($newclock == 2 || $newclock == 5) {
+                        $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                        if ($reroll == 0) {
+                            game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                            game::$instance->notify->all(
+                                "flipReroll",
+                                '',
+                                [
+                                    'player_id' => $this->player_id,
+
+                                ]
+                            );
+                        }
+
+                        game::$instance->addPending($this->player_id, "ActionsBonus");
+                    }
+
+                    // Position pet
+                    if ($newclock == 1 || $newclock == 4) {
+
+                        game::$instance->addPending($this->player_id, "ClockChoosePet", 1);
+                    }
+                }
+
+                // AUCUNE ACTION IMMEDIATE SUR UN TAKE
+                else {
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+
+            
+
+            }
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            // TURN CLOCK
+            ///////////////////////////////////////////////////////////////////////////////////////
+            if (str_starts_with($varg2, 'clock_')) {
+
+                $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+                $newclock = ($clock + 1) % 6;
+                game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
+
+                $txt = clienttranslate('${player_name} moves the clock forward');
+                game::$instance->notify->all(
+                    "activateClockTower",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'clock' => $newclock,
+
+                    ]
+                );
+
+                // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
+                game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'clock'");
+
+                // Notif pour enlever l'icone
+                    game::$instance->notify->all(
+                        "removeBonus",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            'bonus' => 'clock'
+                            
+                        ]
+                    );
+
+
+                //Position Artefact
+                if ($newclock == 0 || $newclock == 3) {
+                    game::$instance->player_artefacts->inc($this->player_id, 1);
+                    $count_artefact = game::$instance->player_artefacts->get($this->player_id);
+                    if ($count_artefact == 3) {
+                        game::$instance->addPending($this->player_id, "EndGame");
+                    } else {
+                        game::$instance->addPending($this->player_id, "ActionsBonus");
+                    }
+                }
+
+                // Position Turn reroll token
+                if ($newclock == 2 || $newclock == 5) {
+                    $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                    if ($reroll == 0) {
+                        game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                        game::$instance->notify->all(
+                            "flipReroll",
+                            '',
+                            [
+                                'player_id' => $this->player_id,
+
+                            ]
+                        );
+                    }
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+
+                // Position pet
+                if ($newclock == 1 || $newclock == 4) {
+
+                    game::$instance->addPending($this->player_id, "ClockChoosePet", 1);
+                }
+     
+            }
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            // TAKE PET
+            ///////////////////////////////////////////////////////////////////////////////////////
+            if (str_starts_with($varg2, 'card_pet_')) {
+
+                [,, $no_pet] = explode('_', $varg2);
+
+                $pet = 'pet'.$no_pet;
+                
+                //je recupere le détail du pet avant modif (pour savoir si c'est take ou steal)
+                $detail_pet = game::$instance->getUniqueValueFromDB("SELECT $pet FROM other WHERE id=1");
+                [$slot, $position] = explode('_', $detail_pet);
+
+                //je modifie l'etat du pet
+                if ($pet !== null) {
+                    $newposition = $slot . '_' . $this->player_id;
+                    game::$instance->DbQuery("
+                        UPDATE other 
+                        SET {$pet} = '{$newposition}' 
+                        WHERE id = 1
+                    ");
+                }
+
+                // je lances les notifs (take ou steal)
+                if ($position == 'table') {
+                    $txt = clienttranslate('${player_name} takes a pet');
+                    game::$instance->notify->all(
+                        "stealPet",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'pet_id' => $varg2,
+                        ]
+                    );
+                } else {
+                    $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
+                    $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
+                    $txt = clienttranslate('${player_name} steals a pet from ${opponent}');
+                    game::$instance->notify->all(
+                        "stealPet",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'pet_id' => $varg2,
+                            'opponent' =>    [
+                                'log' => '<b style="color: #${color};">${opponent_name}</b>',
+                                'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
+                            ],
+                        ]
+                    );
+                }
+
+                // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
+                game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'pet'");
+
+                // Notif pour enlever l'icone
+                    game::$instance->notify->all(
+                        "removeBonus",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            'bonus' => 'pet'
+                            
+                        ]
+                    );
+
+
+                //j'inc le compteur ghosts
+
+                game::$instance->player_ghosts->inc($this->player_id, 1);
+                $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
+                if ($count_ghosts == 5) {
+                    game::$instance->addPending($this->player_id, "EndGame");
+                } else {
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+
+            }
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            // GRIMOIRE
+            ///////////////////////////////////////////////////////////////////////////////////////
+            if (str_starts_with($varg2, 'deck_grimoire')) {
+
+                // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
+                game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'grimoire'");
+
+                // Notif pour enlever l'icone
+                    game::$instance->notify->all(
+                        "removeBonus",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+                            'bonus' => 'grimoire'
+                            
+                        ]
+                    );
+
+            game::$instance->addPending($this->player_id, "ActionsBonus");
+
+            }
+
+        }
+
+        
+    }
+
+    /*
+     _____           _    
+    |  __ \         | |   
+    | |__) |_ _ _ __| | __
+    |  ___/ _` | '__| |/ /
+    | |  | (_| | |  |   < 
+    |_|   \__,_|_|  |_|\_\
+                       
+    */               
+
+    function argPark($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "ActionsBonus";
+        $ret['title'] = clienttranslate('${actplayer} goes to the park');
+        $ret['titleyou'] = clienttranslate('${you} are going to the park');
+
+
+        $ret['buttons'][] = 'yes_btn';
+
+
+        return $ret;
+    }
+
+
+
+    function Park($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {
         game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
     }
 
@@ -565,17 +1131,17 @@ class Pending extends APP_GameClass
         $pets = game::$instance->getObjectFromDB("SELECT pet1 pet1, pet2 pet2, pet3 pet3 FROM other WHERE id=1");
 
         for ($i = 1; $i <= 3; $i++) {
-            [$no_pet, $position] = explode('_', $pets['pet' . $i]);
+            [,$position] = explode('_', $pets['pet' . $i]);
             if ($position == 'table') {
-                $ret["selectable"][] = 'card_pet_' . $no_pet;
+                $ret["selectable"][] = 'card_pet_' . $i;
             }
         }
 
         if (count($ret["selectable"]) == 0) {
             for ($i = 1; $i <= 3; $i++) {
-                [$no_pet, $position] = explode('_', $pets['pet' . $i]);
+                [,$position] = explode('_', $pets['pet' . $i]);
                 if ($position != $this->player_id) {
-                    $ret["selectable"][] = 'card_pet_' . $no_pet;
+                    $ret["selectable"][] = 'card_pet_' . $i;
                 }
             }
         }
@@ -585,49 +1151,37 @@ class Pending extends APP_GameClass
         }
 
 
-
-
-
         return $ret;
     }
 
     function ClockChoosePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         if ($varg1 == null) {
-            game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+
+            if($parg1 == 1)
+            {
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+            }
+            else
+            {
+                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+            }
+            
         } else {
             [,, $no_pet] = explode('_', $varg2);
 
-            $no_pet = intval($no_pet);
+            $pet = 'pet'.$no_pet;
+            
+            //je recupere le détail du pet avant modif (pour savoir si c'est take ou steal)
+            $detail_pet = game::$instance->getUniqueValueFromDB("SELECT $pet FROM other WHERE id=1");
+            [$slot, $position] = explode('_', $detail_pet);
 
-            // je recupere le nom de la colonne a modifier
-            $pattern = $no_pet . '\_%';
-
-            $sql = "
-            SELECT 
-                CASE
-                    WHEN pet1 LIKE '{$pattern}' THEN 'pet1'
-                    WHEN pet2 LIKE '{$pattern}' THEN 'pet2'
-                    WHEN pet3 LIKE '{$pattern}' THEN 'pet3'
-                END AS pet_column
-            FROM other
-            WHERE id = 1
-            ";
-
-            $result = game::$instance->DbQuery($sql);
-            $row = $result->fetch_assoc();
-            $pet_column = $row['pet_column'];
-
-            //je recupere l'etat de la position du pet avant modif (pour savoir si c'est take ou steal)
-            $detail_pet = game::$instance->getUniqueValueFromDB("SELECT $pet_column FROM other WHERE id=1");
-            [, $position] = explode('_', $detail_pet);
-
-            //je modifie l'etat de la position pet
-            if ($pet_column !== null) {
-                $newposition = $no_pet . '_' . $this->player_id;
+            //je modifie l'etat du pet
+            if ($pet !== null) {
+                $newposition = $slot . '_' . $this->player_id;
                 game::$instance->DbQuery("
                     UPDATE other 
-                    SET {$pet_column} = '{$newposition}' 
+                    SET {$pet} = '{$newposition}' 
                     WHERE id = 1
                 ");
             }
@@ -668,7 +1222,14 @@ class Pending extends APP_GameClass
             if ($count_ghosts == 5) {
                 game::$instance->addPending($this->player_id, "EndGame");
             } else {
-                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+                if($parg1 == 1)
+                {
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+                else
+                {
+                    game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+                }
             }
         }
     }

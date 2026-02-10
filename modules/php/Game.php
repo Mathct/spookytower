@@ -415,6 +415,8 @@ class Game extends \Bga\GameFramework\Table
 
         $result["park_order"] = $this->getGameStateValue('park_order');
 
+        $result["actions_bonus"] = game::$instance->getObjectListFromDB("SELECT name name, count count FROM actionpending WHERE id >=1 AND id <= 6");
+
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 

@@ -40,6 +40,10 @@ class NormalTurn {
       this.possibles = [];
       console.log(args);
 
+      console.log("enteringState function");
+      this.game.function = args.function;
+      //this.game.setupRiver();
+
       // selectable
       if (Array.isArray(args.selectable) && args.selectable.length > 0) {
         args.selectable.forEach((sid) => {
@@ -281,6 +285,17 @@ class NormalTurn {
               this.game.safeClass("validate_bonus_btn", "add", "disabled");
             }
             break;
+          case "end_bonus_btn":
+            this.bga.statusBar.addActionButton(
+              _("End Bonus"),
+              () =>
+                this.bga.actions.performAction("actValidateBonus", {
+                  arg1: key,
+                  arg2: this.game.selected_token,
+                }),
+              { color: "primary", id: "validate_bonus_btn" },
+            );
+            break;
         }
       }
     }
@@ -357,6 +372,8 @@ export class Game {
     this.selected_building = "";
     this.selected_stack = "";
     this.selected_pet = "";
+    console.log("setup function");
+    this.function = "";
 
     // variable en local storage pour le zoom
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
@@ -455,40 +472,13 @@ export class Game {
   setupConnections(selectables) {
     this.connections = [];
 
+    console.log("ARGS .connections", this.function);
+
     selectables.forEach((elt_id) => {
       const element = document.getElementById(elt_id);
       if (!element) return;
 
-      // --- Carte table (building) ---
-      if (elt_id.startsWith("table_building_card_")) {
-        const clickHandler = () => this.onSelectBuilding(elt_id);
-        element.addEventListener("click", clickHandler);
-        this.connections.push({
-          element,
-          event: "click",
-          handler: clickHandler,
-        });
-        return;
-      } else if (elt_id.includes("_stack_")) {
-        // --- Cartes “token” ou autres éléments cliquables ---
-        const clickHandler = () => this.onSelectStack(elt_id);
-        element.addEventListener("click", clickHandler);
-        this.connections.push({
-          element,
-          event: "click",
-          handler: clickHandler,
-        });
-        return;
-      } else if (elt_id.startsWith("card_pet_")) {
-        const clickHandler = () => this.onSelectPet(elt_id);
-        element.addEventListener("click", clickHandler);
-        this.connections.push({
-          element,
-          event: "click",
-          handler: clickHandler,
-        });
-        return;
-      } else {
+      if (this.function == "ActionsBonus") {
         // --- Cartes “token” ou autres éléments cliquables ---
         const clickHandler = () => this.onSelectToken(elt_id);
         element.addEventListener("click", clickHandler);
@@ -498,6 +488,47 @@ export class Game {
           handler: clickHandler,
         });
         return;
+      } else {
+        // --- Carte table (building) ---
+        if (elt_id.startsWith("table_building_card_")) {
+          const clickHandler = () => this.onSelectBuilding(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else if (elt_id.includes("_stack_")) {
+          // --- Cartes “token” ou autres éléments cliquables ---
+          const clickHandler = () => this.onSelectStack(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else if (elt_id.startsWith("card_pet_")) {
+          const clickHandler = () => this.onSelectPet(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else {
+          // --- Cartes “token” ou autres éléments cliquables ---
+          const clickHandler = () => this.onSelectToken(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        }
       }
     });
   }
@@ -521,6 +552,7 @@ export class Game {
     this.selected_building = "";
     this.selected_stack = "";
     this.selected_pet = "";
+    this.function = "";
   }
 
   // Gestion de la sélection d'un building
@@ -672,6 +704,7 @@ export class Game {
     if (this.selected_token === "") {
       this.safeClass(token_elt, "add", "selected");
       this.selected_token = token_id;
+      this.safeClass("validate_bonus_btn", "remove", "disabled");
     }
     // Si on clique sur une autre case
     else {
@@ -683,8 +716,10 @@ export class Game {
       if (this.selected_token != token_id) {
         this.safeClass(token_elt, "add", "selected");
         this.selected_token = token_id;
+        this.safeClass("validate_bonus_btn", "remove", "disabled");
       } else {
         this.selected_token = "";
+        this.safeClass("validate_bonus_btn", "add", "disabled");
       }
     }
   }
@@ -948,32 +983,64 @@ export class Game {
   }
 
   setupRiver() {
-    const river = document.getElementById("river_id");
-    if (!river) return;
+    const riverElement = document.getElementById("river_id");
 
-    /*const icons = ["ic_reroll_1", "ic_artefact", "ic_clue", "ic_grimoire", "ic_clock", "ic_pet", "ic_flip8", "ic_draw_any"];
+    // Reset
+    riverElement.innerHTML = "";
 
-    river.innerHTML = ""; // reset si nécessaire
+    console.log("setupRiver");
 
-    icons.forEach((ic) => {
-      river.insertAdjacentHTML("beforeend", `<div class="river_icon ${ic}"></div>`);
-    });*/
+    let nb_icons = 0;
+
+    this.gamedatas.actions_bonus.forEach((actionBonus) => {
+      const actionCount = Number(actionBonus.count);
+      nb_icons += actionCount;
+      for (let i = 0; i < actionCount; i++) {
+        const iconElementId = `river_ic_${actionBonus.name}_${Math.floor(Math.random() * 100000)}`;
+
+        const iconHTML = `<div id="${iconElementId}" class="river_icon ic_${actionBonus.name}"></div>
+      `;
+
+        riverElement.insertAdjacentHTML("beforeend", iconHTML);
+      }
+    });
+
+    if (nb_icons > 0) {
+      this.safeClass("river_id", "remove", "closed");
+    }
   }
 
   setupPets() {
-    // Ordre haut → bas, exemple : "213"
-
-    // Parcourir l'ordre et injecter le HTML directement
     for (let i = 1; i < 4; i++) {
-      // la table du pet i+1
-      const containerType = this.gamedatas.other[`pet${i}`].split("_")[0];
-      console.log("containerType", this.gamedatas.other[`pet${i}`]);
+      const petData = this.gamedatas.other[`pet${i}`];
+      const containerNb = petData.split("_")[0];
+      const containerType = petData.split("_")[1];
 
-      const container = document.getElementById(`table_pet_slot_${containerType}`);
+      let containerColor = "";
+      if (containerType !== "table") {
+        const playerId = this.bga.players.getActivePlayerId();
+        containerColor = this.players[playerId].color; // ex: "ff0000"
+      }
+
+      const container = document.getElementById(`table_pet_slot_${containerNb}`);
+
+      let borderStyle = "";
+      if (containerColor) {
+        const r = parseInt(containerColor.slice(0, 2), 16);
+        const g = parseInt(containerColor.slice(2, 4), 16);
+        const b = parseInt(containerColor.slice(4, 6), 16);
+
+        borderStyle = `
+        box-shadow:
+          inset 0 0 0 4px #${containerColor},
+          inset 0 0 0 9999px rgba(${r}, ${g}, ${b}, 0.3);
+      `;
+      }
 
       const petHTML = `
-          <div id="card_pet_${i}" class="card_item pet_cards" style="background-position: ${-(i - 1) * 100}% 0%;"></div>
-        `;
+      <div id="card_pet_${i}" class="card_item pet_cards"
+        style=" background-position: ${-(i - 1) * 100}% 0%; ${borderStyle}"></div>`;
+
       container.insertAdjacentHTML("beforeend", petHTML);
     }
   }
@@ -1086,7 +1153,7 @@ export class Game {
     Object.values(this.gamedatas.players).forEach((player) => {
       const ghost_counter = new ebg.counter();
       ghost_counter.create(`ghost_counter_${player.id}`, {
-        value: player.ghost,
+        value: player.player_ghosts,
         playerCounter: "player_ghosts",
         playerId: player.id,
       });
@@ -1100,14 +1167,14 @@ export class Game {
 
       const artefact_counter = new ebg.counter();
       artefact_counter.create(`artefact_counter_${player.id}`, {
-        value: player.artefact,
+        value: player.player_artefacts,
         playerCounter: "player_artefacts",
         playerId: player.id,
       });
 
       const clue_counter = new ebg.counter();
       clue_counter.create(`clue_counter_${player.id}`, {
-        value: player.clue,
+        value: player.player_clues,
         playerCounter: "player_clues",
         playerId: player.id,
       });
@@ -1798,7 +1865,7 @@ export class Game {
 
         console.log("IC", ic);
 
-        if (["grimoire", "clock", "flip8", "flip9", "draw8"].includes(ic)) {
+        if (["grimoire", "clock", "flip8", "flip9", "draw8", "pet"].includes(ic)) {
           const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
           const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
           parent.insertAdjacentHTML("beforeend", html);
@@ -1993,6 +2060,17 @@ export class Game {
     //  trois fantômes      : on envoie vers le panel joueur et on incrémente
   }
 
+  async notif_flipCard(args) {
+    // on retourne les cartes dans une colonne
+    // on récolte
+    console.log("notif_flipCard", args);
+  }
+
+  async notif_removeBonus(args) {
+    // on enlève un icone bonus
+    console.log("notif_removeBonus", args);
+  }
+
   async notif_goToThePark(args) {
     // on flipe une carte Park
     // on envoie vers le panel joueur et on incrémente
@@ -2035,7 +2113,42 @@ export class Game {
   async notif_stealPet(args) {
     console.log("notif_stealPet", args);
 
-    // on incrémente ou  décrémente le nombre de pet
+    // ID du pet reçu dans la notif (ex: "card_pet_2")
+    const petElementId = args.pet_id;
+
+    // Élément DOM du pet
+    const petElement = document.getElementById(petElementId);
+    if (!petElement) {
+      return;
+    }
+
+    // Container DOM qui contient le pet (ex: "table_pet_slot_3")
+    const petContainerElement = petElement.parentElement;
+    if (!petContainerElement) {
+      return;
+    }
+
+    // Numéro du slot extrait de l'id du container
+    // "table_pet_slot_3" → "3"
+    const petContainerNumber = petContainerElement.id.split("_")[3];
+
+    // Joueur actif (voleur)
+    const activePlayerId = this.bga.players.getActivePlayerId();
+    const activePlayerColor = this.players[activePlayerId].color; // ex: "ff0000"
+    if (!activePlayerColor) {
+      return;
+    }
+
+    // Conversion hex → rgb
+    const red = parseInt(activePlayerColor.slice(0, 2), 16);
+    const green = parseInt(activePlayerColor.slice(2, 4), 16);
+    const blue = parseInt(activePlayerColor.slice(4, 6), 16);
+
+    // Application de la bordure + fond semi-transparent
+    petElement.style.boxShadow = `
+    inset 0 0 0 4px #${activePlayerColor},
+    inset 0 0 0 9999px rgba(${red}, ${green}, ${blue}, 0.3)
+  `;
   }
 
   async notif_flipReroll(args) {
