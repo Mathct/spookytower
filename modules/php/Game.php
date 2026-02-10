@@ -417,6 +417,8 @@ class Game extends \Bga\GameFramework\Table
 
         $result["actions_bonus"] = game::$instance->getObjectListFromDB("SELECT name name, count count FROM actionpending WHERE id >=1 AND id <= 6");
 
+        $result["replay_player_id"] = $this->getGameStateValue('replay');
+
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 

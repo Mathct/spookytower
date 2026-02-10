@@ -464,6 +464,9 @@ class Pending extends APP_GameClass
                         game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
                         game::$instance->player_clues->inc($this->player_id, 1);
                     }
+                    if ($name == 'replay') {
+                        game::$instance->setGameStateInitialValue('replay', $this->player_id);
+                    }
                 }
             }
 
@@ -1071,7 +1074,7 @@ class Pending extends APP_GameClass
                         ]
                     );
 
-            game::$instance->addPending($this->player_id, "ActionsBonus");
+                game::$instance->addPending($this->player_id, "Grimoire");
 
             }
 
@@ -1079,6 +1082,56 @@ class Pending extends APP_GameClass
 
         
     }
+
+
+    /*
+      _____      _                 _          
+     / ____|    (_)               (_)         
+    | |  __ _ __ _ _ __ ___   ___  _ _ __ ___ 
+    | | |_ | '__| | '_ ` _ \ / _ \| | '__/ _ \
+    | |__| | |  | | | | | | | (_) | | | |  __/
+     \_____|_|  |_|_| |_| |_|\___/|_|_|  \___|
+                                           
+    */      
+     
+    function argGrimoire($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "ActionsBonus";
+        $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
+        $ret['titleyou'] = clienttranslate('${you} are reading the grimoire');
+
+
+        $ret['buttons'][] = 'yes_btn';
+
+
+        return $ret;
+    }
+
+
+
+    function Grimoire($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {
+        $card_pick = game::$instance->grimoire_DB->pickCardForLocation('deck', 'hand', $this->player_id);
+
+        game::$instance->notify->all(
+            "drawGrimoire",
+            '',
+            [
+                'player_id' => $this->player_id,
+                'grimoire' => $card_pick
+                
+            ]
+        );
+
+
+
+        game::$instance->addPending($this->player_id, "ActionsBonus");
+    }
+
 
     /*
      _____           _    
@@ -1096,7 +1149,7 @@ class Pending extends APP_GameClass
         $ret["selectable"] = [];
         $ret["selected"] = [];
         $ret['buttons'] = [];
-        $ret["function"] = "ActionsBonus";
+        $ret["function"] = "Park";
         $ret['title'] = clienttranslate('${actplayer} goes to the park');
         $ret['titleyou'] = clienttranslate('${you} are going to the park');
 
