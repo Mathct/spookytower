@@ -568,7 +568,7 @@ class Pending extends APP_GameClass
 
         if($clock >= 1)
         {
-            $ret["selectable"][] = 'clock_hand_sprite';
+            $ret["selectable"][] = 'clock_tower';
             
         }
 
