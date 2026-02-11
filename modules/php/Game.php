@@ -419,6 +419,8 @@ class Game extends \Bga\GameFramework\Table
 
         $result["replay_player_id"] = $this->getGameStateValue('replay');
 
+        $result["grimoire_card"] = game::$instance->getObjectFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg FROM grimoire WHERE card_location = 'table'");
+
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 

@@ -480,14 +480,24 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .player_board {
   display: flex;
-  align-items: flex-end;
+
   justify-content: flex-end;
   gap: var(--card_gap);
 }
 
 .building_columns {
   display: flex;
+  flex-wrap: wrap;          /* autorise le retour à la ligne */
   gap: calc(var(--card_gap) / 2);
+  justify-content: flex-end; /* colle les stacks à droite sur chaque ligne */
+  align-content: flex-end;   /* colle les lignes elles-mêmes vers le bas si plusieurs lignes */
+  align-self: flex-end;    /* ce bloc reste en bas */
+}
+
+/* house slot et house ghosts */
+.house_slot,
+.house_ghosts {
+  align-self: flex-start; /* collé en haut du player_board */
 }
 
 /* ---------- STACKS ---------- */
@@ -658,6 +668,11 @@ font-family: "AktivGrotesk-Regular", sans-serif;
     box-shadow: 0 0 3px yellow;
     z-index: 100;
   }
+
+#clock_tower_id.selectable,
+#clock_tower_id.selected {
+  border-radius: 50%;
+}
    
 .selected, .selectedmulti {
     cursor: pointer !important;

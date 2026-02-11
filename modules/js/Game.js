@@ -794,8 +794,14 @@ export class Game {
       );
     });
 
-    const current_player_id = this.bga.players.getCurrentPlayerId();
+    if (parseInt(this.gamedatas.replay_player_id) > 0) {
+      const iconId = `panel_ic_replay`;
+      const html = `<div id="${iconId}" class="icon ic_replay"></div>`;
+      const bottom_board = document.getElementById(`bottom_board_${this.gamedatas.replay_player_id}`);
+      bottom_board.insertAdjacentHTML("beforeend", html);
+    }
 
+    const current_player_id = this.bga.players.getCurrentPlayerId();
     if (current_player_id) {
       const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
 
@@ -903,8 +909,8 @@ export class Game {
 
     // Injecter la carte + compteur
     const parkHTML = `        
-        <div class="card_item parkgrim_cards opa_30" style="background-position: -500% 0%;"></div>
-        <div class="card_item parkgrim_cards" style="background-position: ${posX}% 0%;">
+        <div class="card_item parkgrim_cards opa_30" id="park_opa" style="background-position: -500% 0%;"></div>
+        <div class="card_item parkgrim_cards" id="park_active" style="background-position: ${posX}% 0%;">
             <div class="table_building_counter" id="deck_park_counter"></div>
         </div>
     `;
@@ -917,11 +923,11 @@ export class Game {
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const cardHTML = `
-        <div class="card_item parkgrim_cards opa_30" style="background-position: -700% -100%;"></div>
-        <div class="card_item parkgrim_cards" style="background-position: -700% -100%;">
-            <div class="table_building_counter" id="deck_grimoire_counter"></div>
-        </div>
-    `;
+      <div class="card_item parkgrim_cards opa_30" id="grimoire_opa" style="background-position: -700% -100%;"></div>
+      <div class="card_item parkgrim_cards" id="grimoire_active" style="background-position: -700% -100%;">
+          <div class="table_building_counter" id="deck_grimoire_counter"></div>
+      </div>
+  `;
 
     deckGrimoireSlot.insertAdjacentHTML("beforeend", cardHTML);
 
@@ -1014,12 +1020,11 @@ export class Game {
     for (let i = 1; i < 4; i++) {
       const petData = this.gamedatas.other[`pet${i}`];
       const containerNb = petData.split("_")[0];
-      const containerType = petData.split("_")[1];
+      const containerType = petData.split("_")[1]; // table ou l'id du joueur
 
       let containerColor = "";
       if (containerType !== "table") {
-        const playerId = this.bga.players.getActivePlayerId();
-        containerColor = this.players[playerId].color; // ex: "ff0000"
+        containerColor = this.players[containerType].color; // ex: "ff0000"
       }
 
       const container = document.getElementById(`table_pet_slot_${containerNb}`);
@@ -1459,13 +1464,12 @@ export class Game {
   }
 
   async animFlipPark() {
-    const park = document.querySelector("#deck_park .parkgrim_cards");
+    const park = document.getElementById("park_active");
     if (!park) return;
 
     const nb_cards = parseInt(this.gamedatas.deck_park);
     const versoCol = this.gamedatas.park_order[5 - nb_cards];
 
-    // ⚡ Mode instantané : état final immédiat
     if (this.instantaneousMode) {
       park.style.transition = "";
       park.style.transform = "";
@@ -1473,13 +1477,13 @@ export class Game {
       return;
     }
 
-    // 🎞️ Mode animé
+    // pour bloquer les multiclics
     if (park.dataset.flipping === "true") return;
     park.dataset.flipping = "true";
 
-    const half = 200; // demi-flip en ms
+    const half = 200;
 
-    // Premier demi-flip : rotation + léger pop
+    // Premier demi-flip
     park.style.transition = `transform ${half}ms ease-in-out`;
     park.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
     await new Promise((resolve) => setTimeout(resolve, half));
@@ -1487,24 +1491,19 @@ export class Game {
     // Changement visuel : verso
     park.style.backgroundPosition = `-${versoCol}00% 0%`;
 
-    // Deuxième demi-flip : retour à la position normale
+    // Deuxième demi-flip
     park.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
     await new Promise((resolve) => setTimeout(resolve, half));
 
-    // Reset final
-    park.style.transition = "";
-    park.style.transform = "";
     delete park.dataset.flipping;
   }
 
-  async animFlipGrimoire() {
-    const grimoire = document.querySelector("#deck_grimoire .parkgrim_cards");
+  async animFlipGrimoire(grimoireType) {
+    const grimoire = document.getElementById("grimoire_active");
     if (!grimoire) return;
 
-    const grimoireVerso = 3;
-    const n = grimoireVerso - 1;
+    const n = grimoireType - 1;
 
-    // ⚡ Mode instantané : état final immédiat
     if (this.instantaneousMode) {
       grimoire.style.transition = "";
       grimoire.style.transform = "";
@@ -1512,13 +1511,13 @@ export class Game {
       return;
     }
 
-    // 🎞️ Mode animé
+    // pour bloquer les multiclics
     if (grimoire.dataset.flipping === "true") return;
     grimoire.dataset.flipping = "true";
 
-    const half = 200; // demi-flip en ms
+    const half = 200;
 
-    // Premier demi-flip : rotation + léger pop
+    // Premier demi-flip
     grimoire.style.transition = `transform ${half}ms ease-in-out`;
     grimoire.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
     await new Promise((resolve) => setTimeout(resolve, half));
@@ -1530,9 +1529,6 @@ export class Game {
     grimoire.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
     await new Promise((resolve) => setTimeout(resolve, half));
 
-    // Reset final
-    grimoire.style.transition = "";
-    grimoire.style.transform = "";
     delete grimoire.dataset.flipping;
   }
 
@@ -1766,23 +1762,6 @@ export class Game {
     delete stack.dataset.flipping;
   }
 
-  async toggleRiver() {
-    const riverElt = document.getElementById("river_id");
-    if (!riverElt) return;
-
-    // ⚡ Mode instantané : état final direct
-    if (this.instantaneousMode) {
-      riverElt.style.transition = "";
-      riverElt.classList.toggle("closed");
-      return;
-    }
-
-    // 🎞️ Mode animé normal
-    riverElt.classList.toggle("closed");
-
-    await new Promise((resolve) => setTimeout(resolve, 400));
-  }
-
   async animGetRewards(no_house, cardsInfos, playerId) {
     const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
     if (!stack) return;
@@ -1935,6 +1914,250 @@ export class Game {
     delete stack.dataset.animating;
   }
 
+  async toggleRiver() {
+    const riverElt = document.getElementById("river_id");
+    if (!riverElt) return;
+
+    // ⚡ Mode instantané : état final direct
+    if (this.instantaneousMode) {
+      riverElt.style.transition = "";
+      riverElt.classList.toggle("closed");
+      return;
+    }
+
+    // 🎞️ Mode animé normal
+    riverElt.classList.toggle("closed");
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+
+  async showRiver() {
+    const riverElt = document.getElementById("river_id");
+    if (!riverElt) return;
+
+    // Si déjà ouvert, rien à faire
+    if (!riverElt.classList.contains("closed")) return;
+
+    // ⚡ Mode instantané : état final
+    if (this.instantaneousMode) {
+      riverElt.classList.remove("closed");
+      riverElt.style.transition = "";
+      return;
+    }
+
+    // 🎞️ Mode animé
+    riverElt.classList.remove("closed");
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+
+  async hideRiver() {
+    const riverElt = document.getElementById("river_id");
+    if (!riverElt) return;
+
+    // Si déjà fermé, rien à faire
+    if (riverElt.classList.contains("closed")) return;
+
+    // ⚡ Mode instantané : état final
+    if (this.instantaneousMode) {
+      riverElt.classList.add("closed");
+      riverElt.style.transition = "";
+      return;
+    }
+
+    // 🎞️ Mode animé
+    riverElt.classList.add("closed");
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+
+  async animFlipSoloStack(stackId, cardsInfos, playerId) {
+    const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
+    if (!stack) return;
+
+    const info = cardsInfos[0]; // on ne prend QUE la carte demandée
+    if (!info) return;
+
+    const card = Array.from(stack.querySelectorAll(".building_cards"))[0]; // première carte dans le stack
+    if (!card) return;
+
+    const half = 200;
+
+    if (this.instantaneousMode) {
+      // flip instantané : appliquer directement le verso
+      const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
+      const col = card_offset % 12;
+      const row = 1 + Math.floor(card_offset / 12);
+      card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
+      card.style.transition = "";
+      card.style.transform = "";
+      return;
+    }
+
+    // flip animé
+    card.style.transition = `transform ${half}ms ease-in-out`;
+    card.style.transform = "rotateY(90deg)";
+    await new Promise((r) => setTimeout(r, half));
+
+    const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
+    const col = card_offset % 12;
+    const row = 1 + Math.floor(card_offset / 12);
+    card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
+
+    card.style.transform = "rotateY(0deg)";
+    await new Promise((r) => setTimeout(r, half));
+
+    card.style.transition = "";
+    card.style.transform = "";
+
+    // ---- Supprimer la carte ----
+    card.remove();
+  }
+
+  async animGetRewardsSolo(stackId, cardsInfos, playerId) {
+    console.log("GetRewardsSolo");
+
+    const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
+    if (!stack) return;
+
+    const river = document.getElementById("river_id");
+    if (!river) {
+      console.warn("River element not found!");
+      return;
+    }
+
+    const info = cardsInfos[0]; // seule carte concernée
+    if (!info) return;
+
+    // Récupérer les bonus
+    const card_idx = info.type + info.type_arg;
+    const bonuses = this.gamedatas.building_cards[card_idx] || [];
+
+    for (let i = 0; i < bonuses.length; i++) {
+      const bonus = bonuses[i];
+      const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
+      if (!ic) continue;
+
+      // créer l'icône
+      const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
+      const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
+      stack.insertAdjacentHTML("beforeend", html);
+
+      const iconEl = document.getElementById(iconId);
+      if (!iconEl || !iconEl.isConnected) continue;
+
+      // animer vers la rivière
+      this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
+      await new Promise((r) => setTimeout(r, 80));
+    }
+  }
+
+  async animShiftStackCards(stackId, playerId) {
+    const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
+    if (!stack) return;
+
+    const containers = Array.from(stack.querySelectorAll(".building_card_container"));
+    if (containers.length === 0) return;
+
+    // ⚡ Mode instantané : on déplace directement
+    if (this.instantaneousMode) {
+      // Parcours croissant
+      for (let i = 1; i < containers.length; i++) {
+        const currentContainer = containers[i];
+        const prevContainer = containers[i - 1];
+        if (currentContainer.children.length === 0) continue;
+
+        const card = currentContainer.children[0];
+        prevContainer.appendChild(card);
+
+        // Renommer correctement
+        card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
+      }
+      return;
+    }
+
+    // 🎞️ Mode animé : glisser les cartes vers le container précédent
+    const animations = [];
+    for (let i = 1; i < containers.length; i++) {
+      const currentContainer = containers[i];
+      const prevContainer = containers[i - 1];
+      if (currentContainer.children.length === 0) continue;
+
+      const card = currentContainer.children[0];
+      animations.push(() =>
+        this.animationManager.slideAndAttach(card, prevContainer, { duration: 600 }).then(() => {
+          card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
+        }),
+      );
+    }
+
+    await this.animationManager.playParallel(animations);
+  }
+
+  async animRemoveBonus(bonus_type) {
+    // Sélecteur du premier élément correspondant
+    const selector = `[id^="river_ic_${bonus_type}"]`;
+    const bonusElement = document.querySelector(selector);
+
+    if (!bonusElement) {
+      console.log("No bonus element found for", bonus_type);
+      return;
+    }
+
+    if (this.instantaneousmode) {
+      // Mode instantané : suppression directe
+      bonusElement.remove();
+      console.log("Bonus removed instantly:", bonusElement.id);
+      return;
+    }
+
+    // 1️⃣ Animation disparition
+    bonusElement.style.transition = "transform 400ms ease, opacity 400ms ease";
+    bonusElement.style.transform = "scale(0)";
+    bonusElement.style.opacity = "0";
+
+    // Attente de la fin de l'animation
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    // Suppression du DOM
+    bonusElement.remove();
+
+    console.log("Bonus removed:", bonusElement.id);
+  }
+
+  async animEndBonus() {
+    // Sélectionne tous les éléments restants river_ic_
+    const bonusElements = document.querySelectorAll('[id^="river-ic_"]');
+
+    if (bonusElements.length === 0 && this.instantaneousMode) {
+      // Pas de bonus à supprimer, mais fermer la rivière
+      await this.hideRiver();
+      return;
+    }
+
+    // Si mode instantané, suppression directe
+    if (this.instantaneousMode) {
+      bonusElements.forEach((el) => el.remove());
+      console.log("All remaining bonus elements removed instantly");
+
+      // Fermer la rivière
+      await this.hideRiver();
+      return;
+    }
+
+    // Animation pour chaque élément
+    for (const el of bonusElements) {
+      el.style.transition = "transform 400ms ease, opacity 400ms ease";
+      el.style.transform = "scale(0)";
+      el.style.opacity = "0";
+    }
+
+    // Attendre la fin de l'animation des bonus
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    // Supprimer du DOM
+    bonusElements.forEach((el) => el.remove());
+    console.log("All remaining bonus elements removed with animation");
+  }
+
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications
 
@@ -2001,7 +2224,7 @@ export class Game {
     console.log("notif_flipCards", args);
     await this.animFlipStack(args.no_house, args.cards, args.player_id);
 
-    await this.toggleRiver();
+    await this.showRiver();
 
     await this.animGetRewards(args.no_house, args.cards, args.player_id);
 
@@ -2064,11 +2287,20 @@ export class Game {
     // on retourne les cartes dans une colonne
     // on récolte
     console.log("notif_flipCard", args);
+
+    await this.animFlipSoloStack(args.no_house, args.cards, args.player_id);
+
+    await this.showRiver();
+
+    await this.animGetRewardsSolo(args.no_house, args.cards, args.player_id);
+
+    await this.animShiftStackCards(args.no_house, args.player_id);
   }
 
   async notif_removeBonus(args) {
-    // on enlève un icone bonus
     console.log("notif_removeBonus", args);
+
+    await this.animRemoveBonus(args.bonus);
   }
 
   async notif_goToThePark(args) {
@@ -2077,7 +2309,7 @@ export class Game {
     // on décrémente les torches et le compteur
     console.log("notif_goToThePark", args);
 
-    this.animFlipPark();
+    await this.animFlipPark();
   }
 
   async notif_drawGrimoire(args) {
@@ -2085,7 +2317,7 @@ export class Game {
     // on décrémente lecompteur
     console.log("notif_drawGrimoire", args);
 
-    this.animFlipGrimoire();
+    await this.animFlipGrimoire(args.grimoire.type);
 
     // un fantôme
     // une torche
@@ -2107,7 +2339,7 @@ export class Game {
     //            sur la table, on envoie vers le panel joueur et on incrémente pet
     // reroll   : on flipe le reroll si nécessaire
 
-    this.animClockTower();
+    await this.animClockTower();
   }
 
   async notif_stealPet(args) {
@@ -2154,7 +2386,7 @@ export class Game {
   async notif_flipReroll(args) {
     console.log("notif_flipReroll", args);
 
-    this.animFlipReroll(args.player_id);
+    await this.animFlipReroll(args.player_id);
   }
 
   async notif_rollDice(args) {
@@ -2162,5 +2394,13 @@ export class Game {
 
     this.forcedFaces = args.roll;
     this.rollDiceMultiple();
+  }
+
+  async notif_endBonus(args) {
+    console.log("notif_endBonus", args);
+
+    await this.animEndBonus();
+
+    await this.hideRiver();
   }
 }
