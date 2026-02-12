@@ -61,3 +61,34 @@ $this->_BUILDING_CARD = [
     122 => ["ghost_17"],
     123 => ["ghost_18"]
 ];
+
+
+$this->_GHOST = [
+    'building_11',
+    'building_71',
+    'building_81',
+    'building_82',
+    'building_91',
+    'building_92',
+    'building_101',
+    'building_102',
+    'building_103',
+    'building_104',
+    'building_105',
+    'building_111',
+    'building_112',
+    'building_113',
+    'building_114',
+    'building_121',
+    'building_122',
+    'building_123',
+    'pet_1',
+    'pet_2',
+    'pet_3',
+    'park_1',
+    'park_2',
+    'park_3',
+    'park_4',
+    'park_5',
+    'grimoire_1'
+];

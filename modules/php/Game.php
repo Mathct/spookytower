@@ -28,6 +28,7 @@ class Game extends \Bga\GameFramework\Table
 {
     // material
     public array $_BUILDING_CARD;
+    public array $_GHOST;
 
     // counters table
     public TableCounter $deck_1;
@@ -389,6 +390,7 @@ class Game extends \Bga\GameFramework\Table
         $result["other"] = game::$instance->getObjectFromDb("SELECT * FROM other WHERE 1");
 
         $result["building_cards"] = $this->_BUILDING_CARD;
+        $result["ghost_assets"] = $this->_GHOST;
 
         //counters
         $this->deck_1->fillResult($result);

@@ -200,7 +200,7 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-          case "reveal_grimoire_btn":
+          /*  case "reveal_grimoire_btn":
             this.bga.statusBar.addActionButton(
               _("Reveal Grimoire"),
               () =>
@@ -269,7 +269,7 @@ class NormalTurn {
             if (this.game.selected_stack == "") {
               this.game.safeClass("flip_card9_btn", "add", "disabled");
             }
-            break;
+            break;*/
           case "validate_bonus_btn":
             this.bga.statusBar.addActionButton(
               _("Validate Bonus"),
@@ -479,15 +479,35 @@ export class Game {
       if (!element) return;
 
       if (this.function == "ActionsBonus") {
-        // --- Cartes “token” ou autres éléments cliquables ---
-        const clickHandler = () => this.onSelectToken(elt_id);
-        element.addEventListener("click", clickHandler);
-        this.connections.push({
-          element,
-          event: "click",
-          handler: clickHandler,
-        });
-        return;
+        if (elt_id.startsWith("card_pet_")) {
+          const clickHandler = () => this.onSelectPet(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else if (elt_id.startsWith("table_building_card_")) {
+          const clickHandler = () => this.onSelectBuilding(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else {
+          // --- Cartes “token” ou autres éléments cliquables ---
+          const clickHandler = () => this.onSelectToken(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        }
       } else {
         // --- Carte table (building) ---
         if (elt_id.startsWith("table_building_card_")) {
@@ -739,42 +759,21 @@ export class Game {
 
             <!-- Ghost icon + counter -->
             <div class="icon-group">
-              <div
-                class="icon ic_ghost"
-                id="icon_ghost_${player.id}"
-                title="${_("Ghost")}"
-              ></div>
-              <span
-                class="icon-text"
-                id="ghost_counter_${player.id}"
-              ></span>
+              <div class="icon ic_ghost" id="icon_ghost_${player.id}" title="${_("Ghost")}"></div>
+              <span class="icon-text" id="ghost_counter_${player.id}"></span>
             </div>
 
           
             <!-- Artefact icon + counter -->
             <div class="icon-group">
-              <div
-                class="icon ic_artefact"
-                id="icon_artefact_${player.id}"
-                title="${_("Artefacts")}"
-              ></div>
-              <span
-                class="icon-text"
-                id="artefact_counter_${player.id}"
-              ></span>
+              <div class="icon ic_artefact" id="icon_artefact_${player.id}" title="${_("Artefacts")}" ></div>
+              <span class="icon-text" id="artefact_counter_${player.id}"></span>
             </div>
 
             <!-- Clue icon + counter -->
             <div class="icon-group">
-              <div
-                class="icon ic_clue"
-                id="icon_clue_${player.id}"
-                title="${_("Clues")}"
-              ></div>
-              <span
-                class="icon-text"
-                id="clue_counter_${player.id}"
-              ></span>
+              <div class="icon ic_clue" id="icon_clue_${player.id}" title="${_("Clues")}"></div>
+              <span class="icon-text" id="clue_counter_${player.id}"></span>
             </div>
           </div>
 
@@ -782,14 +781,8 @@ export class Game {
           </div>
 
           <div class="b-board" id="bottom_board_${player.id}">
-              <!-- Reroll icon -->
-              <div
-                class="icon ic_reroll_${player.reroll ?? 1}"
-                id="icon_reroll_${player.id}"
-                title="${_("Reroll")}"
-              ></div>
+              <div class="icon ic_reroll_${player.reroll ?? 1}" id="icon_reroll_${player.id}" title="${_("Reroll")}"></div>
             </div>
-
           `,
       );
     });
@@ -804,7 +797,6 @@ export class Game {
     const current_player_id = this.bga.players.getCurrentPlayerId();
     if (current_player_id) {
       const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
-
       if (rerollIcon) {
         rerollIcon.classList.add("clickable");
         rerollIcon.addEventListener("click", () => this.animClockTower());
@@ -846,8 +838,7 @@ export class Game {
                   style="background-position: 0% 0%;"></div>
             </div>
 
-            <div class="table_building_counter"
-                id="table_building_counter_${buildingNumber}"></div>
+            <div class="table_building_counter" id="table_building_counter_${buildingNumber}"></div>
           </div>
         `);
         buildingNumber++;
@@ -895,7 +886,6 @@ export class Game {
   setupTopRow() {
     // -------------------- Deck Park --------------------
     const deckParkSlot = document.getElementById("deck_park");
-    if (!deckParkSlot) return;
 
     // Déterminer la position dans le sprite en fonction de nb_parks
     const nb_parks = this.gamedatas.deck_park;
@@ -910,40 +900,31 @@ export class Game {
     // Injecter la carte + compteur
     const parkHTML = `        
         <div class="card_item parkgrim_cards opa_30" id="park_opa" style="background-position: -500% 0%;"></div>
-        <div class="card_item parkgrim_cards" id="park_active" style="background-position: ${posX}% 0%;">
-            <div class="table_building_counter" id="deck_park_counter"></div>
-        </div>
+        <div class="card_item parkgrim_cards" id="park_active" style="background-position: ${posX}% 0%;"></div>
+        <div class="table_building_counter" id="deck_park_counter"></div>
     `;
-
     deckParkSlot.insertAdjacentHTML("beforeend", parkHTML);
 
     // -------------------- Deck Grimoire --------------------
     const deckGrimoireSlot = document.getElementById("deck_grimoire");
-    if (!deckGrimoireSlot) return;
 
     // ---- Injecter la carte + compteur à l'intérieur ----
     const cardHTML = `
       <div class="card_item parkgrim_cards opa_30" id="grimoire_opa" style="background-position: -700% -100%;"></div>
-      <div class="card_item parkgrim_cards" id="grimoire_active" style="background-position: -700% -100%;">
-          <div class="table_building_counter" id="deck_grimoire_counter"></div>
-      </div>
+      <div class="card_item parkgrim_cards" id="grimoire_active" style="background-position: -700% -100%;"></div>
+      <div class="table_building_counter" id="deck_grimoire_counter"></div>
   `;
-
     deckGrimoireSlot.insertAdjacentHTML("beforeend", cardHTML);
 
     // -------------------- Dice Track --------------------
     const diceTrackSlot = document.getElementById("dice_track");
-    if (!diceTrackSlot) return;
-
     // ---- Injecter la carte + compteur à l'intérieur ----
     const diceHTML = `
         <div class="card_item building_cards" 
              style="background-position: -1100% -500%;" title="Dice Track">
         </div>
     `;
-
     diceTrackSlot.insertAdjacentHTML("beforeend", diceHTML);
-
     // ---- Injecter les dés ----
     diceTrackSlot.style.position = "relative";
 
@@ -970,13 +951,10 @@ export class Game {
           </div>
         </div>
     `;
-
     diceTrackSlot.insertAdjacentHTML("beforeend", dicefaceHTML);
 
     // -------------------- Clock Tower --------------------
     const clockTowerSlot = document.getElementById("clock_tower");
-    if (!clockTowerSlot) return;
-
     const clockHourRot = 60 * this.gamedatas.other.clock;
 
     // ---- Injecter la carte + compteur à l'intérieur ----
@@ -993,9 +971,6 @@ export class Game {
 
     // Reset
     riverElement.innerHTML = "";
-
-    console.log("setupRiver");
-
     let nb_icons = 0;
 
     this.gamedatas.actions_bonus.forEach((actionBonus) => {
@@ -1003,10 +978,8 @@ export class Game {
       nb_icons += actionCount;
       for (let i = 0; i < actionCount; i++) {
         const iconElementId = `river_ic_${actionBonus.name}_${Math.floor(Math.random() * 100000)}`;
-
         const iconHTML = `<div id="${iconElementId}" class="river_icon ic_${actionBonus.name}"></div>
       `;
-
         riverElement.insertAdjacentHTML("beforeend", iconHTML);
       }
     });
@@ -1028,13 +1001,11 @@ export class Game {
       }
 
       const container = document.getElementById(`table_pet_slot_${containerNb}`);
-
       let borderStyle = "";
       if (containerColor) {
         const r = parseInt(containerColor.slice(0, 2), 16);
         const g = parseInt(containerColor.slice(2, 4), 16);
         const b = parseInt(containerColor.slice(4, 6), 16);
-
         borderStyle = `
         box-shadow:
           inset 0 0 0 4px #${containerColor},
@@ -1042,10 +1013,8 @@ export class Game {
       `;
       }
 
-      const petHTML = `
-      <div id="card_pet_${i}" class="card_item pet_cards"
+      const petHTML = `<div id="card_pet_${i}" class="card_item pet_cards"
         style=" background-position: ${-(i - 1) * 100}% 0%; ${borderStyle}"></div>`;
-
       container.insertAdjacentHTML("beforeend", petHTML);
     }
   }
@@ -1053,14 +1022,11 @@ export class Game {
   setupBuildings() {
     for (let i = 1; i <= 12; i++) {
       const cardDiv = document.getElementById(`table_building_card_${i}`);
-      if (!cardDiv) continue;
 
       const posX = -(i - 1) * 100; // carte 1 -> 0%, carte 2 -> -100%, etc.
       cardDiv.style.backgroundPosition = `${posX}% 0%`;
 
       const cardDivBlank = document.getElementById(`table_building_card_${i}_blank`);
-      if (!cardDivBlank) continue;
-
       cardDivBlank.style.backgroundPosition = `${posX}% 0%`;
     }
   }
@@ -1103,11 +1069,8 @@ export class Game {
         for (let i = 0; i < maxCards; i++) {
           html += `
           <div class="building_card_container"
-               id="player_${player.id}_stack_${stackIndex}_container_${i + 1}"
-               style="
-                 bottom: calc(${i} * var(--card_h) * 0.2);
-                 z-index: ${6 - i};
-               ">
+              id="player_${player.id}_stack_${stackIndex}_container_${i + 1}"
+              style="bottom: calc(${i} * var(--card_h) * 0.2); z-index: ${6 - i};">
           </div>`;
         }
 
@@ -1134,23 +1097,44 @@ export class Game {
 
         cards.forEach((card, i) => {
           const container = document.getElementById(`player_${player.id}_stack_${stackIndex}_container_${i + 1}`);
-
-          if (!container) return;
-
           const bgPos = (Number(card.type) - 1) * 100;
 
           container.insertAdjacentHTML(
             "beforeend",
-            `
-      <div id="player_${player.id}_stack_${stackIndex}_card_${i + 1}"
-           class="building_cards"
-           style="background-position: -${bgPos}% 0%">
-      </div>
-      `,
+            `<div id="player_${player.id}_stack_${stackIndex}_card_${i + 1}" class="building_cards"
+              style="background-position: -${bgPos}% 0%">
+            </div>`,
           );
         });
       });
+
+      this.spawnGhosts(player.id);
     });
+  }
+
+  spawnGhosts(playerId) {
+    const container = document.getElementById(`player_${playerId}_house_ghost`);
+    if (!container) return;
+
+    const ghostCount = 4;
+
+    for (let i = 0; i < ghostCount; i++) {
+      const ghost = document.createElement("div");
+      ghost.classList.add("ghost_sprites");
+
+      const col = Math.floor(Math.random() * 7);
+      const row = Math.floor(Math.random() * 4);
+      ghost.style.backgroundPosition = `-${col}00% -${row}00%`;
+
+      // Position initiale adaptée au ratio vertical
+      ghost.style.left = Math.random() * 60 + "%";
+      ghost.style.top = Math.random() * 75 + "%";
+
+      ghost.style.animationDuration = 6 + Math.random() * 3 + "s";
+      ghost.style.animationDelay = Math.random() * 3 + "s";
+
+      container.appendChild(ghost);
+    }
   }
 
   setupCounters() {
@@ -1418,46 +1402,31 @@ export class Game {
     const icon = document.getElementById(`icon_reroll_${playerId}`);
     if (!icon) return;
 
-    // ⚡ Mode instantané : état final direct
     if (this.instantaneousMode) {
-      icon.style.transition = "";
-      icon.style.transform = "";
-
       icon.classList.toggle("ic_reroll_0");
       icon.classList.toggle("ic_reroll_1");
-
-      delete icon.dataset.flipping;
       return;
     }
-
-    // 🎞️ Mode animé normal
 
     if (icon.dataset.flipping === "true") return;
     icon.dataset.flipping = "true";
 
-    const half = 200; // demi-flip en ms
+    const half = 200; // durée demi-flip
 
-    // Premier demi-flip : rotation + léger pop + translation Y
+    // Premier demi-flip
     icon.style.transition = `transform ${half}ms ease-in-out`;
     icon.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
-
     await new Promise((resolve) => setTimeout(resolve, half));
 
-    // Changement du sprite exactement à mi-flip
-    if (icon.classList.contains("ic_reroll_1")) {
-      icon.classList.remove("ic_reroll_1");
-      icon.classList.add("ic_reroll_0");
-    } else {
-      icon.classList.remove("ic_reroll_0");
-      icon.classList.add("ic_reroll_1");
-    }
+    // Swap du sprite
+    icon.classList.toggle("ic_reroll_0");
+    icon.classList.toggle("ic_reroll_1");
 
-    // Deuxième demi-flip : retour à la position normale avec léger rebond
+    // Deuxième demi-flip
     icon.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
-
     await new Promise((resolve) => setTimeout(resolve, half));
 
-    // Reset final
+    // Reset
     icon.style.transition = "";
     icon.style.transform = "";
     delete icon.dataset.flipping;
@@ -1501,6 +1470,8 @@ export class Game {
   async animFlipGrimoire(grimoireType) {
     const grimoire = document.getElementById("grimoire_active");
     if (!grimoire) return;
+
+    grimoire.id = `grimoire_active_verso`;
 
     const n = grimoireType - 1;
 
@@ -2148,6 +2119,75 @@ export class Game {
     console.log("Replay removed");
   }
 
+  async animRemoveGrimoire() {
+    const oldCard = document.getElementById("grimoire_active_verso");
+    if (!oldCard) {
+      console.log("No grimoire element found");
+      return;
+    }
+
+    // 1️⃣ Vérifier le compteur AVANT suppression
+    const counterValue = this.topRowCounters.deck_grimoire.getValue();
+
+    if (counterValue > 0) {
+      const counterDiv = document.getElementById("deck_grimoire_counter");
+      if (counterDiv) {
+        counterDiv.insertAdjacentHTML(
+          "afterend",
+          `
+        <div class="card_item parkgrim_cards"
+             id="grimoire_active"
+             style="background-position: -700% -100%;">
+        </div>
+        `,
+        );
+      }
+    }
+
+    // 2️⃣ Mode instantané
+    if (this.instantaneousMode) {
+      oldCard.remove();
+      return;
+    }
+
+    // 3️⃣ Animation disparition ancienne carte
+    oldCard.style.transition = "transform 400ms ease, opacity 400ms ease";
+    oldCard.style.transform = "scale(0)";
+    oldCard.style.opacity = "0";
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    oldCard.remove();
+  }
+
+  async animZoomOutReward(bonus) {
+    const deckGrimoireSlot = document.getElementById("deck_grimoire");
+    if (!deckGrimoireSlot) return;
+
+    const iconId = `grimoire_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
+    const html = `<div id="${iconId}" class="river_icon ic_${bonus}"></div>`;
+    deckGrimoireSlot.insertAdjacentHTML("beforeend", html);
+
+    const icon = document.getElementById(iconId);
+    if (!icon) return;
+
+    // Force le navigateur à appliquer l’état initial
+    icon.offsetWidth;
+
+    // 🎬 Déclenche l'animation
+    icon.style.transform = "translate(-50%, -50%) scale(3)";
+    icon.style.opacity = "1";
+
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    icon.style.opacity = "0";
+    icon.style.transform = "translate(-50%, -50%) scale(4)";
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    icon.remove();
+  }
+
   async animEndBonus() {
     // Sélectionne tous les éléments restants river_ic_
     const bonusElements = document.querySelectorAll('[id^="river-ic_"]');
@@ -2205,42 +2245,17 @@ export class Game {
     });
   }
 
-  // TODO: from this point and below, you can write your game notifications handling methods
-
-  /*
-    Example:
-    async notif_cardPlayed( args ) {
-        // Note: args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-        
-        // TODO: play the card in the user interface.
-    }
-    */
-
   async notif_takeCard(args) {
     // on déplace une carte de la table vers sa maison
 
     console.log("notif_takeCard", args);
-
-    const card_to_place = args.card;
-    // position donne l'emplacement. 1 en bas
 
     // on créé un clone de la carte sauf si c'est la dernière
     // on enlève le compteur dans ce cas
 
     // attention car les cartes se positionnent sous celles qui sont en bas
     // ou sinon, on déplace vers le haut celles qui sont présentes et on place la dernière toujours en bas
-
     this.animTakeCard(args.no_card);
-
-    // cartes 1 2 3 4 on flipe le reroll si nécessaire
-    // TODO BESOIN de l'info sur le reroll
-    if (args.no_card < 5) {
-      // this.animFlipReroll(args.player_id);
-    }
-    // carte 9 on gagne un clock, activé aussitôt
-    if (args.no_card == 9) {
-      //this.animClockTower();
-    }
   }
 
   async notif_flipCards(args) {
@@ -2359,6 +2374,14 @@ export class Game {
     // un draw_any on déplace dans le conteneur s'il reste des cartes à piocher
   }
 
+  async notif_removeGrimoire(args) {
+    console.log("notif_removeGrimoire", args);
+
+    await this.animZoomOutReward(args.icon);
+
+    await this.animRemoveGrimoire();
+  }
+
   async notif_activateClockTower(args) {
     // on tourne l'aiguille et on gagne artefact, pet ou reroll
     console.log("notif_activateClockTower", args);
@@ -2381,26 +2404,13 @@ export class Game {
 
     // Élément DOM du pet
     const petElement = document.getElementById(petElementId);
-    if (!petElement) {
-      return;
-    }
 
     // Container DOM qui contient le pet (ex: "table_pet_slot_3")
     const petContainerElement = petElement.parentElement;
-    if (!petContainerElement) {
-      return;
-    }
-
-    // Numéro du slot extrait de l'id du container
-    // "table_pet_slot_3" → "3"
-    const petContainerNumber = petContainerElement.id.split("_")[3];
 
     // Joueur actif (voleur)
     const activePlayerId = this.bga.players.getActivePlayerId();
     const activePlayerColor = this.players[activePlayerId].color; // ex: "ff0000"
-    if (!activePlayerColor) {
-      return;
-    }
 
     // Conversion hex → rgb
     const red = parseInt(activePlayerColor.slice(0, 2), 16);

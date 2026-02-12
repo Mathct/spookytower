@@ -274,6 +274,17 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   position: relative; /* pour les cartes superposées */
 }
 
+#deck_grimoire .river_icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.2); /* état initial */
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 600ms ease-out, opacity 600ms ease-out;
+}
+
 .table_clock_slot {
   width: var(--card_h);
   height: var(--card_h);
@@ -630,6 +641,27 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   gap: 20px;
   align-items: center;
   justify-content: center;
+}
+
+
+.ghost_sprites {
+  position: absolute;
+  background-image: url("img/ST_ghosts.png");
+  background-size: 700% 400%;
+  width: calc(var(--card_w) * 0.5);
+  height: calc(var(--card_h) * 0.5);
+  pointer-events: none;
+
+  animation: ghostFloat 6s ease-in-out infinite alternate;
+}
+
+@keyframes ghostFloat {
+  0%   { transform: translate(0px, 0px); }
+  20%  { transform: translate(8px, -25px); }
+  40%  { transform: translate(-10px, -40px); }
+  60%  { transform: translate(12px, -15px); }
+  80%  { transform: translate(-6px, 20px); }
+  100% { transform: translate(5px, 35px); }
 }
 
 .house_slot .house_cards {
