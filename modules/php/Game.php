@@ -222,7 +222,8 @@ class Game extends \Bga\GameFramework\Table
         $this->reattributeColorsBasedOnPreferences($players, $gameinfos["player_colors"]);
         $this->reloadPlayersBasicInfos();
 
-        //INIT DES DECKS
+        //INIT DES TABLES DB
+
         //Building
         for ($i = 1; $i <= 12; $i++) {
             $building = [];
@@ -260,7 +261,7 @@ class Game extends \Bga\GameFramework\Table
         $this->grimoire_DB->shuffle('deck');
 
 
-        //INIT PETS
+        //other
         $tab = [1, 2, 3];
         shuffle($tab);          // Mélange le tableau
         // Prépare les valeurs
@@ -273,12 +274,22 @@ class Game extends \Bga\GameFramework\Table
             VALUES ('$pet1', '$pet2', '$pet3')
         ");
 
-        // INIT ACTIONPENDING
+        //actionpending
         game::$instance->DbQuery("
             INSERT INTO actionpending (name) VALUES
                 ('flip8'), ('flip9'), ('draw8'), ('clock'),
                 ('pet'), ('grimoire'), ('ghost'), ('clue')
         ");
+
+        //ghost
+        $ghosts = $this->_GHOST;
+        foreach($ghosts as $ghost)
+        {
+            game::$instance->DbQuery("
+            INSERT INTO ghost (name) VALUES ('{$ghost}')");
+        }
+        
+
 
 
 
@@ -390,7 +401,7 @@ class Game extends \Bga\GameFramework\Table
         $result["other"] = game::$instance->getObjectFromDb("SELECT * FROM other WHERE 1");
 
         $result["building_cards"] = $this->_BUILDING_CARD;
-        $result["ghost_assets"] = $this->_GHOST;
+        $result["ghost_sprites"] = game::$instance->getObjectListFromDB("SELECT name name, position position FROM ghost WHERE position != 0");
 
         //counters
         $this->deck_1->fillResult($result);

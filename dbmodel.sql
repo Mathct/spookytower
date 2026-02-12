@@ -104,5 +104,12 @@ CREATE TABLE IF NOT EXISTS `actionpending` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
+CREATE TABLE IF NOT EXISTS `ghost` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `name` varchar(16) NULL,
+  `position` int(16) unsigned DEFAULT 0, 
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
 ALTER TABLE `player` ADD `reroll` int(5) NOT NULL DEFAULT 1;
 --   `reroll`     1 reroll OK, 0 reroll NOK

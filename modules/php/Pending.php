@@ -459,6 +459,11 @@ class Pending extends APP_GameClass
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 1);
                         }
+
+                        //MAJ TABLE GHOST
+                        $name_ghost = 'building_'.$type_card;
+                        game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$name_ghost}'");
+
                     }
                     if ($name == 'clue') {
                         game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
@@ -728,6 +733,10 @@ class Pending extends APP_GameClass
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 1);
                         }
+
+                        //MAJ TABLE GHOST
+                        $name_ghost = 'building_'.$type_card;
+                        game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$name_ghost}'");
                     }
                     if ($name == 'clue') {
                         game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
@@ -1018,6 +1027,10 @@ class Pending extends APP_GameClass
                     ]
                 );
 
+                //MAJ TABLE GHOST
+                $name_ghost = 'pet_'.$no_pet;
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$name_ghost}'");
+
 
                 //j'inc le compteur ghosts
 
@@ -1103,6 +1116,10 @@ class Pending extends APP_GameClass
             } else {
                 game::$instance->addPending($this->player_id, "ActionsBonus");
             }
+
+            //MAJ TABLE GHOST
+            $name_ghost = 'grimoire_1';
+            game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$name_ghost}'");
 
             //AJOUTER LA NOTIF MESSAGE
             $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
@@ -1601,7 +1618,9 @@ class Pending extends APP_GameClass
                 );
             }
 
-
+            //MAJ TABLE GHOST
+            $name_ghost = 'pet_'.$no_pet;
+            game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$name_ghost}'");
 
             //j'inc le compteur ghosts
 
@@ -1760,6 +1779,10 @@ class Pending extends APP_GameClass
                     ]
                 );
             }
+
+            //MAJ TABLE GHOST
+            $name_ghost = 'pet_'.$no_pet;
+            game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$name_ghost}'");
 
             //j'inc le compteur ghosts
 
