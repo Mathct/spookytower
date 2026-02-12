@@ -2123,6 +2123,31 @@ export class Game {
     console.log("Bonus removed:", bonusElement.id);
   }
 
+  async animRemoveReplay() {
+    const replayElement = document.getElementById("panel_ic_replay");
+    if (!replayElement) {
+      console.log("No replay element found");
+      return;
+    }
+
+    if (this.instantaneousMode) {
+      replayElement.remove();
+      console.log("Replay removed instantly");
+      return;
+    }
+
+    // Animation de disparition
+    replayElement.style.transition = "transform 400ms ease, opacity 400ms ease";
+    replayElement.style.transform = "scale(0)";
+    replayElement.style.opacity = "0";
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    replayElement.remove();
+
+    console.log("Replay removed");
+  }
+
   async animEndBonus() {
     // Sélectionne tous les éléments restants river_ic_
     const bonusElements = document.querySelectorAll('[id^="river-ic_"]');
@@ -2301,6 +2326,12 @@ export class Game {
     console.log("notif_removeBonus", args);
 
     await this.animRemoveBonus(args.bonus);
+  }
+
+  async notif_removeReplay(args) {
+    console.log("notif_removeBonus", args);
+
+    await this.animRemoveReplay(args.bonus);
   }
 
   async notif_goToThePark(args) {

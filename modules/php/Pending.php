@@ -616,9 +616,30 @@ class Pending extends APP_GameClass
             if ($clue >= 1) {
                 game::$instance->addPending($this->player_id, "Park");
             } else {
-                game::$instance->DbQuery("UPDATE actionpending set count = 0");
-                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+                
+                if(game::$instance->getGameStateValue('replay') != 0)
+                {
+                    game::$instance->setGameStateInitialValue('replay', 0);
+                    $txt = clienttranslate('${player_name} replays');
+                    game::$instance->notify->all(
+                        "removeReplay",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+
+                        ]
+                    );
+                    game::$instance->addPending($this->player_id, "PlayerTurn");
+                }
+                else
+                {
+                    game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+                }
+                
             }
+
+            game::$instance->DbQuery("UPDATE actionpending set count = 0");
+
         } else {
             ///////////////////////////////////////////////////////////////////////////////////////
             // FLIP CARD 8- ou 9+
@@ -716,6 +737,9 @@ class Pending extends APP_GameClass
                     if ($name == 'clue') {
                         game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
                         game::$instance->player_clues->inc($this->player_id, 1);
+                    }
+                    if ($name == 'replay') {
+                        game::$instance->setGameStateInitialValue('replay', $this->player_id);
                     }
                 }
 
@@ -1057,9 +1081,6 @@ class Pending extends APP_GameClass
         $ret['titleyou'] = clienttranslate('${you} are reading the grimoire');
 
 
-        $ret['buttons'][] = 'yes_btn';
-
-
         return $ret;
     }
 
@@ -1079,9 +1100,559 @@ class Pending extends APP_GameClass
             ]
         );
 
+        if($card_pick['type'] == 1)
+        {
+            game::$instance->player_ghosts->inc($this->player_id, 1);
+            $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
+            if ($count_ghosts == 5) {
+                game::$instance->addPending($this->player_id, "EndGame");
+            } else {
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+            }
+
+            //AJOUTER LA NOTIF MESSAGE
+            $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+            game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+            game::$instance->notify->all(
+                "removeGrimoireCard",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                ]
+            );
+        }
+
+        if($card_pick['type'] == 2)
+        {
+            game::$instance->player_clues->inc($this->player_id, 1);
+            game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'clue'");
+            game::$instance->addPending($this->player_id, "ActionsBonus");
+
+            //AJOUTER LA NOTIF MESSAGE
+            $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                );
+        }
+
+        if($card_pick['type'] == 3)
+        {
+            game::$instance->addPending($this->player_id, "GrimoireTake");
+            //AJOUTER LA NOTIF MESSAGE
+        }
+
+        if($card_pick['type'] == 4)
+        {
+            game::$instance->setGameStateInitialValue('replay', $this->player_id);
+            game::$instance->addPending($this->player_id, "ActionsBonus");
+            //AJOUTER LA NOTIF MESSAGE
+            $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                );
+        }
+
+        if($card_pick['type'] == 5)
+        {
+            game::$instance->addPending($this->player_id, "GrimoireClock", 2);
+            //AJOUTER LA NOTIF MESSAGE
+        }
+
+        if($card_pick['type'] == 6)
+        {
+            game::$instance->addPending($this->player_id, "GrimoireClock", 1);
+            //AJOUTER LA NOTIF MESSAGE
+        }
+
+        if($card_pick['type'] == 7)
+        {
+            game::$instance->addPending($this->player_id, "GrimoirePet");
+            //AJOUTER LA NOTIF MESSAGE
+        }
+
+        
+    }
+
+    function argGrimoireTake($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "ActionsBonus";
+        $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
+        $ret['titleyou'] = clienttranslate('${you} must take a card');
 
 
-        game::$instance->addPending($this->player_id, "ActionsBonus");
+        for ($i = 1; $i <= 12; $i++) 
+        {
+            $deck = "deck_$i";
+            $count = game::$instance->$deck->get();
+
+            if ($count >= 1) {
+                $ret["selectable"][] = 'table_building_card_' . $i;
+            }
+        }
+
+        if(count($ret["selectable"]) >= 1)
+        {
+            $ret['buttons'][] = 'take_card_btn';
+        }
+
+        return $ret;
+    }
+
+
+
+    function GrimoireTake($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {   
+        if($varg1 == null)
+        {
+            game::$instance->addPending($this->player_id, "ActionsBonus");
+
+            $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                );  
+        }
+
+        else
+        {
+            //on recupere le numero du deck
+            [,,, $no_deck] = explode('_', $varg2);
+            $deck = 'deck' . $no_deck;
+
+            //on pick la carte et on recupere les info du pickcard (pour la card_id)
+            $card_pick = game::$instance->building_DB->pickCardForLocation($deck, 'house', $this->player_id);
+
+            //on met a jour sa position
+            $count_card = count(game::$instance->getObjectListFromDB("SELECT card_id id FROM building WHERE card_type = '{$no_deck}' AND card_location = 'house' AND card_location_arg = '{$this->player_id}'", true));
+            game::$instance->DbQuery("UPDATE building SET position = $count_card WHERE card_id ='{$card_pick['id']}'");
+
+            //on recupere les info pour le front
+            $card =  game::$instance->getObjectFromDB("SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'");
+
+
+            $txt = clienttranslate('${player_name} takes card ${no_card}');
+            game::$instance->notify->all(
+                "takeCard",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'no_card' => $no_deck,
+                    'card' => $card,
+                ]
+            );
+
+
+            //je change le compteur du deck
+            game::$instance->{'deck_' . $no_deck}->inc(-1);
+
+
+            // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
+            if ($no_deck >= 1 && $no_deck <= 4) {
+                $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                if ($reroll == 0) {
+                    game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                    game::$instance->notify->all(
+                        "flipReroll",
+                        '',
+                        [
+                            'player_id' => $this->player_id,
+
+                        ]
+                    );
+                }
+
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+
+                $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                ); 
+
+            }
+
+            // ACTION IMMEDIATE SUR UN TAKE: turn clock
+            elseif ($no_deck == 9) {
+                $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+                $newclock = ($clock + 1) % 6;
+                game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
+
+                $txt = clienttranslate('${player_name} moves the clock forward');
+                game::$instance->notify->all(
+                    "activateClockTower",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'clock' => $newclock,
+
+                    ]
+                );
+
+                //Position Artefact
+                if ($newclock == 0 || $newclock == 3) {
+                    game::$instance->player_artefacts->inc($this->player_id, 1);
+                    $count_artefact = game::$instance->player_artefacts->get($this->player_id);
+                    if ($count_artefact == 3) {
+                        game::$instance->addPending($this->player_id, "EndGame");
+                    } else {
+                        game::$instance->addPending($this->player_id, "ActionsBonus");
+                    }
+
+                    $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                ); 
+                }
+
+                // Position Turn reroll token
+                if ($newclock == 2 || $newclock == 5) {
+                    $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                    if ($reroll == 0) {
+                        game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                        game::$instance->notify->all(
+                            "flipReroll",
+                            '',
+                            [
+                                'player_id' => $this->player_id,
+
+                            ]
+                        );
+                    }
+
+                    $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                ); 
+
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+
+                // Position pet
+                if ($newclock == 1 || $newclock == 4) {
+
+                    game::$instance->addPending($this->player_id, "GrimoirePet");
+                }
+            }
+
+            // AUCUNE ACTION IMMEDIATE SUR UN TAKE
+            else {
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+
+                $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                ); 
+            }
+            
+        }
+        
+    }
+
+    function argGrimoireClock($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "ActionsBonus";
+        $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
+        $ret['titleyou'] = clienttranslate('${you} are reading the grimoire');
+
+
+
+        return $ret;
+    }
+
+
+
+    function GrimoireClock($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {  
+        $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+        $newclock = ($clock + 1) % 6;
+        game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
+
+        $txt = clienttranslate('${player_name} moves the clock forward');
+        game::$instance->notify->all(
+            "activateClockTower",
+            $txt,
+            [
+                'player_id' => $this->player_id,
+                'clock' => $newclock,
+
+            ]
+        );
+
+        //Position Artefact
+        if ($newclock == 0 || $newclock == 3) {
+            game::$instance->player_artefacts->inc($this->player_id, 1);
+            $count_artefact = game::$instance->player_artefacts->get($this->player_id);
+            if ($count_artefact == 3) {
+                game::$instance->addPending($this->player_id, "EndGame");
+            } else {
+                if($parg1 == 2)
+                {
+                    game::$instance->addPending($this->player_id, "GrimoireClock", 1);
+                }
+                else
+                {
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+
+                    $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                ); 
+                }
+                
+            }
+
+        }
+
+        // Position Turn reroll token
+        if ($newclock == 2 || $newclock == 5) {
+            $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+            if ($reroll == 0) {
+                game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                game::$instance->notify->all(
+                    "flipReroll",
+                    '',
+                    [
+                        'player_id' => $this->player_id,
+
+                    ]
+                );
+            }
+
+            if($parg1 == 2)
+            {
+                game::$instance->addPending($this->player_id, "GrimoireClock", 1);
+            }
+            else
+            {
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+
+                $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                ); 
+            }
+        }
+
+        // Position pet
+        if ($newclock == 1 || $newclock == 4) {
+
+            game::$instance->addPending($this->player_id, "GrimoirePet", $parg1);
+        }
+        
+         
+    }
+
+    function argGrimoirePet($parg1, $parg2)
+    {
+        $ret = [];
+        $ret["selectable"] = [];
+        $ret["selected"] = [];
+        $ret['buttons'] = [];
+        $ret["function"] = "ActionsBonus";
+        $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
+        $ret['titleyou'] = clienttranslate('${you} must choose a pet');
+
+
+        $pets = game::$instance->getObjectFromDB("SELECT pet1 pet1, pet2 pet2, pet3 pet3 FROM other WHERE id=1");
+
+        for ($i = 1; $i <= 3; $i++) {
+            [, $position] = explode('_', $pets['pet' . $i]);
+            if ($position == 'table') {
+                $ret["selectable"][] = 'card_pet_' . $i;
+            }
+        }
+
+        if (count($ret["selectable"]) == 0) {
+            for ($i = 1; $i <= 3; $i++) {
+                [, $position] = explode('_', $pets['pet' . $i]);
+                if ($position != $this->player_id) {
+                    $ret["selectable"][] = 'card_pet_' . $i;
+                }
+            }
+        }
+
+        if (count($ret["selectable"]) != 0) {
+            $ret['buttons'][] = 'take_pet_btn';
+        }
+
+
+        return $ret;
+    }
+
+
+
+    function GrimoirePet($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
+    {  
+        if ($varg1 == null) {
+
+            if($parg1 == 2)
+            {
+                game::$instance->addPending($this->player_id, "GrimoireClock", 1);
+            }
+            else
+            {
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+
+                $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                ); 
+            }
+
+        } else {
+            
+            [,, $no_pet] = explode('_', $varg2);
+
+            $pet = 'pet' . $no_pet;
+
+            //je recupere le détail du pet avant modif (pour savoir si c'est take ou steal)
+            $detail_pet = game::$instance->getUniqueValueFromDB("SELECT $pet FROM other WHERE id=1");
+            [$slot, $position] = explode('_', $detail_pet);
+
+            //je modifie l'etat du pet
+            if ($pet !== null) {
+                $newposition = $slot . '_' . $this->player_id;
+                game::$instance->DbQuery("
+                    UPDATE other 
+                    SET {$pet} = '{$newposition}' 
+                    WHERE id = 1
+                ");
+            }
+
+            // je lances les notifs (take ou steal)
+            if ($position == 'table') {
+                $txt = clienttranslate('${player_name} takes a pet');
+                game::$instance->notify->all(
+                    "stealPet",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'pet_id' => $varg2,
+                    ]
+                );
+            } else {
+                $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
+                $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
+                $txt = clienttranslate('${player_name} steals a pet from ${opponent}');
+                game::$instance->notify->all(
+                    "stealPet",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'pet_id' => $varg2,
+                        'opponent' =>    [
+                            'log' => '<b style="color: #${color};">${opponent_name}</b>',
+                            'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
+                        ],
+                    ]
+                );
+            }
+
+            if($parg1 == 1)
+            {
+                $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
+                game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+                game::$instance->notify->all(
+                    "removeGrimoireCard",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                    ]
+                );
+            }
+            
+            
+
+            //j'inc le compteur ghosts
+
+            game::$instance->player_ghosts->inc($this->player_id, 1);
+            $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
+            if ($count_ghosts == 5) {
+                game::$instance->addPending($this->player_id, "EndGame");
+            } else {
+                if($parg1 == 2)
+                {
+                    game::$instance->addPending($this->player_id, "GrimoireClock", 1);
+                }
+                else
+                {
+                    game::$instance->addPending($this->player_id, "ActionsBonus"); 
+                }
+                
+            }
+        }
+         
     }
 
 
