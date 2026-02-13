@@ -1107,12 +1107,37 @@ export class Game {
           );
         });
       });
+    });
 
-      this.spawnGhosts(player.id);
+    this.spawnGhosts();
+  }
+
+  spawnGhosts() {
+    this.gamedatas.ghost_sprites.forEach((ghost) => {
+      const container = document.getElementById(`player_${ghost.position}_house_ghost`);
+      const col = (ghost.id - 1) % 7;
+      const row = Math.floor((ghost.id - 1) / 7);
+
+      const left = Math.random() * 60;
+      const top = Math.random() * 75;
+      const duration = 6 + Math.random() * 3;
+      const delay = Math.random() * 3;
+
+      const ghostsHTML = `
+        <div id="ghost_${ghost.name}" class="ghost_sprites"
+          style="
+            background-position: -${col}00% -${row}00%;
+            left: ${left}%;
+            top: ${top}%;
+            animation-duration: ${duration}s;
+            animation-delay: ${delay}s;
+          "></div>`;
+
+      container.insertAdjacentHTML("beforeend", ghostsHTML);
     });
   }
 
-  spawnGhosts(playerId) {
+  spawnGhostsOld(playerId) {
     const container = document.getElementById(`player_${playerId}_house_ghost`);
     if (!container) return;
 
@@ -2405,12 +2430,8 @@ export class Game {
     // Élément DOM du pet
     const petElement = document.getElementById(petElementId);
 
-    // Container DOM qui contient le pet (ex: "table_pet_slot_3")
-    const petContainerElement = petElement.parentElement;
-
-    // Joueur actif (voleur)
-    const activePlayerId = this.bga.players.getActivePlayerId();
-    const activePlayerColor = this.players[activePlayerId].color; // ex: "ff0000"
+    // Joueur actif
+    const activePlayerColor = this.players[args.player_id].color; // ex: "ff0000"
 
     // Conversion hex → rgb
     const red = parseInt(activePlayerColor.slice(0, 2), 16);
@@ -2422,6 +2443,111 @@ export class Game {
     inset 0 0 0 4px #${activePlayerColor},
     inset 0 0 0 9999px rgba(${red}, ${green}, ${blue}, 0.3)
   `;
+
+    if (!args.opponent) {
+      const cardId = args.pet_id;
+      const petId = cardId.replace(/^card_/, "");
+      const index = this.gamedatas.ghost_assets.indexOf(petId);
+
+      if (index === -1) return;
+
+      const col = index % 7;
+      const row = Math.floor(index / 7);
+
+      const duration = 6 + Math.random() * 3;
+      const delay = Math.random() * 3;
+
+      // 1️⃣ Création sans left/top
+      petElement.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div id="ghost_${petId}" class="ghost_sprites"
+          style="
+            background-position: -${col}00% -${row}00%;
+            animation-duration: ${duration}s;
+            animation-delay: ${delay}s;
+          ">
+        </div>
+      `,
+      );
+
+      const spriteElement = document.getElementById(`ghost_${petId}`);
+      const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
+      if (!spriteElement || !destination) return;
+
+      // 2️⃣ Animation avec chaînage explicite
+      this.animationManager
+        .slideAndAttach(spriteElement, destination, 1200)
+        .then(() => {
+          // 3️⃣ Position aléatoire APRES reparenting
+          spriteElement.style.left = `${Math.random() * 60}%`;
+          spriteElement.style.top = `${Math.random() * 75}%`;
+        })
+        .catch((err) => {
+          console.error("Animation stealPet error:", err);
+        });
+    } else {
+      const cardId = args.pet_id;
+      const petId = cardId.replace(/^card_/, "");
+      const spriteElement = document.getElementById(`ghost_${petId}`);
+      const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
+      if (!spriteElement || !destination) return;
+
+      // 1️⃣ Stopper l'animation CSS
+      spriteElement.style.animationPlayState = "paused";
+
+      // 2️⃣ Lancer l'animation slide
+      this.animationManager.slideAndAttach(spriteElement, destination, 1200).then(() => {
+        // 3️⃣ Relancer l'animation CSS
+        spriteElement.style.animationPlayState = "running";
+
+        // 4️⃣ Appliquer position aléatoire après le slide
+        spriteElement.style.left = `${Math.random() * 60}%`;
+        spriteElement.style.top = `${Math.random() * 75}%`;
+      });
+    }
+  }
+
+  async notif_winGhost(args) {
+    console.log("notif_winGhost", args);
+
+    //TODO A MODIFIER SELON L'ARG RECU
+
+    // ID du pet reçu dans la notif (ex: "card_pet_2")
+    const ghostElementId = args.ghost_id;
+
+    // Élément DOM du pet
+    const ghostElement = document.getElementById(ghostElementId);
+
+    // Joueur actif
+    const cardId = args.ghost_id;
+    const ghostId = cardId.replace("card_", "");
+    const index = this.gamedatas.ghost_assets.indexOf(ghostId);
+
+    const col = index % 7;
+    const row = Math.floor(index / 7);
+
+    const left = Math.random() * 60;
+    const top = Math.random() * 75;
+    const duration = 6 + Math.random() * 3;
+    const delay = Math.random() * 3;
+
+    const ghostsHTML = `
+        <div id="ghost_${ghostId}" class="ghost_sprites"
+          style="
+            background-position: -${col}00% -${row}00%;
+            left: ${left}%;
+            top: ${top}%;
+            animation-duration: ${duration}s;
+            animation-delay: ${delay}s;
+          "></div>`;
+
+    ghostElement.insertAdjacentHTML("beforeend", ghostsHTML);
+
+    const spriteElement = document.getElementById(`ghost_${petId}`);
+
+    const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
+    await this.animationManager.slideAndAttach(spriteElement, destination, 1200, 0, null);
   }
 
   async notif_flipReroll(args) {

@@ -283,12 +283,11 @@ class Game extends \Bga\GameFramework\Table
 
         //ghost
         $ghosts = $this->_GHOST;
-        foreach($ghosts as $ghost)
-        {
+        foreach ($ghosts as $ghost) {
             game::$instance->DbQuery("
             INSERT INTO ghost (name) VALUES ('{$ghost}')");
         }
-        
+
 
 
 
@@ -401,7 +400,8 @@ class Game extends \Bga\GameFramework\Table
         $result["other"] = game::$instance->getObjectFromDb("SELECT * FROM other WHERE 1");
 
         $result["building_cards"] = $this->_BUILDING_CARD;
-        $result["ghost_sprites"] = game::$instance->getObjectListFromDB("SELECT name name, position position FROM ghost WHERE position != 0");
+        $result["ghost_assets"] = $this->_GHOST;
+        $result["ghost_sprites"] = game::$instance->getObjectListFromDB("SELECT id, name, position FROM ghost WHERE position != 0");
 
         //counters
         $this->deck_1->fillResult($result);
