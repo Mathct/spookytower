@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `actionpending` (
 CREATE TABLE IF NOT EXISTS `ghost` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` varchar(16) NULL,
-  `position` int(16) unsigned DEFAULT 0, 
+  `position` int(16) unsigned DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
