@@ -223,8 +223,6 @@ class Pending extends APP_GameClass
                 ]
             );
            
-
-
             $rand_dice1 = bga_rand(1, 6);
             $rand_dice2 = bga_rand(1, 6);
             game::$instance->DbQuery("UPDATE other SET dice1 = $rand_dice1, dice2 = $rand_dice2");
@@ -258,19 +256,31 @@ class Pending extends APP_GameClass
             $newclock = ($clock + 1) % 6;
             game::$instance->DbQuery("UPDATE other set clock = $newclock WHERE id=1");
 
-            $txt = clienttranslate('${player_name} moves the clock forward');
+            $txt = clienttranslate('${player_name} turns ${log}');
             game::$instance->notify->all(
                 "activateClockTower",
                 $txt,
                 [
                     'player_id' => $this->player_id,
                     'clock' => $newclock,
+                    'log' => $this->getLogs('clock'),
 
                 ]
             );
 
             //Position Artefact
             if ($newclock == 0 || $newclock == 3) {
+
+                $txt = clienttranslate('${player_name} gains ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('artefact'),
+                        
+                    ]
+                );
                 game::$instance->player_artefacts->inc($this->player_id, 1);
                 $count_artefact = game::$instance->player_artefacts->get($this->player_id);
                 if ($count_artefact == 3) {
@@ -282,6 +292,16 @@ class Pending extends APP_GameClass
 
             // Position Turn reroll token
             if ($newclock == 2 || $newclock == 5) {
+                $txt = clienttranslate('${player_name} gains ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('reroll'),
+                        
+                    ]
+                );
                 $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
                 if ($reroll == 0) {
                     game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -345,6 +365,18 @@ class Pending extends APP_GameClass
 
             // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
             if ($no_deck >= 1 && $no_deck <= 4) {
+
+                $txt = clienttranslate('${player_name} gains ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('reroll'),
+                        
+                    ]
+                );
+
                 $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
                 if ($reroll == 0) {
                     game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -368,19 +400,31 @@ class Pending extends APP_GameClass
                 $newclock = ($clock + 1) % 6;
                 game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
 
-                $txt = clienttranslate('${player_name} moves the clock forward');
+                $txt = clienttranslate('${player_name} turns ${log}');
                 game::$instance->notify->all(
                     "activateClockTower",
                     $txt,
                     [
                         'player_id' => $this->player_id,
                         'clock' => $newclock,
-
+                        'log' => $this->getLogs('clock'),
                     ]
                 );
 
                 //Position Artefact
                 if ($newclock == 0 || $newclock == 3) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('artefact'),
+                            
+                        ]
+                    );
+
                     game::$instance->player_artefacts->inc($this->player_id, 1);
                     $count_artefact = game::$instance->player_artefacts->get($this->player_id);
                     if ($count_artefact == 3) {
@@ -392,6 +436,18 @@ class Pending extends APP_GameClass
 
                 // Position Turn reroll token
                 if ($newclock == 2 || $newclock == 5) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('reroll'),
+                            
+                        ]
+                    );
+
                     $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
                     if ($reroll == 0) {
                         game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -473,9 +529,33 @@ class Pending extends APP_GameClass
                         if ($type_card == 121 || $type_card == 122 || $type_card == 123) {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 2 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 2);
+
+                            $txt = clienttranslate('${player_name} gains ${log} ${log}');
+                            game::$instance->notify->all(
+                                "message",
+                                $txt,
+                                [
+                                    'player_id' => $this->player_id,
+                                    'log' => $this->getLogs('ghost'),
+                                    
+                                ]
+                            );
+
                         } else {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 1);
+
+                            $txt = clienttranslate('${player_name} gains ${log}');
+                            game::$instance->notify->all(
+                                "message",
+                                $txt,
+                                [
+                                    'player_id' => $this->player_id,
+                                    'log' => $this->getLogs('ghost'),
+                                    
+                                ]
+                            );
+
                         }
 
                         //MAJ TABLE GHOST
@@ -485,9 +565,32 @@ class Pending extends APP_GameClass
                     if ($name == 'clue') {
                         game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
                         game::$instance->player_clues->inc($this->player_id, 1);
+
+                        $txt = clienttranslate('${player_name} gains ${log}');
+                        game::$instance->notify->all(
+                            "message",
+                            $txt,
+                            [
+                                'player_id' => $this->player_id,
+                                'log' => $this->getLogs('clue'),
+                                
+                            ]
+                        );
+
                     }
                     if ($name == 'replay') {
                         game::$instance->setGameStateInitialValue('replay', $this->player_id);
+
+                        $txt = clienttranslate('${player_name} gains ${log}');
+                        game::$instance->notify->all(
+                            "message",
+                            $txt,
+                            [
+                                'player_id' => $this->player_id,
+                                'log' => $this->getLogs('replay'),
+                                
+                            ]
+                        );
                     }
                 }
             }
@@ -681,10 +784,10 @@ class Pending extends APP_GameClass
                 LIMIT 1
                 ");
 
-                $txt = clienttranslate('${player_name} flips a card');
+                
                 game::$instance->notify->all(
                     "flipCard",
-                    $txt,
+                    '',
                     [
                         'player_id' => $this->player_id,
                         'no_house' => $no_house,
@@ -693,6 +796,18 @@ class Pending extends APP_GameClass
                 );
 
                 if ($no_house <= 8) {
+
+                    $txt = clienttranslate('${player_name} uses ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('flip8'),
+                            
+                        ]
+                    );
+
                     // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
                     game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'flip8'");
                     // Notif pour enlever l'icone
@@ -706,6 +821,18 @@ class Pending extends APP_GameClass
                         ]
                     );
                 } else {
+
+                    $txt = clienttranslate('${player_name} uses ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('flip9'),
+                            
+                        ]
+                    );
+
                     // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
                     game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'flip9'");
                     // Notif pour enlever l'icone
@@ -746,9 +873,32 @@ class Pending extends APP_GameClass
                         if ($type_card == 121 || $type_card == 122 || $type_card == 123) {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 2 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 2);
+
+                            $txt = clienttranslate('${player_name} gains ${log} ${log}');
+                            game::$instance->notify->all(
+                                "message",
+                                $txt,
+                                [
+                                    'player_id' => $this->player_id,
+                                    'log' => $this->getLogs('ghost'),
+                                    
+                                ]
+                            );
+
                         } else {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 1);
+
+                            $txt = clienttranslate('${player_name} gains ${log}');
+                            game::$instance->notify->all(
+                                "message",
+                                $txt,
+                                [
+                                    'player_id' => $this->player_id,
+                                    'log' => $this->getLogs('ghost'),
+                                    
+                                ]
+                            );
                         }
 
                         //MAJ TABLE GHOST
@@ -758,9 +908,31 @@ class Pending extends APP_GameClass
                     if ($name == 'clue') {
                         game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = '{$name}'");
                         game::$instance->player_clues->inc($this->player_id, 1);
+
+                        $txt = clienttranslate('${player_name} gains ${log}');
+                        game::$instance->notify->all(
+                            "message",
+                            $txt,
+                            [
+                                'player_id' => $this->player_id,
+                                'log' => $this->getLogs('clue'),
+                                
+                            ]
+                        );
                     }
                     if ($name == 'replay') {
                         game::$instance->setGameStateInitialValue('replay', $this->player_id);
+
+                        $txt = clienttranslate('${player_name} gains ${log}');
+                        game::$instance->notify->all(
+                            "message",
+                            $txt,
+                            [
+                                'player_id' => $this->player_id,
+                                'log' => $this->getLogs('replay'),
+                                
+                            ]
+                        );
                     }
                 }
 
@@ -798,14 +970,24 @@ class Pending extends APP_GameClass
                 $card =  game::$instance->getObjectFromDB("SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'");
 
 
-                $txt = clienttranslate('${player_name} takes card ${no_card}');
                 game::$instance->notify->all(
                     "takeCard",
-                    $txt,
+                    '',
                     [
                         'player_id' => $this->player_id,
                         'no_card' => $no_deck,
                         'card' => $card,
+                    ]
+                );
+
+                $txt = clienttranslate('${player_name} uses ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('take8'),
+                        
                     ]
                 );
 
@@ -830,6 +1012,18 @@ class Pending extends APP_GameClass
 
                 // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
                 if ($no_deck >= 1 && $no_deck <= 4) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('reroll'),
+                            
+                        ]
+                    );
+
                     $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
                     if ($reroll == 0) {
                         game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -847,60 +1041,7 @@ class Pending extends APP_GameClass
                     game::$instance->addPending($this->player_id, "ActionsBonus");
                 }
 
-                // ACTION IMMEDIATE SUR UN TAKE: turn clock
-                elseif ($no_deck == 9) {
-                    $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
-                    $newclock = ($clock + 1) % 6;
-                    game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
-
-                    $txt = clienttranslate('${player_name} moves the clock forward');
-                    game::$instance->notify->all(
-                        "activateClockTower",
-                        $txt,
-                        [
-                            'player_id' => $this->player_id,
-                            'clock' => $newclock,
-
-                        ]
-                    );
-
-                    //Position Artefact
-                    if ($newclock == 0 || $newclock == 3) {
-                        game::$instance->player_artefacts->inc($this->player_id, 1);
-                        $count_artefact = game::$instance->player_artefacts->get($this->player_id);
-                        if ($count_artefact == 3) {
-                            game::$instance->addPending($this->player_id, "EndGame");
-                        } else {
-                            game::$instance->addPending($this->player_id, "ActionsBonus");
-                        }
-                    }
-
-                    // Position Turn reroll token
-                    if ($newclock == 2 || $newclock == 5) {
-                        $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
-                        if ($reroll == 0) {
-                            game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
-
-                            game::$instance->notify->all(
-                                "flipReroll",
-                                '',
-                                [
-                                    'player_id' => $this->player_id,
-
-                                ]
-                            );
-                        }
-
-                        game::$instance->addPending($this->player_id, "ActionsBonus");
-                    }
-
-                    // Position pet
-                    if ($newclock == 1 || $newclock == 4) {
-
-                        game::$instance->addPending($this->player_id, "ClockChoosePet", 1);
-                    }
-                }
-
+                
                 // AUCUNE ACTION IMMEDIATE SUR UN TAKE
                 else {
                     game::$instance->addPending($this->player_id, "ActionsBonus");
@@ -916,14 +1057,24 @@ class Pending extends APP_GameClass
                 $newclock = ($clock + 1) % 6;
                 game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
 
-                $txt = clienttranslate('${player_name} moves the clock forward');
                 game::$instance->notify->all(
                     "activateClockTower",
-                    $txt,
+                    '',
                     [
                         'player_id' => $this->player_id,
                         'clock' => $newclock,
 
+                    ]
+                );
+
+                $txt = clienttranslate('${player_name} uses ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('clock'),
+                        
                     ]
                 );
 
@@ -944,6 +1095,18 @@ class Pending extends APP_GameClass
 
                 //Position Artefact
                 if ($newclock == 0 || $newclock == 3) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('artefact'),
+                            
+                        ]
+                    );
+
                     game::$instance->player_artefacts->inc($this->player_id, 1);
                     $count_artefact = game::$instance->player_artefacts->get($this->player_id);
                     if ($count_artefact == 3) {
@@ -955,6 +1118,18 @@ class Pending extends APP_GameClass
 
                 // Position Turn reroll token
                 if ($newclock == 2 || $newclock == 5) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('reroll'),
+                            
+                        ]
+                    );
+
                     $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
                     if ($reroll == 0) {
                         game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -1003,25 +1178,27 @@ class Pending extends APP_GameClass
 
                 // je lances les notifs (take ou steal)
                 if ($position == 'table') {
-                    $txt = clienttranslate('${player_name} takes a pet');
+                    $txt = clienttranslate('${player_name} takes ${log}');
                     game::$instance->notify->all(
                         "stealPet",
                         $txt,
                         [
                             'player_id' => $this->player_id,
                             'pet_id' => $varg2,
+                            'log' => $this->getLogs('pet'),
                         ]
                     );
                 } else {
                     $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
                     $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
-                    $txt = clienttranslate('${player_name} steals a pet from ${opponent}');
+                    $txt = clienttranslate('${player_name} steals ${log} from ${opponent}');
                     game::$instance->notify->all(
                         "stealPet",
                         $txt,
                         [
                             'player_id' => $this->player_id,
                             'pet_id' => $varg2,
+                            'log' => $this->getLogs('pet'),
                             'opponent' =>    [
                                 'log' => '<b style="color: #${color};">${opponent_name}</b>',
                                 'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
@@ -1076,6 +1253,17 @@ class Pending extends APP_GameClass
                         'player_id' => $this->player_id,
                         'bonus' => 'grimoire'
 
+                    ]
+                );
+
+                $txt = clienttranslate('${player_name} uses ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('grimoire'),
+                        
                     ]
                 );
 
@@ -1145,6 +1333,17 @@ class Pending extends APP_GameClass
             $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
             game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
 
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('ghost'),
+                    
+                ]
+            );
+
             game::$instance->notify->all(
                 "removeGrimoire",
                 '',
@@ -1159,9 +1358,19 @@ class Pending extends APP_GameClass
             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'clue'");
             game::$instance->addPending($this->player_id, "ActionsBonus");
 
-            //AJOUTER LA NOTIF MESSAGE
             $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
             game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
+
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('clue'),
+                    
+                ]
+            );
 
             game::$instance->notify->all(
                 "removeGrimoire",
@@ -1174,13 +1383,34 @@ class Pending extends APP_GameClass
 
         if ($card_pick['type'] == 3) {
             game::$instance->addPending($this->player_id, "GrimoireTake");
-            //AJOUTER LA NOTIF MESSAGE
+
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('take'),
+                    
+                ]
+            );
         }
 
         if ($card_pick['type'] == 4) {
             game::$instance->setGameStateInitialValue('replay', $this->player_id);
             game::$instance->addPending($this->player_id, "ActionsBonus");
-            //AJOUTER LA NOTIF MESSAGE
+            
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('replay'),
+                    
+                ]
+            );
+
             $grimoire_id = game::$instance->getUniqueValueFromDB("SELECT card_id FROM grimoire WHERE card_location = 'table'");
             game::$instance->grimoire_DB->moveCard($grimoire_id, 'discard', $this->player_id);
 
@@ -1195,17 +1425,47 @@ class Pending extends APP_GameClass
 
         if ($card_pick['type'] == 5) {
             game::$instance->addPending($this->player_id, "GrimoireClock", 2);
-            //AJOUTER LA NOTIF MESSAGE
+            
+            $txt = clienttranslate('${player_name} gains ${log} ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('clock'),
+                    
+                ]
+            );
         }
 
         if ($card_pick['type'] == 6) {
             game::$instance->addPending($this->player_id, "GrimoireClock", 1);
-            //AJOUTER LA NOTIF MESSAGE
+            
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('clock'),
+                    
+                ]
+            );
         }
 
         if ($card_pick['type'] == 7) {
             game::$instance->addPending($this->player_id, "GrimoirePet");
-            //AJOUTER LA NOTIF MESSAGE
+            
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('pet'),
+                    
+                ]
+            );
         }
     }
 
@@ -1287,6 +1547,18 @@ class Pending extends APP_GameClass
 
             // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
             if ($no_deck >= 1 && $no_deck <= 4) {
+
+                $txt = clienttranslate('${player_name} gains ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('reroll'),
+                        
+                    ]
+                );
+
                 $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
                 if ($reroll == 0) {
                     game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -1321,10 +1593,19 @@ class Pending extends APP_GameClass
                 $newclock = ($clock + 1) % 6;
                 game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
 
-                $txt = clienttranslate('${player_name} moves the clock forward');
+                $txt = clienttranslate('${player_name} turns ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('clock'),
+                    ]
+                );
+
                 game::$instance->notify->all(
                     "activateClockTower",
-                    $txt,
+                    "",
                     [
                         'player_id' => $this->player_id,
                         'clock' => $newclock,
@@ -1334,6 +1615,18 @@ class Pending extends APP_GameClass
 
                 //Position Artefact
                 if ($newclock == 0 || $newclock == 3) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('artefact'),
+                            
+                        ]
+                    );
+
                     game::$instance->player_artefacts->inc($this->player_id, 1);
                     $count_artefact = game::$instance->player_artefacts->get($this->player_id);
                     if ($count_artefact == 3) {
@@ -1356,6 +1649,18 @@ class Pending extends APP_GameClass
 
                 // Position Turn reroll token
                 if ($newclock == 2 || $newclock == 5) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('reroll'),
+                            
+                        ]
+                    );
+
                     $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
                     if ($reroll == 0) {
                         game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -1432,10 +1737,19 @@ class Pending extends APP_GameClass
         $newclock = ($clock + 1) % 6;
         game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
 
-        $txt = clienttranslate('${player_name} moves the clock forward');
+        $txt = clienttranslate('${player_name} turns ${log}');
+        game::$instance->notify->all(
+            "message",
+            $txt,
+            [
+                'player_id' => $this->player_id,
+                'log' => $this->getLogs('clock'),
+            ]
+        );
+
         game::$instance->notify->all(
             "activateClockTower",
-            $txt,
+            '',
             [
                 'player_id' => $this->player_id,
                 'clock' => $newclock,
@@ -1445,6 +1759,18 @@ class Pending extends APP_GameClass
 
         //Position Artefact
         if ($newclock == 0 || $newclock == 3) {
+
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('artefact'),
+                    
+                ]
+            );
+
             game::$instance->player_artefacts->inc($this->player_id, 1);
             $count_artefact = game::$instance->player_artefacts->get($this->player_id);
             if ($count_artefact == 3) {
@@ -1471,6 +1797,18 @@ class Pending extends APP_GameClass
 
         // Position Turn reroll token
         if ($newclock == 2 || $newclock == 5) {
+
+            $txt = clienttranslate('${player_name} gains ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('reroll'),
+                    
+                ]
+            );
+
             $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
             if ($reroll == 0) {
                 game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
@@ -1591,25 +1929,27 @@ class Pending extends APP_GameClass
 
             // je lances les notifs (take ou steal)
             if ($position == 'table') {
-                $txt = clienttranslate('${player_name} takes a pet');
+                $txt = clienttranslate('${player_name} takes ${log}');
                 game::$instance->notify->all(
                     "stealPet",
                     $txt,
                     [
                         'player_id' => $this->player_id,
                         'pet_id' => $varg2,
+                        'log' => $this->getLogs('pet'),
                     ]
                 );
             } else {
                 $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
                 $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
-                $txt = clienttranslate('${player_name} steals a pet from ${opponent}');
+                $txt = clienttranslate('${player_name} steals ${log} from ${opponent}');
                 game::$instance->notify->all(
                     "stealPet",
                     $txt,
                     [
                         'player_id' => $this->player_id,
                         'pet_id' => $varg2,
+                        'log' => $this->getLogs('pet'),
                         'opponent' =>    [
                             'log' => '<b style="color: #${color};">${opponent_name}</b>',
                             'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
@@ -1672,6 +2012,8 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('${actplayer} goes to the park');
         $ret['titleyou'] = clienttranslate('${you} are going to the park');
 
+
+        $ret['buttons'][] = 'go_to_park_btn';
 
         return $ret;
     }
@@ -1799,6 +2141,20 @@ class Pending extends APP_GameClass
 
             $count_clues_after = game::$instance->player_clues->get($this->player_id);
 
+            for($i = 1; $i <= $count_ghosts_win; $i++)
+            {
+                $txt = clienttranslate('${player_name} gains ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('ghost'),
+                        
+                    ]
+                );
+            }
+
             game::$instance->notify->all(
                 "goToThePark",
                 '',
@@ -1917,25 +2273,27 @@ class Pending extends APP_GameClass
 
             // je lances les notifs (take ou steal)
             if ($position == 'table') {
-                $txt = clienttranslate('${player_name} takes a pet');
+                $txt = clienttranslate('${player_name} takes ${log}');
                 game::$instance->notify->all(
                     "stealPet",
                     $txt,
                     [
                         'player_id' => $this->player_id,
                         'pet_id' => $varg2,
+                        'log' => $this->getLogs('pet'),
                     ]
                 );
             } else {
                 $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
                 $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
-                $txt = clienttranslate('${player_name} steals a pet from ${opponent}');
+                $txt = clienttranslate('${player_name} steals ${log} from ${opponent}');
                 game::$instance->notify->all(
                     "stealPet",
                     $txt,
                     [
                         'player_id' => $this->player_id,
                         'pet_id' => $varg2,
+                        'log' => $this->getLogs('pet'),
                         'opponent' =>    [
                             'log' => '<b style="color: #${color};">${opponent_name}</b>',
                             'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
@@ -2021,32 +2379,83 @@ class Pending extends APP_GameClass
     function getLogs ($type)
     {
         if ($type == 'dice_1') {
-            return "<div class='dice_log' title='' style='background-position-x = 0%;'></div>";
+            return "<div class='dice_log' title='' style='background-position-x : 0%;'></div>";
         }
 
-        if ($type == 'dice_2') {
-            return "<div class='dice_log' title='' style='background-position-x = -100%;'></div>";
+        elseif ($type == 'dice_2') {
+            return "<div class='dice_log' title='' style='background-position-x : -100%;'></div>";
         }
 
-        if ($type == 'dice_3') {
-            return "<div class='dice_log' title='' style='background-position-x = -200%;'></div>";
+        elseif ($type == 'dice_3') {
+            return "<div class='dice_log' title='' style='background-position-x : -200%;'></div>";
         }
 
-        if ($type == 'dice_4') {
-            return "<div class='dice_log' title='' style='background-position-x = -300%;'></div>";
+        elseif ($type == 'dice_4') {
+            return "<div class='dice_log' title='' style='background-position-x : -300%;'></div>";
         }
 
-        if ($type == 'dice_5') {
-            return "<div class='dice_log' title='' style='background-position-x = -400%;'></div>";
+        elseif ($type == 'dice_5') {
+            return "<div class='dice_log' title='' style='background-position-x : -400%;'></div>";
         }
 
-        if ($type == 'dice_6') {
-            return "<div class='dice_log' title='' style='background-position-x = -500%;'></div>";
+        elseif ($type == 'dice_6') {
+            return "<div class='dice_log' title='' style='background-position-x : -500%;'></div>";
         }
 
-        if ($type == 'reroll') {
-            return "<div class='icone_log' title='' style='background-position-x = 0%; background-position-y = 0%;'></div>";
+        elseif ($type == 'reroll') {
+            return "<div class='icone_log' title='' style='background-position-x : 0%; background-position-y : 0%;'></div>";
         }
+
+        elseif ($type == 'clock') {
+            return "<div class='icone_log' title='' style='background-position-x : -100%; background-position-y : -100%;'></div>";
+        }
+
+        elseif ($type == 'artefact') {
+            return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : 0%;'></div>";
+        }
+
+        elseif ($type == 'ghost') {
+            return "<div class='icone_log' title='' style='background-position-x : -300%; background-position-y : 0%;'></div>";
+        }
+
+        elseif ($type == 'clue') {
+            return "<div class='icone_log' title='' style='background-position-x : -400%; background-position-y : 0%;'></div>";
+        }
+
+        elseif ($type == 'replay') {
+            return "<div class='icone_log' title='' style='background-position-x : -300%; background-position-y : -100%;'></div>";
+        }
+
+        elseif ($type == 'flip8') {
+            return "<div class='icone_log' title='' style='background-position-x : 0%; background-position-y : -200%;'></div>";
+        }
+
+        elseif ($type == 'flip9') {
+            return "<div class='icone_log' title='' style='background-position-x : -100%; background-position-y : -200%;'></div>";
+        }
+
+        elseif ($type == 'take8') {
+            return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : -200%;'></div>";
+        }
+
+        elseif ($type == 'pet') {
+            return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : -100%;'></div>";
+        }
+
+        elseif ($type == 'grimoire') {
+            return "<div class='icone_log' title='' style='background-position-x : 0%; background-position-y : -100%;'></div>";
+        }
+
+        elseif ($type == 'take') {
+            return "<div class='icone_log' title='' style='background-position-x : -300%; background-position-y : -200%;'></div>";
+        }
+
+        else {
+            return "";
+        }
+
+
+
 
 
 

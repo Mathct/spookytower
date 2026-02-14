@@ -171,6 +171,16 @@ class NormalTurn {
               this.game.safeClass("flip_cards_btn", "add", "disabled");
             }
             break;
+          case "go_to_park_btn":
+            this.bga.statusBar.addActionButton(
+              _("Go to Park"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                }),
+              { color: "primary" },
+            );
+            break;
           case "take_pet_btn":
             this.bga.statusBar.addActionButton(
               _("Take Pet"),
@@ -1554,9 +1564,7 @@ export class Game {
       const panel_artefacts = document.getElementById(`icon_artefact_${playerId}`);
 
       // Animation slide vers le panel joueur + destruction
-      await new Promise((resolve) => {
-        this.animationManager.slideOutAndDestroy(iconEl, panel_artefacts, 600, 0, resolve);
-      });
+      await this.animationManager.slideOutAndDestroy(iconEl, panel_artefacts, 600, 0);
 
       // petit délai si nécessaire
       await new Promise((r) => setTimeout(r, 80));
