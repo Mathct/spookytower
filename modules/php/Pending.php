@@ -483,7 +483,7 @@ class Pending extends APP_GameClass
             // verif nombre de ghosts
 
             $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
-            if ($count_ghosts == 5) {
+            if ($count_ghosts >= 5) {
                 game::$instance->addPending($this->player_id, "EndGame");
             } else {
                 game::$instance->addPending($this->player_id, "ActionsBonus");
@@ -754,7 +754,7 @@ class Pending extends APP_GameClass
                 // verif nombre de ghosts
 
                 $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
-                if ($count_ghosts == 5) {
+                if ($count_ghosts >= 5) {
                     game::$instance->addPending($this->player_id, "EndGame");
                 } else {
                     game::$instance->addPending($this->player_id, "ActionsBonus");
@@ -1036,7 +1036,7 @@ class Pending extends APP_GameClass
 
                 game::$instance->player_ghosts->inc($this->player_id, 1);
                 $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
-                if ($count_ghosts == 5) {
+                if ($count_ghosts >= 5) {
                     game::$instance->addPending($this->player_id, "EndGame");
                 } else {
                     game::$instance->addPending($this->player_id, "ActionsBonus");
@@ -1108,10 +1108,13 @@ class Pending extends APP_GameClass
             ]
         );
 
+        game::$instance->deck_grimoire->inc(-1);
+        
+
         if ($card_pick['type'] == 1) {
             game::$instance->player_ghosts->inc($this->player_id, 1);
             $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
-            if ($count_ghosts == 5) {
+            if ($count_ghosts >= 5) {
                 game::$instance->addPending($this->player_id, "EndGame");
             } else {
                 game::$instance->addPending($this->player_id, "ActionsBonus");
@@ -1619,7 +1622,7 @@ class Pending extends APP_GameClass
 
             game::$instance->player_ghosts->inc($this->player_id, 1);
             $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
-            if ($count_ghosts == 5) {
+            if ($count_ghosts >= 5) {
                 game::$instance->addPending($this->player_id, "EndGame");
             } else {
                 if ($parg1 == 2) {
@@ -1820,24 +1823,32 @@ class Pending extends APP_GameClass
             );
         }
 
-        
+        // verif nombre de ghosts
 
-        if (game::$instance->getGameStateValue('replay') != 0) {
-            game::$instance->setGameStateInitialValue('replay', 0);
-            $txt = clienttranslate('${player_name} replays');
-            game::$instance->notify->all(
-                "removeReplay",
-                $txt,
-                [
-                    'player_id' => $this->player_id,
-
-                ]
-            );
-
-            game::$instance->addPending($this->player_id, "PlayerTurn");
+        $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
+        if ($count_ghosts >= 5) {
+            game::$instance->addPending($this->player_id, "EndGame");
         } else {
-            game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+            
+            if (game::$instance->getGameStateValue('replay') != 0) {
+                game::$instance->setGameStateInitialValue('replay', 0);
+                $txt = clienttranslate('${player_name} replays');
+                game::$instance->notify->all(
+                    "removeReplay",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+
+                    ]
+                );
+
+                game::$instance->addPending($this->player_id, "PlayerTurn");
+            } else {
+                game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+            }
         }
+
+        
 
     }
 
@@ -1956,7 +1967,7 @@ class Pending extends APP_GameClass
 
             game::$instance->player_ghosts->inc($this->player_id, 1);
             $count_ghosts = game::$instance->player_ghosts->get($this->player_id);
-            if ($count_ghosts == 5) {
+            if ($count_ghosts >= 5) {
                 game::$instance->addPending($this->player_id, "EndGame");
             } else {
                 if ($parg1 == 1) {
@@ -2005,6 +2016,10 @@ class Pending extends APP_GameClass
 
     function EndGame($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
+        game::$instance->DbQuery("UPDATE player set player_score = 1 WHERE player_id = '{$this->player_id}'");
+
+        game::$instance->bga->playerScore->set($this->player_id, 1);
+        
         game::$instance->addPending($this->player_id, "EndGame");
     }
 }

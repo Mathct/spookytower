@@ -1463,6 +1463,8 @@ export class Game {
     const park = document.getElementById("park_active");
     if (!park) return;
 
+    park.id = `park_active_verso`;
+
     const nb_cards = parseInt(this.gamedatas.deck_park);
     const versoCol = this.gamedatas.park_order[5 - nb_cards];
 
@@ -1902,7 +1904,10 @@ export class Game {
   }
 
   async moveGhostToHouse(ghostId, startElement) {
+    // le nom du ghost dans le tableau _GHOST_ASSETS
     console.log("ghost_id", ghostId);
+
+    // le conteneur de départ
     console.log("starelement", startElement);
 
     const playerId = this.bga.players.getActivePlayerId();
@@ -2159,6 +2164,40 @@ export class Game {
     console.log("Bonus removed:", bonusElement.id);
   }
 
+  async animRemoveClue() {
+    const playerId = this.bga.players.getActivePlayerId();
+    // Sélecteur du conteneur des indices du joueur
+    const container = document.getElementById(`player_${playerId}_house_clues`);
+
+    if (!container || container.children.length === 0) {
+      console.log("No clue found for player", playerId);
+      return;
+    }
+
+    // On prend le premier enfant
+    const clueElement = container.children[0];
+
+    if (this.instantaneousmode) {
+      // Mode instantané : suppression directe
+      clueElement.remove();
+      console.log("Clue removed instantly:", clueElement.id);
+      return;
+    }
+
+    // 1️⃣ Animation disparition
+    clueElement.style.transition = "transform 400ms ease, opacity 400ms ease";
+    clueElement.style.transform = "scale(0)";
+    clueElement.style.opacity = "0";
+
+    // Attente de la fin de l'animation
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    // Suppression du DOM
+    clueElement.remove();
+
+    console.log("Clue removed:", clueElement.id);
+  }
+
   async animRemoveReplay() {
     const replayElement = document.getElementById("panel_ic_replay");
     if (!replayElement) {
@@ -2206,6 +2245,71 @@ export class Game {
         </div>
         `,
         );
+      }
+    }
+
+    // 2️⃣ Mode instantané
+    if (this.instantaneousMode) {
+      oldCard.remove();
+      return;
+    }
+
+    // 3️⃣ Animation disparition ancienne carte
+    oldCard.style.transition = "transform 400ms ease, opacity 400ms ease";
+    oldCard.style.transform = "scale(0)";
+    oldCard.style.opacity = "0";
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    oldCard.remove();
+  }
+
+  async animRemovePark(playerId) {
+    const oldCard = document.getElementById("park_active_verso");
+    if (!oldCard) {
+      console.log("No park element found");
+      return;
+    }
+
+    // 1️⃣ Vérifier le compteur AVANT suppression
+    const counterValue = this.topRowCounters.deck_park.getValue();
+
+    if (counterValue > 0) {
+      const counterDiv = document.getElementById("deck_park_counter");
+      if (counterDiv) {
+        let col;
+
+        // Détermination du nombre de cartes à supprimer
+        let numClues;
+        if (counterValue >= 5) {
+          col = 5;
+          numClues = 3;
+        } else if (counterValue >= 2 && counterValue <= 4) {
+          col = 6;
+          numClues = 2;
+        } else {
+          col = 7;
+          numClues = 1;
+        }
+
+        // Calcul position pour la nouvelle carte
+        const posX = -(col * 100); // chaque colonne = -100%
+
+        // Insertion de la nouvelle carte
+        counterDiv.insertAdjacentHTML(
+          "afterend",
+          `
+        <div class="card_item parkgrim_cards"
+             id="park_active"
+             style="background-position: ${posX}% 0%;">
+        </div>
+        `,
+        );
+
+        // 🔹 Suppression des indices correspondants
+        for (let i = 0; i < numClues; i++) {
+          await this.animRemoveClue(playerId);
+        }
       }
     }
 
@@ -2420,7 +2524,15 @@ export class Game {
     // on décrémente les torches et le compteur
     console.log("notif_goToThePark", args);
 
-    await this.animFlipPark();
+    for (let i = 0; i < args.ghosts.length; i++) {
+      await this.animFlipPark();
+
+      const ghost_id = `ghost_${args.ghosts[i]}`;
+      const parkElt = document.getElementById("deck_park");
+      await this.moveGhostToHouse(ghost_id, parkElt);
+
+      await this.animRemovePark();
+    }
   }
 
   async notif_drawGrimoire(args) {
