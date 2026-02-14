@@ -190,6 +190,25 @@ class NormalTurn {
             }
             break;
 
+          case "take_grimoire_pet_btn":
+            this.bga.statusBar.addActionButton(
+              _("Take Pet"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                  arg2: this.game.selected_token,
+                }),
+              {
+                color: "primary",
+                id: "take_grimoire_pet_btn",
+              },
+            );
+
+            if (this.game.selected_token == "") {
+              this.game.safeClass("take_grimoire_pet_btn", "add", "disabled");
+            }
+            break;
+
           case "turn_clock_btn":
             this.bga.statusBar.addActionButton(
               _("Turn clock"),
@@ -200,76 +219,6 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-          /*  case "reveal_grimoire_btn":
-            this.bga.statusBar.addActionButton(
-              _("Reveal Grimoire"),
-              () =>
-                this.bga.actions.performAction("actGrimoire", {
-                  arg1: key,
-                }),
-              { color: "primary" },
-            );
-            break;
-          case "take_card8_btn":
-            this.bga.statusBar.addActionButton(
-              _("Take a 8- Card"),
-              () =>
-                this.bga.actions.performAction("actTakeCard8", {
-                  arg1: key,
-                  arg2: this.game.selected_building,
-                }),
-              { color: "primary", id: "take_card8_btn" },
-            );
-
-            if (this.game.selected_building == "") {
-              this.game.safeClass("take_card8_btn", "add", "disabled");
-            }
-            break;
-          case "take_card_any_btn":
-            this.bga.statusBar.addActionButton(
-              _("Take any Card"),
-              () =>
-                this.bga.actions.performAction("actTakeCardAny", {
-                  arg1: key,
-                  arg2: this.game.selected_building,
-                }),
-              { color: "primary", id: "take_card_any_btn" },
-            );
-
-            if (this.game.selected_building == "") {
-              this.game.safeClass("take_card_any_btn", "add", "disabled");
-            }
-            break;
-          case "flip_flip8_btn":
-            this.bga.statusBar.addActionButton(
-              _("Flip a 8- Card"),
-              () =>
-                this.bga.actions.performAction("actFlipCard8", {
-                  arg1: key,
-                  arg2: this.game.selected_stack,
-                }),
-              { color: "primary", id: "flip_card8_btn" },
-            );
-
-            if (this.game.selected_stack == "") {
-              this.game.safeClass("flip_card8_btn", "add", "disabled");
-            }
-            break;
-          case "flip_card9_btn":
-            this.bga.statusBar.addActionButton(
-              _("Flip a 9+ Card"),
-              () =>
-                this.bga.actions.performAction("actFlipCard9", {
-                  arg1: key,
-                  arg2: this.game.selected_stack,
-                }),
-              { color: "primary", id: "flip_card9_btn" },
-            );
-
-            if (this.game.selected_stack == "") {
-              this.game.safeClass("flip_card9_btn", "add", "disabled");
-            }
-            break;*/
           case "validate_bonus_btn":
             this.bga.statusBar.addActionButton(
               _("Validate Bonus"),
@@ -479,7 +428,7 @@ export class Game {
       if (!element) return;
 
       if (this.function == "ActionsBonus") {
-        /*  if (elt_id.startsWith("card_pet_")) {
+        /*if (elt_id.startsWith("card_pet_")) {
           const clickHandler = () => this.onSelectPet(elt_id);
           element.addEventListener("click", clickHandler);
           this.connections.push({
@@ -488,9 +437,7 @@ export class Game {
             handler: clickHandler,
           });
           return;
-        } else */
-
-        if (elt_id.startsWith("table_building_card_")) {
+        } else */ if (elt_id.startsWith("table_building_card_")) {
           const clickHandler = () => this.onSelectBuilding(elt_id);
           element.addEventListener("click", clickHandler);
           this.connections.push({
@@ -727,6 +674,7 @@ export class Game {
       this.safeClass(token_elt, "add", "selected");
       this.selected_token = token_id;
       this.safeClass("validate_bonus_btn", "remove", "disabled");
+      this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
     }
     // Si on clique sur une autre case
     else {
@@ -739,9 +687,11 @@ export class Game {
         this.safeClass(token_elt, "add", "selected");
         this.selected_token = token_id;
         this.safeClass("validate_bonus_btn", "remove", "disabled");
+        this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
       } else {
         this.selected_token = "";
         this.safeClass("validate_bonus_btn", "add", "disabled");
+        this.safeClass("take_grimoire_pet_btn", "add", "disabled");
       }
     }
   }
@@ -1041,6 +991,8 @@ export class Game {
 
     players.forEach((player, idx) => {
       const houseIndex = spriteIndices[idx];
+
+      console.log("petzz", this.gamedatas.player);
 
       // création du board
       playersArea.insertAdjacentHTML(
@@ -1496,7 +1448,7 @@ export class Game {
     delete park.dataset.flipping;
   }
 
-  async animFlipGrimoire(grimoireType) {
+  async animFlipGrimoire(grimoireType, playerId) {
     const grimoire = document.getElementById("grimoire_active");
     if (!grimoire) return;
 
@@ -1530,6 +1482,16 @@ export class Game {
     await new Promise((resolve) => setTimeout(resolve, half));
 
     delete grimoire.dataset.flipping;
+
+    if (grimoireType == 2) {
+      const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
+      const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
+
+      const house_clues = document.getElementById(`player_${playerId}_house_clues`);
+      console.log("housse", `player_${playerId}_house_clues`);
+      console.log("house_clues", house_clues);
+      house_clues.insertAdjacentHTML("beforeend", html);
+    }
   }
 
   async animClockTower() {
@@ -2540,7 +2502,7 @@ export class Game {
     // on décrémente lecompteur
     console.log("notif_drawGrimoire", args);
 
-    await this.animFlipGrimoire(args.grimoire.type);
+    await this.animFlipGrimoire(args.grimoire.type, args.player_id);
 
     // un fantôme
     // une torche

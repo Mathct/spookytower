@@ -21,6 +21,7 @@ class NormalTurn extends GameState
             type: StateType::ACTIVE_PLAYER,
             description: clienttranslate('${actplayer} must take a Normal Turn action'),
             descriptionMyTurn: clienttranslate('${you} must take a Normal Turn action'),
+            transitions: ['end' => 99],
         );
     }
 
