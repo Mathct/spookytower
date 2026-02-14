@@ -92,3 +92,33 @@ $this->_GHOST = [
     'park_5',
     'grimoire_1'
 ];
+
+$this->_GHOST_ASSETS = [
+    'ghost_1',
+    'ghost_2',
+    'ghost_3',
+    'ghost_4',
+    'ghost_5',
+    'ghost_6',
+    'ghost_7',
+    'ghost_8',
+    'ghost_9',
+    'ghost_10',
+    'ghost_11',
+    'ghost_12',
+    'ghost_13',
+    'ghost_14',
+    'ghost_15',
+    'ghost_16',
+    'ghost_17',
+    'ghost_18',
+    'pet_1',
+    'pet_2',
+    'pet_3',
+    'park_1',
+    'park_2',
+    'park_3',
+    'park_4',
+    'park_5',
+    'grimoire_1'
+];

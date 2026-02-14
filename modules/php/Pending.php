@@ -1130,7 +1130,6 @@ class Pending extends APP_GameClass
                 '',
                 [
                     'player_id' => $this->player_id,
-                    'icon' => 'ghost'
                 ]
             );
         }
@@ -1149,7 +1148,6 @@ class Pending extends APP_GameClass
                 '',
                 [
                     'player_id' => $this->player_id,
-                    'icon' => 'clue'
                 ]
             );
         }
@@ -1171,7 +1169,6 @@ class Pending extends APP_GameClass
                 '',
                 [
                     'player_id' => $this->player_id,
-                    'icon' => 'replay'
                 ]
             );
         }
@@ -1446,7 +1443,6 @@ class Pending extends APP_GameClass
                         '',
                         [
                             'player_id' => $this->player_id,
-                            'icon' => 'clock'
                         ]
                     );
                 }
@@ -1482,7 +1478,6 @@ class Pending extends APP_GameClass
                     '',
                     [
                         'player_id' => $this->player_id,
-                        'icon' => 'clock'
                     ]
                 );
             }
@@ -1551,7 +1546,6 @@ class Pending extends APP_GameClass
                     '',
                     [
                         'player_id' => $this->player_id,
-                        'icon' => 'pet'
                     ]
                 );
             }
@@ -1613,7 +1607,6 @@ class Pending extends APP_GameClass
                     '',
                     [
                         'player_id' => $this->player_id,
-                        'icon' => 'ghost'
                     ]
                 );
             }
@@ -1659,7 +1652,7 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('${actplayer} goes to the park');
         $ret['titleyou'] = clienttranslate('${you} are going to the park');
 
-
+        
         $ret['buttons'][] = 'yes_btn';
 
 
@@ -1670,7 +1663,182 @@ class Pending extends APP_GameClass
 
     function Park($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
-        game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+        $count_clues = game::$instance->player_clues->get($this->player_id);
+        $count_park = game::$instance->deck_park->get();
+        $order = game::$instance->getGameStateValue('park_order');
+
+        $tableau_order = array_map('intval', str_split((string)$order));
+
+        $ghosts_win = [];
+
+
+        if($count_park == 5)
+        {
+            if($count_clues >= 1)
+            {
+                $ghosts_win[] = $tableau_order[0];
+                game::$instance->player_clues->inc($this->player_id, -1);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_1'");
+            }
+
+            if($count_clues >= 3)
+            {
+                $ghosts_win[] = $tableau_order[1];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_2'");
+            }
+
+            if($count_clues >= 5)
+            {
+                $ghosts_win[] = $tableau_order[2];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_3'");
+            }
+
+            if($count_clues >= 7)
+            {
+                $ghosts_win[] = $tableau_order[3];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+            }
+
+            if($count_clues >= 10)
+            {
+                $ghosts_win[] = $tableau_order[4];
+                game::$instance->player_clues->inc($this->player_id, -3);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+            }
+
+        }
+
+        if($count_park == 4)
+        {
+            if($count_clues >= 2)
+            {
+                $ghosts_win[] = $tableau_order[1];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_2'");
+            }
+
+            if($count_clues >= 4)
+            {
+                $ghosts_win[] = $tableau_order[2];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_3'");
+            }
+
+            if($count_clues >= 6)
+            {
+                $ghosts_win[] = $tableau_order[3];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+            }
+
+            if($count_clues >= 9)
+            {
+                $ghosts_win[] = $tableau_order[4];
+                game::$instance->player_clues->inc($this->player_id, -3);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+            }
+            
+        }
+
+        if($count_park == 3)
+        {
+
+            if($count_clues >= 2)
+            {
+                $ghosts_win[] = $tableau_order[2];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_3'");
+            }
+
+            if($count_clues >= 4)
+            {
+                $ghosts_win[] = $tableau_order[3];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+            }
+
+            if($count_clues >= 7)
+            {
+                $ghosts_win[] = $tableau_order[4];
+                game::$instance->player_clues->inc($this->player_id, -3);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+            }
+            
+        }
+
+        if($count_park == 2)
+        {
+
+            if($count_clues >= 2)
+            {
+                $ghosts_win[] = $tableau_order[3];
+                game::$instance->player_clues->inc($this->player_id, -2);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+            }
+
+            if($count_clues >= 5)
+            {
+                $ghosts_win[] = $tableau_order[4];
+                game::$instance->player_clues->inc($this->player_id, -3);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+            }
+            
+        }
+
+        if($count_park == 1)
+        {
+
+            if($count_clues >= 3)
+            {
+                $ghosts_win[] = $tableau_order[4];
+                game::$instance->player_clues->inc($this->player_id, -3);
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+            }
+            
+        }
+
+        $count_ghosts_win = count($ghosts_win);
+        if($count_ghosts_win >= 1)
+        {
+            game::$instance->deck_park->inc(-$count_ghosts_win);
+            game::$instance->player_ghosts->inc($this->player_id, $count_ghosts_win);
+
+            $count_clues_after = game::$instance->player_clues->get($this->player_id);
+
+            game::$instance->notify->all(
+                "goToThePark",
+                '',
+                [
+                    'player_id' => $this->player_id,
+                    'ghosts' => $ghosts_win,
+                    'clues' => $count_clues - $count_clues_after,
+
+                ]
+            );
+        }
+
+        
+
+        if (game::$instance->getGameStateValue('replay') != 0) {
+            game::$instance->setGameStateInitialValue('replay', 0);
+            $txt = clienttranslate('${player_name} replays');
+            game::$instance->notify->all(
+                "removeReplay",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+
+                ]
+            );
+
+            game::$instance->addPending($this->player_id, "PlayerTurn");
+        } else {
+            game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
+        }
+
     }
 
 

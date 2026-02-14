@@ -479,7 +479,7 @@ export class Game {
       if (!element) return;
 
       if (this.function == "ActionsBonus") {
-        if (elt_id.startsWith("card_pet_")) {
+        /*  if (elt_id.startsWith("card_pet_")) {
           const clickHandler = () => this.onSelectPet(elt_id);
           element.addEventListener("click", clickHandler);
           this.connections.push({
@@ -488,7 +488,9 @@ export class Game {
             handler: clickHandler,
           });
           return;
-        } else if (elt_id.startsWith("table_building_card_")) {
+        } else */
+
+        if (elt_id.startsWith("table_building_card_")) {
           const clickHandler = () => this.onSelectBuilding(elt_id);
           element.addEventListener("click", clickHandler);
           this.connections.push({
@@ -1884,20 +1886,9 @@ export class Game {
           this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
           await new Promise((r) => setTimeout(r, 80));
         } else if (ic == "ghost") {
-          const iconId = `house_ic_ghost_${Math.floor(Math.random() * 1000)}`;
-          const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
-          parent.insertAdjacentHTML("beforeend", html);
-
-          const iconEl = document.getElementById(iconId);
-          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-            console.warn("Skip animation: invalid node", iconId, iconEl);
-            continue;
-          }
-          const house_ghosts = document.getElementById(`player_${playerId}_house_ghosts`);
-
-          // Animation slide vers la rivière
-          this.animationManager.slideAndAttach(iconEl, house_ghosts, 600, 0, null);
-          await new Promise((r) => setTimeout(r, 80));
+          const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
+          const ghost_id = `ghost_${ghost_idx}`;
+          await this.moveGhostToHouse(ghost_id, parent);
         }
       }
 
@@ -1908,6 +1899,55 @@ export class Game {
     // 3️⃣ Marquer la pile comme vide
     stack.classList.add("empty");
     delete stack.dataset.animating;
+  }
+
+  async moveGhostToHouse(ghostId, startElement) {
+    console.log("ghost_id", ghostId);
+    console.log("starelement", startElement);
+
+    const playerId = this.bga.players.getActivePlayerId();
+
+    const index = this.gamedatas.ghost_assets.indexOf(ghostId);
+
+    console.log("index ", index);
+
+    if (index === -1) return;
+
+    const col = index % 7;
+    const row = Math.floor(index / 7);
+
+    const duration = 6 + Math.random() * 3;
+    const delay = Math.random() * 3;
+
+    // 1️⃣ Création sans left/top
+    startElement.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div id="ghost_${ghostId}" class="ghost_sprites"
+          style="
+            background-position: -${col}00% -${row}00%;
+            animation-duration: ${duration}s;
+            animation-delay: ${delay}s;
+          ">
+        </div>
+      `,
+    );
+
+    const spriteElement = document.getElementById(`ghost_${ghostId}`);
+    const destination = document.getElementById(`player_${playerId}_house_ghost`);
+    if (!spriteElement || !destination) return;
+
+    // 2️⃣ Animation avec chaînage explicite
+    this.animationManager
+      .slideAndAttach(spriteElement, destination, 800)
+      .then(() => {
+        // 3️⃣ Position aléatoire APRES reparenting
+        spriteElement.style.left = `${Math.random() * 60}%`;
+        spriteElement.style.top = `${Math.random() * 75}%`;
+      })
+      .catch((err) => {
+        console.error("Animation stealPet error:", err);
+      });
   }
 
   async toggleRiver() {
@@ -2449,43 +2489,7 @@ export class Game {
       const petId = cardId.replace(/^card_/, "");
       const index = this.gamedatas.ghost_assets.indexOf(petId);
 
-      if (index === -1) return;
-
-      const col = index % 7;
-      const row = Math.floor(index / 7);
-
-      const duration = 6 + Math.random() * 3;
-      const delay = Math.random() * 3;
-
-      // 1️⃣ Création sans left/top
-      petElement.insertAdjacentHTML(
-        "beforeend",
-        `
-        <div id="ghost_${petId}" class="ghost_sprites"
-          style="
-            background-position: -${col}00% -${row}00%;
-            animation-duration: ${duration}s;
-            animation-delay: ${delay}s;
-          ">
-        </div>
-      `,
-      );
-
-      const spriteElement = document.getElementById(`ghost_${petId}`);
-      const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
-      if (!spriteElement || !destination) return;
-
-      // 2️⃣ Animation avec chaînage explicite
-      this.animationManager
-        .slideAndAttach(spriteElement, destination, 1200)
-        .then(() => {
-          // 3️⃣ Position aléatoire APRES reparenting
-          spriteElement.style.left = `${Math.random() * 60}%`;
-          spriteElement.style.top = `${Math.random() * 75}%`;
-        })
-        .catch((err) => {
-          console.error("Animation stealPet error:", err);
-        });
+      this.moveGhostToHouse(index, petElement);
     } else {
       const cardId = args.pet_id;
       const petId = cardId.replace(/^card_/, "");
@@ -2497,7 +2501,7 @@ export class Game {
       spriteElement.style.animationPlayState = "paused";
 
       // 2️⃣ Lancer l'animation slide
-      this.animationManager.slideAndAttach(spriteElement, destination, 1200).then(() => {
+      this.animationManager.slideAndAttach(spriteElement, destination, 800).then(() => {
         // 3️⃣ Relancer l'animation CSS
         spriteElement.style.animationPlayState = "running";
 
@@ -2527,8 +2531,6 @@ export class Game {
     const col = index % 7;
     const row = Math.floor(index / 7);
 
-    const left = Math.random() * 60;
-    const top = Math.random() * 75;
     const duration = 6 + Math.random() * 3;
     const delay = Math.random() * 3;
 
@@ -2536,8 +2538,6 @@ export class Game {
         <div id="ghost_${ghostId}" class="ghost_sprites"
           style="
             background-position: -${col}00% -${row}00%;
-            left: ${left}%;
-            top: ${top}%;
             animation-duration: ${duration}s;
             animation-delay: ${delay}s;
           "></div>`;
@@ -2547,7 +2547,11 @@ export class Game {
     const spriteElement = document.getElementById(`ghost_${petId}`);
 
     const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
-    await this.animationManager.slideAndAttach(spriteElement, destination, 1200, 0, null);
+    await this.animationManager.slideAndAttach(spriteElement, destination, 800).then(() => {
+      // 3️⃣ Position aléatoire APRES reparenting
+      spriteElement.style.left = `${Math.random() * 60}%`;
+      spriteElement.style.top = `${Math.random() * 75}%`;
+    });
   }
 
   async notif_flipReroll(args) {
