@@ -889,3 +889,25 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .face4 { transform: rotateY(-90deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -300%; }
 .face5 { transform: rotateX(90deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -400%; }
 .face6 { transform: rotateX(-90deg) translateZ(calc(40px * var(--st_scale))); background-image: url('img/dice.png'); background-size: 600% 100%; background-position-x: -500%; }
+
+/* ICONS LOGS*/
+
+.icone_log {
+  width: 35px;
+  height: 35px;
+  background-image: url("img/ST_icons.png");
+  background-size: 500% 300%;
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.dice_log {
+  width: 35px;
+  height: 35px;
+  background-image: url("img/dice.png");
+  background-size: 600% 100%;
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
+}

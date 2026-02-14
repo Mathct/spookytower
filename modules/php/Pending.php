@@ -71,14 +71,17 @@ class Pending extends APP_GameClass
 
         $roll = [$rand_dice1, $rand_dice2];
 
-        $txt = clienttranslate('${player_name} rolls ${dice1} and ${dice2}');
+        $log1 = 'dice_'.$rand_dice1;
+        $log2 = 'dice_'.$rand_dice2;
+
+        $txt = clienttranslate('${player_name} rolls ${dice1} ${dice2}');
         game::$instance->notify->all(
             "rollDice",
             $txt,
             [
                 'player_id' => $this->player_id,
-                'dice1' => $rand_dice1,
-                'dice2' => $rand_dice2,
+                'dice1' => $this->getLogs($log1),
+                'dice2' => $this->getLogs($log2),
                 'roll' => $roll
             ]
         );
@@ -209,6 +212,18 @@ class Pending extends APP_GameClass
                 ]
             );
 
+            $txt = clienttranslate('${player_name} uses ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('reroll'),
+                    
+                ]
+            );
+           
+
 
             $rand_dice1 = bga_rand(1, 6);
             $rand_dice2 = bga_rand(1, 6);
@@ -216,14 +231,17 @@ class Pending extends APP_GameClass
 
             $roll = [$rand_dice1, $rand_dice2];
 
-            $txt = clienttranslate('${player_name} rolls ${dice1} and ${dice2}');
+            $log1 = 'dice_'.$rand_dice1;
+            $log2 = 'dice_'.$rand_dice2;
+
+            $txt = clienttranslate('${player_name} rolls ${dice1} ${dice2}');
             game::$instance->notify->all(
                 "rollDice",
                 $txt,
                 [
                     'player_id' => $this->player_id,
-                    'dice1' => $rand_dice1,
-                    'dice2' => $rand_dice2,
+                    'dice1' => $this->getLogs($log1),
+                    'dice2' => $this->getLogs($log2),
                     'roll' => $roll
                 ]
             );
@@ -1986,4 +2004,58 @@ class Pending extends APP_GameClass
         game::$instance->gamestate->nextState('end');
 
     }
+
+
+    /*
+     _                     
+    | |                    
+    | |     ___   __ _ ___ 
+    | |    / _ \ / _` / __|
+    | |___| (_) | (_| \__ \
+    |______\___/ \__, |___/
+                __/ |    
+                |___/     
+
+    */
+
+    function getLogs ($type)
+    {
+        if ($type == 'dice_1') {
+            return "<div class='dice_log' title='' style='background-position-x = 0%;'></div>";
+        }
+
+        if ($type == 'dice_2') {
+            return "<div class='dice_log' title='' style='background-position-x = -100%;'></div>";
+        }
+
+        if ($type == 'dice_3') {
+            return "<div class='dice_log' title='' style='background-position-x = -200%;'></div>";
+        }
+
+        if ($type == 'dice_4') {
+            return "<div class='dice_log' title='' style='background-position-x = -300%;'></div>";
+        }
+
+        if ($type == 'dice_5') {
+            return "<div class='dice_log' title='' style='background-position-x = -400%;'></div>";
+        }
+
+        if ($type == 'dice_6') {
+            return "<div class='dice_log' title='' style='background-position-x = -500%;'></div>";
+        }
+
+        if ($type == 'reroll') {
+            return "<div class='icone_log' title='' style='background-position-x = 0%; background-position-y = 0%;'></div>";
+        }
+
+
+
+
+
+    }
+
+
+
+
+
 }

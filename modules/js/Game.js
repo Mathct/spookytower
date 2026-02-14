@@ -992,8 +992,6 @@ export class Game {
     players.forEach((player, idx) => {
       const houseIndex = spriteIndices[idx];
 
-      console.log("petzz", this.gamedatas.player);
-
       // création du board
       playersArea.insertAdjacentHTML(
         "beforeend",
@@ -1061,6 +1059,19 @@ export class Game {
           );
         });
       });
+
+      console.log("petzz", this.gamedatas.players[player.id].player_clues);
+      const nb_clues = this.gamedatas.players[player.id].player_clues;
+      if (nb_clues > 0) {
+        for (let i = 0; i < nb_clues; i++) {
+          const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
+          const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
+
+          const house_clues = document.getElementById(`player_${player.id}_house_clues`);
+
+          house_clues.insertAdjacentHTML("beforeend", html);
+        }
+      }
     });
 
     this.spawnGhosts();
@@ -1168,14 +1179,14 @@ export class Game {
     const parkCounter = new ebg.counter();
     parkCounter.create("deck_park_counter", {
       value: this.gamedatas.deck_park,
-      playerCounter: "deck_park",
+      tableCounter: "deck_park",
     });
     this.topRowCounters.deck_park = parkCounter;
 
     const grimCounter = new ebg.counter();
     grimCounter.create("deck_grimoire_counter", {
       value: this.gamedatas.deck_grimoire,
-      playerCounter: "deck_grimoire",
+      tableCounter: "deck_grimoire",
     });
     this.topRowCounters.deck_grimoire = grimCounter;
 
@@ -1852,7 +1863,7 @@ export class Game {
         } else if (ic == "ghost") {
           const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
           const ghost_id = `ghost_${ghost_idx}`;
-          await this.moveGhostToHouse(ghost_id, parent);
+          await this.moveGhostToHouse(ghost_id, parent, playerId);
         }
       }
 
@@ -1865,14 +1876,12 @@ export class Game {
     delete stack.dataset.animating;
   }
 
-  async moveGhostToHouse(ghostId, startElement) {
+  async moveGhostToHouse(ghostId, startElement, playerId) {
     // le nom du ghost dans le tableau _GHOST_ASSETS
     console.log("ghost_id", ghostId);
 
     // le conteneur de départ
     console.log("starelement", startElement);
-
-    const playerId = this.bga.players.getActivePlayerId();
 
     const index = this.gamedatas.ghost_assets.indexOf(ghostId);
 
@@ -2126,9 +2135,9 @@ export class Game {
     console.log("Bonus removed:", bonusElement.id);
   }
 
-  async animRemoveClue() {
-    const playerId = this.bga.players.getActivePlayerId();
+  async animRemoveClue(playerId) {
     // Sélecteur du conteneur des indices du joueur
+    console.log(`player_${playerId}_house_clues`);
     const container = document.getElementById(`player_${playerId}_house_clues`);
 
     if (!container || container.children.length === 0) {
@@ -2491,9 +2500,9 @@ export class Game {
 
       const ghost_id = `ghost_${args.ghosts[i]}`;
       const parkElt = document.getElementById("deck_park");
-      await this.moveGhostToHouse(ghost_id, parkElt);
+      await this.moveGhostToHouse(ghost_id, parkElt, args.player_id);
 
-      await this.animRemovePark();
+      await this.animRemovePark(args.player_id);
     }
   }
 
@@ -2563,7 +2572,7 @@ export class Game {
       const petId = cardId.replace(/^card_/, "");
       const index = this.gamedatas.ghost_assets.indexOf(petId);
 
-      this.moveGhostToHouse(index, petElement);
+      this.moveGhostToHouse(index, petElement, args.player_id);
     } else {
       const cardId = args.pet_id;
       const petId = cardId.replace(/^card_/, "");
