@@ -375,9 +375,6 @@ class Game extends \Bga\GameFramework\Table
             return $progession_artefact;
         }
 
-        
-
-        
     }
 
 
