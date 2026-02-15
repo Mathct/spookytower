@@ -1112,31 +1112,6 @@ export class Game {
     });
   }
 
-  spawnGhostsOld(playerId) {
-    const container = document.getElementById(`player_${playerId}_house_ghost`);
-    if (!container) return;
-
-    const ghostCount = 4;
-
-    for (let i = 0; i < ghostCount; i++) {
-      const ghost = document.createElement("div");
-      ghost.classList.add("ghost_sprites");
-
-      const col = Math.floor(Math.random() * 7);
-      const row = Math.floor(Math.random() * 4);
-      ghost.style.backgroundPosition = `-${col}00% -${row}00%`;
-
-      // Position initiale adaptée au ratio vertical
-      ghost.style.left = Math.random() * 60 + "%";
-      ghost.style.top = Math.random() * 75 + "%";
-
-      ghost.style.animationDuration = 6 + Math.random() * 3 + "s";
-      ghost.style.animationDelay = Math.random() * 3 + "s";
-
-      container.appendChild(ghost);
-    }
-  }
-
   setupCounters() {
     // Player Board Counters
     Object.values(this.gamedatas.players).forEach((player) => {
@@ -2051,22 +2026,63 @@ export class Game {
     const card_idx = info.type + info.type_arg;
     const bonuses = this.gamedatas.building_cards[card_idx] || [];
 
-    for (let i = 0; i < bonuses.length; i++) {
-      const bonus = bonuses[i];
+    for (let j = 0; j < bonuses.length; j++) {
+      const bonus = bonuses[j];
       const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
       if (!ic) continue;
 
-      // créer l'icône
-      const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
-      const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
-      stack.insertAdjacentHTML("beforeend", html);
+      console.log("IC", ic);
+      if (["grimoire", "clock", "flip8", "flip9", "draw8", "pet"].includes(ic)) {
+        const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
+        const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
+        parent.insertAdjacentHTML("beforeend", html);
 
-      const iconEl = document.getElementById(iconId);
-      if (!iconEl || !iconEl.isConnected) continue;
+        const iconEl = document.getElementById(iconId);
+        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+          console.warn("Skip animation: invalid node", iconId, iconEl);
+          continue;
+        }
 
-      // animer vers la rivière
-      this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
-      await new Promise((r) => setTimeout(r, 80));
+        // Animation slide vers la rivière
+        this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
+        await new Promise((r) => setTimeout(r, 80));
+      } else if (ic == "replay") {
+        const iconId = `panel_ic_replay`;
+        const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
+        parent.insertAdjacentHTML("beforeend", html);
+
+        const iconEl = document.getElementById(iconId);
+        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+          console.warn("Skip animation: invalid node", iconId, iconEl);
+          continue;
+        }
+        const panel = document.getElementById(`bottom_board_${playerId}`);
+        // Animation slide vers la rivière
+        this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
+        await new Promise((r) => setTimeout(r, 80));
+      } else if (ic == "clue") {
+        const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
+        const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
+        parent.insertAdjacentHTML("beforeend", html);
+
+        const iconEl = document.getElementById(iconId);
+        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
+          console.warn("Skip animation: invalid node", iconId, iconEl);
+          continue;
+        }
+        const house_clues = document.getElementById(`player_${playerId}_house_clues`);
+
+        // Animation slide vers la rivière
+        this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
+        await new Promise((r) => setTimeout(r, 80));
+      } else if (ic == "ghost") {
+        const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
+        const ghost_id = `ghost_${ghost_idx}`;
+        await this.moveGhostToHouse(ghost_id, parent, playerId);
+      }
+
+      // Petit délai avant la carte suivante pour éviter overlap visuel
+      await new Promise((r) => setTimeout(r, 200));
     }
   }
 
@@ -2338,7 +2354,7 @@ export class Game {
 
   async animEndBonus() {
     // Sélectionne tous les éléments restants river_ic_
-    const bonusElements = document.querySelectorAll('[id^="river-ic_"]');
+    const bonusElements = document.querySelectorAll('[id^="river_ic_"]');
 
     if (bonusElements.length === 0 && this.instantaneousMode) {
       // Pas de bonus à supprimer, mais fermer la rivière

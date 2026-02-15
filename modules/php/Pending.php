@@ -2356,8 +2356,42 @@ class Pending extends APP_GameClass
     function EndGame($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         game::$instance->DbQuery("UPDATE player set player_score = 1 WHERE player_id = '{$this->player_id}'");
-
         game::$instance->bga->playerScore->set($this->player_id, 1);
+
+        $ghots = game::$instance->player_ghosts->get($this->player_id);
+        $artefacts = game::$instance->player_artefacts->get($this->player_id);
+
+        if($ghots >= 5)
+        {
+            $txt = clienttranslate('${player_name} wins the game thank to ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('ghost'),
+                    
+                ]
+            );
+
+        }
+
+        if($artefacts >= 3)
+        {
+            $txt = clienttranslate('${player_name} wins the game thank to ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('artefact'),
+                    
+                ]
+            );
+
+        }
+
+        
 
         game::$instance->gamestate->nextState('end');
 
