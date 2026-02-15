@@ -229,7 +229,7 @@ class Game extends \Bga\GameFramework\Table
         //stats
         $this->bga->playerStats->init('ghost_number', 0);
         $this->bga->playerStats->init('artefact_number', 0);
-        
+
 
         //INIT DES TABLES DB
 
@@ -349,9 +349,38 @@ class Game extends \Bga\GameFramework\Table
      */
     public function getGameProgression()
     {
-        // TODO: compute and return the game progression
+        $players = game::$instance->getObjectListFromDB( "SELECT player_id FROM player", true );
+        $ghosts_tab = [];
+        $artefacts_tab = [];
+        foreach($players as $player)
+        {
+            $ghost = $this->player_ghosts->get((int) $player);
+            $artefact = $this->player_artefacts->get((int) $player);
 
-        return 0;
+            $ghosts_tab[] = $ghost;
+            $artefacts_tab[] = $artefact;
+
+        }
+
+        $max_ghosts = max($ghosts_tab);
+        $max_artefacts = max($artefacts_tab);
+
+        $progession_ghost = round($max_ghosts * 100/5);
+        $progession_artefact = round($max_artefacts * 100/3);
+
+        if($progession_ghost >= $progession_artefact)
+        {
+            return $progession_ghost;
+        }
+
+        else
+        {
+            return $progession_artefact;
+        }
+
+        
+
+        
     }
 
 
