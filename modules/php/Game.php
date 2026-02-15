@@ -362,11 +362,8 @@ class Game extends \Bga\GameFramework\Table
 
         }
 
-        $max_ghosts = max($ghosts_tab);
-        $max_artefacts = max($artefacts_tab);
-
-        $progession_ghost = round($max_ghosts * 100/5);
-        $progession_artefact = round($max_artefacts * 100/3);
+        $progession_ghost = round(max($ghosts_tab) * 100/5);
+        $progession_artefact = round(max($artefacts_tab) * 100/3);
 
         if($progession_ghost >= $progession_artefact)
         {
