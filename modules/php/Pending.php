@@ -2348,7 +2348,7 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('End of game');
         $ret['titleyou'] = clienttranslate('End of game');
 
-        $ret['buttons'][] = 'yes_btn';
+        
 
         return $ret;
     }
