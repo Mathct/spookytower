@@ -120,6 +120,8 @@ class Game extends \Bga\GameFramework\Table
         $this->building_DB = $this->deckFactory->createDeck("building");
         $this->grimoire_DB = $this->deckFactory->createDeck("grimoire");
 
+        
+
 
         /* example of notification decorator.
         // automatically complete notification args when needed
@@ -165,6 +167,7 @@ class Game extends \Bga\GameFramework\Table
         //gsv
         $this->setGameStateInitialValue("replay", 0);
 
+                
         $park = ['2', '3', '4'];
         shuffle($park);          // Mélange le tableau
         $park_order = intval('1' . $park[0] . $park[1] . $park[2] . '5');
@@ -222,6 +225,11 @@ class Game extends \Bga\GameFramework\Table
 
         $this->reattributeColorsBasedOnPreferences($players, $gameinfos["player_colors"]);
         $this->reloadPlayersBasicInfos();
+
+        //stats
+        $this->bga->playerStats->init('ghost_number', 0);
+        $this->bga->playerStats->init('artefact_number', 0);
+        
 
         //INIT DES TABLES DB
 

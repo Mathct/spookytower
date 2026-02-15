@@ -1,1 +1,14 @@
-{}
+{
+    "player": {
+     "ghost_number": {
+       "id": 10,
+       "name": "Number of ghosts",
+       "type": "int"
+     },
+     "artefact_number": {
+       "id": 11,
+       "name": "Number of artefacts",
+       "type": "int"
+     }
+   }
+}

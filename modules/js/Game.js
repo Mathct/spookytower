@@ -331,7 +331,6 @@ export class Game {
     this.selected_building = "";
     this.selected_stack = "";
     this.selected_pet = "";
-    console.log("setup function");
     this.function = "";
 
     // variable en local storage pour le zoom
@@ -435,6 +434,7 @@ export class Game {
 
     selectables.forEach((elt_id) => {
       const element = document.getElementById(elt_id);
+      console.log("connections elements", element);
       if (!element) return;
 
       if (this.function == "ActionsBonus") {
@@ -756,14 +756,14 @@ export class Game {
       bottom_board.insertAdjacentHTML("beforeend", html);
     }
 
-    const current_player_id = this.bga.players.getCurrentPlayerId();
+    /*    const current_player_id = this.bga.players.getCurrentPlayerId();
     if (current_player_id) {
       const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
       if (rerollIcon) {
         rerollIcon.classList.add("clickable");
-        rerollIcon.addEventListener("click", () => this.animClockTower());
+        rerollIcon.addEventListener("click", () => this.animClockTower(current_player_id));
       }
-    }
+    }*/
   }
 
   isMobileDevice() {
@@ -817,7 +817,7 @@ export class Game {
                     <div class="table_deck_slot" id="deck_park" title="Park"></div>
                     <div class="table_deck_slot" id="deck_grimoire" title="Grimoire"></div>
                     <div class="table_track_slot" id="dice_track" title="Dice Track"></div>
-                    <div class="table_clock_slot" id="clock_tower" title="Clock Tower"></div>
+                    <div class="table_clock_slot" id="clock_tower_slot" title="Clock Tower"></div>
                 </div>
                 <div id="river_id" class="river_container closed"></div>
                 <!-- CENTER GRID 5x3 TABLE -->
@@ -916,7 +916,7 @@ export class Game {
     diceTrackSlot.insertAdjacentHTML("beforeend", dicefaceHTML);
 
     // -------------------- Clock Tower --------------------
-    const clockTowerSlot = document.getElementById("clock_tower");
+    const clockTowerSlot = document.getElementById("clock_tower_slot");
     const clockHourRot = 60 * this.gamedatas.other.clock;
 
     // ---- Injecter la carte + compteur à l'intérieur ----
@@ -1373,9 +1373,18 @@ export class Game {
     document.documentElement.style.setProperty("--st_scale", this.zoom_factor);
   }
 
+  //////////////////////////////////////////////////////////////
+  //                                                          //
+  //     _          _                 _   _                   //
+  //    / \   _ __ (_)_ __ ___   __ _| |_(_) ___  _ __  ___   //
+  //   / _ \ | '_ \| | '_ ` _ \ / _` | __| |/ _ \| '_ \/ __|  //
+  //  / ___ \| | | | | | | | | | (_| | |_| | (_) | | | \__ \  //
+  // /_/   \_\_| |_|_|_| |_| |_|\__,_|\__|_|\___/|_| |_|___/  //
+  //                                                          //
+  //////////////////////////////////////////////////////////////
+
   async animFlipReroll(playerId) {
     const icon = document.getElementById(`icon_reroll_${playerId}`);
-    if (!icon) return;
 
     if (this.instantaneousMode) {
       icon.classList.toggle("ic_reroll_0");
@@ -1409,10 +1418,11 @@ export class Game {
 
   async animFlipPark() {
     const park = document.getElementById("park_active");
-    if (!park) return;
 
+    // on change l'id de la carte qui va flipper
     park.id = `park_active_verso`;
 
+    // on prend l'indice du sprite la carte pour le recto et le verso
     const nb_cards = parseInt(this.gamedatas.deck_park);
     const versoCol = this.gamedatas.park_order[5 - nb_cards];
 
@@ -1446,16 +1456,17 @@ export class Game {
 
   async animFlipGrimoire(grimoireType, playerId) {
     const grimoire = document.getElementById("grimoire_active");
-    if (!grimoire) return;
 
+    // on change l'id de la carte qui va flipper
     grimoire.id = `grimoire_active_verso`;
 
-    const n = grimoireType - 1;
+    // on prend l'indice du sprite la carte pour le recto et le verso
+    const versoCol = grimoireType - 1;
 
     if (this.instantaneousMode) {
       grimoire.style.transition = "";
       grimoire.style.transform = "";
-      grimoire.style.backgroundPosition = `-${n}00% -100%`;
+      grimoire.style.backgroundPosition = `-${versoCol}00% -100%`;
       return;
     }
 
@@ -1471,7 +1482,7 @@ export class Game {
     await new Promise((resolve) => setTimeout(resolve, half));
 
     // Changement visuel : verso
-    grimoire.style.backgroundPosition = `-${n}00% -100%`;
+    grimoire.style.backgroundPosition = `-${versoCol}00% -100%`;
 
     // Deuxième demi-flip : retour à 0°
     grimoire.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
@@ -1479,23 +1490,20 @@ export class Game {
 
     delete grimoire.dataset.flipping;
 
+    // on gagne un clue pour la deuxième carte
     if (grimoireType == 2) {
       const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
       const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
 
       const house_clues = document.getElementById(`player_${playerId}_house_clues`);
-      console.log("housse", `player_${playerId}_house_clues`);
-      console.log("house_clues", house_clues);
       house_clues.insertAdjacentHTML("beforeend", html);
     }
   }
 
-  async animClockTower() {
+  async animClockTower(playerId) {
     const hand = document.getElementById("clock_hand_sprite");
-    if (!hand) return;
 
-    const playerId = this.bga.players.getActivePlayerId();
-
+    // Récupère l’angle de rotation depuis le transform CSS ; sinon calcule une valeur par défaut à partir de l’horloge
     const currentTransform = hand.style.transform;
     const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
     let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.other.clock * 60;
@@ -1528,18 +1536,18 @@ export class Game {
 
     // ⚡ Animation des artefacts si clock = 0 ou 3
     if (this.gamedatas.other.clock === 0 || this.gamedatas.other.clock === 3) {
-      //  artefact
+      //  on ajoute un artefact
       const iconId = `house_ic_artefact_${Math.floor(Math.random() * 1000)}`;
       const html = `<div id="${iconId}" class="icon ic_artefact"></div>`;
       const parent = document.getElementById("clock_hand_sprite");
-
       parent.insertAdjacentHTML("beforeend", html);
+      const iconElt = document.getElementById(iconId);
 
-      const iconEl = document.getElementById(iconId);
+      // on récupère la destination
       const panel_artefacts = document.getElementById(`icon_artefact_${playerId}`);
 
       // Animation slide vers le panel joueur + destruction
-      await this.animationManager.slideOutAndDestroy(iconEl, panel_artefacts, 600, 0);
+      await this.animationManager.slideOutAndDestroy(iconElt, panel_artefacts, 600, 0);
 
       // petit délai si nécessaire
       await new Promise((r) => setTimeout(r, 80));
@@ -1550,35 +1558,24 @@ export class Game {
     }
   }
 
-  async animTakeCard(buildingNumber) {
+  async animTakeCard(buildingNumber, playerId) {
     const elt_id = `table_building_card_${buildingNumber}`;
     const sourceCard = document.getElementById(elt_id);
-    if (!sourceCard) return;
-
-    const playerId = this.bga.players.getActivePlayerId();
 
     // Stack cible
-    const stack = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
-    if (!stack) return;
-
-    // Counter
-    const counter = this.tableBuildingCounters[buildingNumber];
-    if (!counter) return;
+    const stackElt = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
 
     // Appeler la fonction de déplacement
-    await this.moveBuildingToStack(sourceCard, stack, counter);
+    await this.moveBuildingToStack(sourceCard, stackElt, playerId);
   }
 
-  async moveBuildingToStack(card, stackOrDeck) {
-    if (!card || !stackOrDeck) return;
-
-    const playerId = this.bga.players.getActivePlayerId();
+  async moveBuildingToStack(card, stackElt, playerId) {
     const stackId = card.id.split("_").pop();
 
     // on révèle le stack
-    stackOrDeck.classList.remove("empty");
+    stackElt.classList.remove("empty");
 
-    const containers = stackOrDeck.querySelectorAll(".building_card_container");
+    const containers = stackElt.querySelectorAll(".building_card_container");
     if (containers.length === 0) return;
 
     const existingCards = [];
@@ -1640,12 +1637,12 @@ export class Game {
   }
 
   async animFlipStack(stackId, cardsInfos, playerId) {
+    // le stack à flipper
     const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
-    if (!stack) return;
-
+    // les cartes dans le stack
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
-    if (!cards.length) return;
 
+    // pour bloquer les multiclics
     if (stack.dataset.flipping === "true") return;
     stack.dataset.flipping = "true";
 
@@ -1658,6 +1655,7 @@ export class Game {
         const info = cardsInfos[i];
         if (!info) return;
 
+        // on définit le verso de la carte
         const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
         const col = card_offset % 12;
         const row = 1 + Math.floor(card_offset / 12);
@@ -1682,6 +1680,7 @@ export class Game {
       container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
     });
 
+    // le flip de chaque carte
     await Promise.all(
       cards.map(
         (card, i) =>
@@ -1720,9 +1719,9 @@ export class Game {
 
   async animGetRewards(no_house, cardsInfos, playerId) {
     const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
-    if (!stack) return;
 
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
+    // on cache si c'est vide
     if (!cards.length) {
       stack.classList.add("empty");
       return;
@@ -1735,12 +1734,7 @@ export class Game {
     // Trier les cartes par position (bas → haut)
     cardsInfos.sort((a, b) => a.position - b.position);
 
-    const river = document.getElementById("river_id");
-    if (!river) {
-      console.warn("River element not found!");
-      delete stack.dataset.animating;
-      return;
-    }
+    const riverElt = document.getElementById("river_id");
 
     // ⚡ Mode instantané : état final direct
     if (this.instantaneousMode) {
@@ -1762,7 +1756,7 @@ export class Game {
 
           const icon = document.createElement("div");
           icon.className = `river_icon ic_${ic}`;
-          river.appendChild(icon);
+          riverElt.appendChild(icon);
         });
       }
 
@@ -1795,63 +1789,57 @@ export class Game {
       // 2️⃣ Création et animation des icônes pour chaque bonus
       for (let j = 0; j < bonuses.length; j++) {
         const bonus = bonuses[j];
+        // on décompose pour garder 'pet' ou 'ghost'
         const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
         if (!ic) continue;
 
-        console.log("IC", ic);
-
         if (["grimoire", "clock", "flip8", "flip9", "draw8", "pet"].includes(ic)) {
+          // on ajoute l'icone à la carte
           const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
           const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
           parent.insertAdjacentHTML("beforeend", html);
 
           const iconEl = document.getElementById(iconId);
-          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-            console.warn("Skip animation: invalid node", iconId, iconEl);
-            continue;
-          }
 
+          if (riverElt.classList.contains("closed")) {
+            await this.showRiver();
+          }
           // Animation slide vers la rivière
-          this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
-          await new Promise((r) => setTimeout(r, 80));
+          this.animationManager.slideAndAttach(iconEl, riverElt, 600, 0, null);
         } else if (ic == "replay") {
+          // on ajoute l'icone à la carte
           const iconId = `panel_ic_replay`;
           const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
           parent.insertAdjacentHTML("beforeend", html);
 
           const iconEl = document.getElementById(iconId);
-          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-            console.warn("Skip animation: invalid node", iconId, iconEl);
-            continue;
-          }
+
           const panel = document.getElementById(`bottom_board_${playerId}`);
-          // Animation slide vers la rivière
+          // Animation slide vers le panel du joueur
           this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
-          await new Promise((r) => setTimeout(r, 80));
         } else if (ic == "clue") {
+          // on ajoute l'icone à la carte
           const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
           const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
           parent.insertAdjacentHTML("beforeend", html);
 
           const iconEl = document.getElementById(iconId);
-          if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-            console.warn("Skip animation: invalid node", iconId, iconEl);
-            continue;
-          }
+
           const house_clues = document.getElementById(`player_${playerId}_house_clues`);
 
-          // Animation slide vers la rivière
+          // Animation slide vers les house clues du joueur
           this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
-          await new Promise((r) => setTimeout(r, 80));
         } else if (ic == "ghost") {
+          // on récupère l'id du fantôme et on lance l'anim
           const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
           const ghost_id = `ghost_${ghost_idx}`;
+
           await this.moveGhostToHouse(ghost_id, parent, playerId);
         }
       }
 
       // Petit délai avant la carte suivante pour éviter overlap visuel
-      await new Promise((r) => setTimeout(r, 200));
+      //await new Promise((r) => setTimeout(r, 200));
     }
 
     // 3️⃣ Marquer la pile comme vide
@@ -1860,15 +1848,7 @@ export class Game {
   }
 
   async moveGhostToHouse(ghostId, startElement, playerId) {
-    // le nom du ghost dans le tableau _GHOST_ASSETS
-    console.log("ghost_id", ghostId);
-
-    // le conteneur de départ
-    console.log("starelement", startElement);
-
     const index = this.gamedatas.ghost_assets.indexOf(ghostId);
-
-    console.log("index ", index);
 
     if (index === -1) return;
 
@@ -1966,13 +1946,10 @@ export class Game {
 
   async animFlipSoloStack(stackId, cardsInfos, playerId) {
     const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
-    if (!stack) return;
 
     const info = cardsInfos[0]; // on ne prend QUE la carte demandée
-    if (!info) return;
 
     const card = Array.from(stack.querySelectorAll(".building_cards"))[0]; // première carte dans le stack
-    if (!card) return;
 
     const half = 200;
 
@@ -2008,19 +1985,9 @@ export class Game {
   }
 
   async animGetRewardsSolo(stackId, cardsInfos, playerId) {
-    console.log("GetRewardsSolo");
-
-    const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
-    if (!stack) return;
-
     const river = document.getElementById("river_id");
-    if (!river) {
-      console.warn("River element not found!");
-      return;
-    }
 
     const info = cardsInfos[0]; // seule carte concernée
-    if (!info) return;
 
     // Récupérer les bonus
     const card_idx = info.type + info.type_arg;
@@ -2038,52 +2005,83 @@ export class Game {
         parent.insertAdjacentHTML("beforeend", html);
 
         const iconEl = document.getElementById(iconId);
-        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-          console.warn("Skip animation: invalid node", iconId, iconEl);
-          continue;
+
+        if (riverElt.classList.contains("closed")) {
+          await this.showRiver();
         }
 
         // Animation slide vers la rivière
         this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
-        await new Promise((r) => setTimeout(r, 80));
       } else if (ic == "replay") {
         const iconId = `panel_ic_replay`;
         const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
         parent.insertAdjacentHTML("beforeend", html);
 
         const iconEl = document.getElementById(iconId);
-        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-          console.warn("Skip animation: invalid node", iconId, iconEl);
-          continue;
-        }
+
         const panel = document.getElementById(`bottom_board_${playerId}`);
         // Animation slide vers la rivière
         this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
-        await new Promise((r) => setTimeout(r, 80));
       } else if (ic == "clue") {
         const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
         const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
         parent.insertAdjacentHTML("beforeend", html);
 
         const iconEl = document.getElementById(iconId);
-        if (!iconEl || !iconEl.isConnected || !river || !river.isConnected) {
-          console.warn("Skip animation: invalid node", iconId, iconEl);
-          continue;
-        }
+
         const house_clues = document.getElementById(`player_${playerId}_house_clues`);
 
         // Animation slide vers la rivière
         this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
-        await new Promise((r) => setTimeout(r, 80));
       } else if (ic == "ghost") {
         const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
         const ghost_id = `ghost_${ghost_idx}`;
         await this.moveGhostToHouse(ghost_id, parent, playerId);
       }
-
-      // Petit délai avant la carte suivante pour éviter overlap visuel
-      await new Promise((r) => setTimeout(r, 200));
     }
+  }
+
+  async animShiftStackCards(stackId, playerId) {
+    // on décale les cartes après avoir flippé l'une d'entre elles
+    const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
+
+    const containers = Array.from(stack.querySelectorAll(".building_card_container"));
+    if (containers.length === 0) return;
+
+    // ⚡ Mode instantané : on déplace directement
+    if (this.instantaneousMode) {
+      // Parcours croissant
+      for (let i = 1; i < containers.length; i++) {
+        const currentContainer = containers[i];
+        const prevContainer = containers[i - 1];
+        if (currentContainer.children.length === 0) continue;
+
+        const card = currentContainer.children[0];
+        prevContainer.appendChild(card);
+
+        // Renommer correctement
+        card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
+      }
+      return;
+    }
+
+    // 🎞️ Mode animé : glisser les cartes vers le container précédent
+    const animations = [];
+    for (let i = 1; i < containers.length; i++) {
+      const currentContainer = containers[i];
+      const prevContainer = containers[i - 1];
+      if (currentContainer.children.length === 0) continue;
+
+      // on décale les cartes
+      const card = currentContainer.children[0];
+      animations.push(() =>
+        this.animationManager.slideAndAttach(card, prevContainer, { duration: 600 }).then(() => {
+          card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
+        }),
+      );
+    }
+
+    await this.animationManager.playParallel(animations);
   }
 
   async animShiftStackCards(stackId, playerId) {
@@ -2419,7 +2417,7 @@ export class Game {
 
     // attention car les cartes se positionnent sous celles qui sont en bas
     // ou sinon, on déplace vers le haut celles qui sont présentes et on place la dernière toujours en bas
-    this.animTakeCard(args.no_card);
+    this.animTakeCard(args.no_card, args.player_id);
   }
 
   async notif_flipCards(args) {
@@ -2428,7 +2426,7 @@ export class Game {
     console.log("notif_flipCards", args);
     await this.animFlipStack(args.no_house, args.cards, args.player_id);
 
-    await this.showRiver();
+    //await this.showRiver();
 
     await this.animGetRewards(args.no_house, args.cards, args.player_id);
 
@@ -2494,7 +2492,7 @@ export class Game {
 
     await this.animFlipSoloStack(args.no_house, args.cards, args.player_id);
 
-    await this.showRiver();
+    //await this.showRiver();
 
     await this.animGetRewardsSolo(args.no_house, args.cards, args.player_id);
 
@@ -2565,7 +2563,7 @@ export class Game {
     //            sur la table, on envoie vers le panel joueur et on incrémente pet
     // reroll   : on flipe le reroll si nécessaire
 
-    await this.animClockTower();
+    await this.animClockTower(args.player_id);
   }
 
   async notif_stealPet(args) {

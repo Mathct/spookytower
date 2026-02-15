@@ -2348,6 +2348,8 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('End of game');
         $ret['titleyou'] = clienttranslate('End of game');
 
+        $ret['buttons'][] = 'yes_btn';
+
         return $ret;
     }
 
@@ -2391,9 +2393,18 @@ class Pending extends APP_GameClass
 
         }
 
+        //stats
+        $players = game::$instance->getObjectListFromDB( "SELECT player_id name FROM player", true );
+        foreach($players as $player)
+        {
+            $ghost = game::$instance->player_ghosts->get($player);
+            game::$instance->bga->playerStats->set('ghost_number', $ghost, $player);
+            $artefact = game::$instance->player_artefacts->get($player);
+            game::$instance->bga->playerStats->set('artefact_number', $artefact, $player);
+        }
         
-
-        game::$instance->gamestate->nextState('end');
+        // on vide la table pending pour mettre fin à la partie
+        game::$instance->DbQuery("DELETE FROM `pending`;");
 
     }
 
