@@ -434,7 +434,7 @@ export class Game {
 
     selectables.forEach((elt_id) => {
       const element = document.getElementById(elt_id);
-      console.log("connections elements", element);
+      //console.log("connections elements", element);
       if (!element) return;
 
       if (this.function == "ActionsBonus") {
@@ -447,7 +447,7 @@ export class Game {
             handler: clickHandler,
           });
           return;
-        } else */ if (elt_id.startsWith("table_building_card_")) {
+        } else  if (elt_id.startsWith("table_building_card_")) {
           const clickHandler = () => this.onSelectBuilding(elt_id);
           element.addEventListener("click", clickHandler);
           this.connections.push({
@@ -456,17 +456,17 @@ export class Game {
             handler: clickHandler,
           });
           return;
-        } else {
-          // --- Cartes “token” ou autres éléments cliquables ---
-          const clickHandler = () => this.onSelectToken(elt_id);
-          element.addEventListener("click", clickHandler);
-          this.connections.push({
-            element,
-            event: "click",
-            handler: clickHandler,
-          });
-          return;
-        }
+        } else {*/
+        // --- Cartes “token” ou autres éléments cliquables ---
+        const clickHandler = () => this.onSelectToken(elt_id);
+        element.addEventListener("click", clickHandler);
+        this.connections.push({
+          element,
+          event: "click",
+          handler: clickHandler,
+        });
+        return;
+        //}
       } else {
         // --- Carte table (building) ---
         if (elt_id.startsWith("table_building_card_")) {
@@ -1188,6 +1188,10 @@ export class Game {
       });
 
       this.tableBuildingCounters[i] = counter;
+      console.log("tablebuildingcounters", this.tableBuildingCounters);
+      if (this.tableBuildingCounters[i].current_value == 0) {
+        this.safeClass(`table_building_card_${i}`, "add", "empty");
+      }
     }
   }
 
@@ -1554,11 +1558,11 @@ export class Game {
     } else if (this.gamedatas.other.clock === 1 || this.gamedatas.other.clock === 4) {
       // PET
     } else if (this.gamedatas.other.clock === 2 || this.gamedatas.other.clock === 5) {
-      this.animFlipReroll(playerId);
+      //this.animFlipReroll(playerId);
     }
   }
 
-  async animTakeCard(buildingNumber, playerId) {
+  async animTakeCard(buildingNumber, playerId, nbRemaining) {
     const elt_id = `table_building_card_${buildingNumber}`;
     const sourceCard = document.getElementById(elt_id);
 
@@ -1566,10 +1570,10 @@ export class Game {
     const stackElt = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
 
     // Appeler la fonction de déplacement
-    await this.moveBuildingToStack(sourceCard, stackElt, playerId);
+    await this.moveBuildingToStack(sourceCard, stackElt, playerId, nbRemaining);
   }
 
-  async moveBuildingToStack(card, stackElt, playerId) {
+  async moveBuildingToStack(card, stackElt, playerId, nbRemaining) {
     const stackId = card.id.split("_").pop();
 
     // on révèle le stack
@@ -1604,7 +1608,6 @@ export class Game {
     }
 
     // 🎞️ Mode animé normal
-
     // on créé une copie de la carte
     const flyingCard = card.cloneNode(true);
     flyingCard.style.width = "100%";
@@ -1630,9 +1633,12 @@ export class Game {
     animations.push(() =>
       this.animationManager.slideAndAttach(flyingCard, targetContainer, { duration: 600 }).then(() => {
         flyingCard.id = `player_${playerId}_stack_${stackId}_card_1`;
+        if (nbRemaining == 0) {
+          // ne fonctionne pas pour les autres joueurs si on compare avec le counter
+          this.safeClass(card, "add", "empty");
+        }
       }),
     );
-
     await this.animationManager.playParallel(animations);
   }
 
@@ -1849,7 +1855,7 @@ export class Game {
 
   async moveGhostToHouse(ghostId, startElement, playerId) {
     const index = this.gamedatas.ghost_assets.indexOf(ghostId);
-
+    console.log("index", index);
     if (index === -1) return;
 
     const col = index % 7;
@@ -1876,6 +1882,8 @@ export class Game {
     const destination = document.getElementById(`player_${playerId}_house_ghost`);
     if (!spriteElement || !destination) return;
 
+    console.log("spriteElement", spriteElement);
+    console.log("destination", destination);
     // 2️⃣ Animation avec chaînage explicite
     this.animationManager
       .slideAndAttach(spriteElement, destination, 800)
@@ -1984,14 +1992,39 @@ export class Game {
     card.remove();
   }
 
-  async animGetRewardsSolo(stackId, cardsInfos, playerId) {
+  async animGetRewardsSolo(no_house, cardsInfos, playerId) {
     const river = document.getElementById("river_id");
+    const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
 
-    const info = cardsInfos[0]; // seule carte concernée
+    const cards = Array.from(stack.querySelectorAll(".building_cards"));
+    // on cache si c'est vide
+    if (!cards.length) {
+      stack.classList.add("empty");
+      return;
+    }
 
-    // Récupérer les bonus
+    // Empêcher l'animation simultanée
+    if (stack.dataset.animating === "true") return;
+    stack.dataset.animating = "true";
+
+    // Trier les cartes par position (bas → haut)
+    cardsInfos.sort((a, b) => a.position - b.position);
+
+    const cardEl = cards[0];
+    const info = cardsInfos[0];
+
+    // Récupérer les bonus pour cette carte
     const card_idx = info.type + info.type_arg;
     const bonuses = this.gamedatas.building_cards[card_idx] || [];
+    const parent = cardEl.parentElement;
+
+    // 1️⃣ Animation disparition
+    cardEl.style.transition = "transform 400ms ease, opacity 400ms ease";
+    cardEl.style.transform = "scale(0)";
+    cardEl.style.opacity = "0";
+    await new Promise((r) => setTimeout(r, 400));
+
+    cardEl.remove();
 
     for (let j = 0; j < bonuses.length; j++) {
       const bonus = bonuses[j];
@@ -2417,7 +2450,7 @@ export class Game {
 
     // attention car les cartes se positionnent sous celles qui sont en bas
     // ou sinon, on déplace vers le haut celles qui sont présentes et on place la dernière toujours en bas
-    this.animTakeCard(args.no_card, args.player_id);
+    this.animTakeCard(args.no_card, args.player_id, args.nb_remaining);
   }
 
   async notif_flipCards(args) {
@@ -2589,18 +2622,18 @@ export class Game {
     inset 0 0 0 9999px rgba(${red}, ${green}, ${blue}, 0.3)
   `;
 
+    console.log("opponent ?", args.opponent);
     if (!args.opponent) {
       const cardId = args.pet_id;
       const petId = cardId.replace(/^card_/, "");
       const index = this.gamedatas.ghost_assets.indexOf(petId);
-
-      this.moveGhostToHouse(index, petElement, args.player_id);
+      console.log("moveGhostToHouse no opponent");
+      await this.moveGhostToHouse(petId, petElement, args.player_id);
     } else {
       const cardId = args.pet_id;
       const petId = cardId.replace(/^card_/, "");
       const spriteElement = document.getElementById(`ghost_${petId}`);
       const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
-      if (!spriteElement || !destination) return;
 
       // 1️⃣ Stopper l'animation CSS
       spriteElement.style.animationPlayState = "paused";

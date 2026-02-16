@@ -71,8 +71,8 @@ class Pending extends APP_GameClass
 
         $roll = [$rand_dice1, $rand_dice2];
 
-        $log1 = 'dice_'.$rand_dice1;
-        $log2 = 'dice_'.$rand_dice2;
+        $log1 = 'dice_' . $rand_dice1;
+        $log2 = 'dice_' . $rand_dice2;
 
         $txt = clienttranslate('${player_name} rolls ${dice1} ${dice2}');
         game::$instance->notify->all(
@@ -219,18 +219,18 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('reroll'),
-                    
+
                 ]
             );
-           
+
             $rand_dice1 = bga_rand(1, 6);
             $rand_dice2 = bga_rand(1, 6);
             game::$instance->DbQuery("UPDATE other SET dice1 = $rand_dice1, dice2 = $rand_dice2");
 
             $roll = [$rand_dice1, $rand_dice2];
 
-            $log1 = 'dice_'.$rand_dice1;
-            $log2 = 'dice_'.$rand_dice2;
+            $log1 = 'dice_' . $rand_dice1;
+            $log2 = 'dice_' . $rand_dice2;
 
             $txt = clienttranslate('${player_name} rolls ${dice1} ${dice2}');
             game::$instance->notify->all(
@@ -278,7 +278,7 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('artefact'),
-                        
+
                     ]
                 );
                 game::$instance->player_artefacts->inc($this->player_id, 1);
@@ -299,7 +299,7 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('reroll'),
-                        
+
                     ]
                 );
                 $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
@@ -346,6 +346,8 @@ class Pending extends APP_GameClass
             //on recupere les info pour le front
             $card =  game::$instance->getObjectFromDB("SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'");
 
+            //je change le compteur du deck
+            game::$instance->{'deck_' . $no_deck}->inc(-1);
 
             $txt = clienttranslate('${player_name} takes card ${no_card}');
             game::$instance->notify->all(
@@ -355,12 +357,12 @@ class Pending extends APP_GameClass
                     'player_id' => $this->player_id,
                     'no_card' => $no_deck,
                     'card' => $card,
+                    'nb_remaining' => game::$instance->{'deck_' . $no_deck}->get()
                 ]
             );
 
 
-            //je change le compteur du deck
-            game::$instance->{'deck_' . $no_deck}->inc(-1);
+
 
 
             // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
@@ -373,7 +375,7 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('reroll'),
-                        
+
                     ]
                 );
 
@@ -421,7 +423,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('artefact'),
-                            
+
                         ]
                     );
 
@@ -444,7 +446,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('reroll'),
-                            
+
                         ]
                     );
 
@@ -537,10 +539,9 @@ class Pending extends APP_GameClass
                                 [
                                     'player_id' => $this->player_id,
                                     'log' => $this->getLogs('ghost'),
-                                    
+
                                 ]
                             );
-
                         } else {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 1);
@@ -552,10 +553,9 @@ class Pending extends APP_GameClass
                                 [
                                     'player_id' => $this->player_id,
                                     'log' => $this->getLogs('ghost'),
-                                    
+
                                 ]
                             );
-
                         }
 
                         //MAJ TABLE GHOST
@@ -573,10 +573,9 @@ class Pending extends APP_GameClass
                             [
                                 'player_id' => $this->player_id,
                                 'log' => $this->getLogs('clue'),
-                                
+
                             ]
                         );
-
                     }
                     if ($name == 'replay') {
                         game::$instance->setGameStateInitialValue('replay', $this->player_id);
@@ -588,7 +587,7 @@ class Pending extends APP_GameClass
                             [
                                 'player_id' => $this->player_id,
                                 'log' => $this->getLogs('replay'),
-                                
+
                             ]
                         );
                     }
@@ -679,7 +678,7 @@ class Pending extends APP_GameClass
         }
 
         if ($clock >= 1) {
-            $ret["selectable"][] = 'clock_tower';
+            $ret["selectable"][] = 'clock_tower_id';
         }
 
         if ($pet >= 1) {
@@ -728,9 +727,10 @@ class Pending extends APP_GameClass
     {
         if ($varg1 == null) {
 
+            $txt = clienttranslate('${player_name} has no more actions to perform');
             game::$instance->notify->all(
                 "endBonus",
-                '',
+                $txt,
                 [
                     'player_id' => $this->player_id,
 
@@ -738,7 +738,9 @@ class Pending extends APP_GameClass
             );
 
             $clue = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
-            if ($clue >= 1) {
+            $count_park = game::$instance->deck_park->get();
+
+            if (($clue >= 1 && $count_park == 5)||($clue >= 2 && $count_park >=2 && $count_park <= 4)||($clue >= 3 && $count_park == 1)) {
                 game::$instance->addPending($this->player_id, "Park");
             } else {
 
@@ -784,7 +786,7 @@ class Pending extends APP_GameClass
                 LIMIT 1
                 ");
 
-                
+
                 game::$instance->notify->all(
                     "flipCard",
                     '',
@@ -804,7 +806,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('flip8'),
-                            
+
                         ]
                     );
 
@@ -829,7 +831,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('flip9'),
-                            
+
                         ]
                     );
 
@@ -881,10 +883,9 @@ class Pending extends APP_GameClass
                                 [
                                     'player_id' => $this->player_id,
                                     'log' => $this->getLogs('ghost'),
-                                    
+
                                 ]
                             );
-
                         } else {
                             game::$instance->DbQuery("UPDATE actionpending set count = count + 1 WHERE name = 'ghost'");
                             game::$instance->player_ghosts->inc($this->player_id, 1);
@@ -896,7 +897,7 @@ class Pending extends APP_GameClass
                                 [
                                     'player_id' => $this->player_id,
                                     'log' => $this->getLogs('ghost'),
-                                    
+
                                 ]
                             );
                         }
@@ -916,7 +917,7 @@ class Pending extends APP_GameClass
                             [
                                 'player_id' => $this->player_id,
                                 'log' => $this->getLogs('clue'),
-                                
+
                             ]
                         );
                     }
@@ -930,7 +931,7 @@ class Pending extends APP_GameClass
                             [
                                 'player_id' => $this->player_id,
                                 'log' => $this->getLogs('replay'),
-                                
+
                             ]
                         );
                     }
@@ -970,6 +971,9 @@ class Pending extends APP_GameClass
                 $card =  game::$instance->getObjectFromDB("SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'");
 
 
+                //je change le compteur du deck
+                game::$instance->{'deck_' . $no_deck}->inc(-1);
+
                 game::$instance->notify->all(
                     "takeCard",
                     '',
@@ -977,6 +981,7 @@ class Pending extends APP_GameClass
                         'player_id' => $this->player_id,
                         'no_card' => $no_deck,
                         'card' => $card,
+                        'nb_remaining' => game::$instance->{'deck_' . $no_deck}->get()
                     ]
                 );
 
@@ -987,13 +992,10 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('take8'),
-                        
+
                     ]
                 );
 
-
-                //je change le compteur du deck
-                game::$instance->{'deck_' . $no_deck}->inc(-1);
 
                 // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
                 game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'draw8'");
@@ -1020,7 +1022,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('reroll'),
-                            
+
                         ]
                     );
 
@@ -1041,7 +1043,7 @@ class Pending extends APP_GameClass
                     game::$instance->addPending($this->player_id, "ActionsBonus");
                 }
 
-                
+
                 // AUCUNE ACTION IMMEDIATE SUR UN TAKE
                 else {
                     game::$instance->addPending($this->player_id, "ActionsBonus");
@@ -1074,7 +1076,7 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('clock'),
-                        
+
                     ]
                 );
 
@@ -1103,7 +1105,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('artefact'),
-                            
+
                         ]
                     );
 
@@ -1126,7 +1128,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('reroll'),
-                            
+
                         ]
                     );
 
@@ -1189,8 +1191,7 @@ class Pending extends APP_GameClass
                         ]
                     );
                 } else {
-                    $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
-                    $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
+                    $opponent_infos = game::$instance->getObjectFromDb("SELECT player_id, player_name, player_color FROM player WHERE player_id = '{$position}'");
                     $txt = clienttranslate('${player_name} steals ${log} from ${opponent}');
                     game::$instance->notify->all(
                         "stealPet",
@@ -1198,13 +1199,17 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'pet_id' => $varg2,
+                            'opponent_id' => $opponent_infos['player_id'],
                             'log' => $this->getLogs('pet'),
                             'opponent' =>    [
                                 'log' => '<b style="color: #${color};">${opponent_name}</b>',
-                                'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
+                                'args' => ['opponent_name' => $opponent_infos['player_name'], 'color' => $opponent_infos['player_color']]
                             ],
                         ]
                     );
+
+                    // on a volé un pet, on décrémente le compteur
+                    game::$instance->player_ghosts->inc($opponent_infos['player_id'], -1);
                 }
 
                 // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
@@ -1263,7 +1268,7 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('grimoire'),
-                        
+
                     ]
                 );
 
@@ -1340,7 +1345,7 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('ghost'),
-                    
+
                 ]
             );
 
@@ -1368,7 +1373,7 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('clue'),
-                    
+
                 ]
             );
 
@@ -1391,7 +1396,7 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('take'),
-                    
+
                 ]
             );
         }
@@ -1399,7 +1404,7 @@ class Pending extends APP_GameClass
         if ($card_pick['type'] == 4) {
             game::$instance->setGameStateInitialValue('replay', $this->player_id);
             game::$instance->addPending($this->player_id, "ActionsBonus");
-            
+
             $txt = clienttranslate('${player_name} gains ${log}');
             game::$instance->notify->all(
                 "message",
@@ -1407,7 +1412,7 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('replay'),
-                    
+
                 ]
             );
 
@@ -1425,7 +1430,7 @@ class Pending extends APP_GameClass
 
         if ($card_pick['type'] == 5) {
             game::$instance->addPending($this->player_id, "GrimoireClock", 2);
-            
+
             $txt = clienttranslate('${player_name} gains ${log} ${log}');
             game::$instance->notify->all(
                 "message",
@@ -1433,14 +1438,14 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('clock'),
-                    
+
                 ]
             );
         }
 
         if ($card_pick['type'] == 6) {
             game::$instance->addPending($this->player_id, "GrimoireClock", 1);
-            
+
             $txt = clienttranslate('${player_name} gains ${log}');
             game::$instance->notify->all(
                 "message",
@@ -1448,14 +1453,14 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('clock'),
-                    
+
                 ]
             );
         }
 
         if ($card_pick['type'] == 7) {
             game::$instance->addPending($this->player_id, "GrimoirePet");
-            
+
             $txt = clienttranslate('${player_name} gains ${log}');
             game::$instance->notify->all(
                 "message",
@@ -1463,7 +1468,7 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('pet'),
-                    
+
                 ]
             );
         }
@@ -1528,6 +1533,8 @@ class Pending extends APP_GameClass
             //on recupere les info pour le front
             $card =  game::$instance->getObjectFromDB("SELECT card_type type, card_location_arg location_arg, position position FROM building WHERE card_id ='{$card_pick['id']}'");
 
+            //je change le compteur du deck
+            game::$instance->{'deck_' . $no_deck}->inc(-1);
 
             $txt = clienttranslate('${player_name} takes card ${no_card}');
             game::$instance->notify->all(
@@ -1537,13 +1544,9 @@ class Pending extends APP_GameClass
                     'player_id' => $this->player_id,
                     'no_card' => $no_deck,
                     'card' => $card,
+                    'nb_remaining' => game::$instance->{'deck_' . $no_deck}->get()
                 ]
             );
-
-
-            //je change le compteur du deck
-            game::$instance->{'deck_' . $no_deck}->inc(-1);
-
 
             // ACTION IMMEDIATE SUR UN TAKE: turn reroll token
             if ($no_deck >= 1 && $no_deck <= 4) {
@@ -1555,7 +1558,7 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('reroll'),
-                        
+
                     ]
                 );
 
@@ -1623,7 +1626,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('artefact'),
-                            
+
                         ]
                     );
 
@@ -1657,7 +1660,7 @@ class Pending extends APP_GameClass
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('reroll'),
-                            
+
                         ]
                     );
 
@@ -1767,7 +1770,7 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('artefact'),
-                    
+
                 ]
             );
 
@@ -1805,7 +1808,7 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('reroll'),
-                    
+
                 ]
             );
 
@@ -1940,8 +1943,7 @@ class Pending extends APP_GameClass
                     ]
                 );
             } else {
-                $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
-                $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
+                $opponent_infos = game::$instance->getObjectFromDb("SELECT player_id, player_name, player_color FROM player WHERE player_id = '{$position}'");
                 $txt = clienttranslate('${player_name} steals ${log} from ${opponent}');
                 game::$instance->notify->all(
                     "stealPet",
@@ -1949,13 +1951,17 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'pet_id' => $varg2,
+                        'opponent_id' => $opponent_infos['player_id'],
                         'log' => $this->getLogs('pet'),
                         'opponent' =>    [
                             'log' => '<b style="color: #${color};">${opponent_name}</b>',
-                            'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
+                            'args' => ['opponent_name' => $opponent_infos['player_name'], 'color' => $opponent_infos['player_color']]
                         ],
                     ]
                 );
+
+                // on a volé un pet, on décrémente le compteur
+                game::$instance->player_ghosts->inc($opponent_infos['player_id'], -1);
             }
 
             if ($parg1 == 1) {
@@ -2141,8 +2147,7 @@ class Pending extends APP_GameClass
 
             $count_clues_after = game::$instance->player_clues->get($this->player_id);
 
-            for($i = 1; $i <= $count_ghosts_win; $i++)
-            {
+            for ($i = 1; $i <= $count_ghosts_win; $i++) {
                 $txt = clienttranslate('${player_name} gains ${log}');
                 game::$instance->notify->all(
                     "message",
@@ -2150,7 +2155,7 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('ghost'),
-                        
+
                     ]
                 );
             }
@@ -2284,8 +2289,7 @@ class Pending extends APP_GameClass
                     ]
                 );
             } else {
-                $opponent_name = game::$instance->getUniqueValueFromDB("SELECT player_name FROM player WHERE player_id = '{$position}'");
-                $opponent_color = game::$instance->getUniqueValueFromDB("SELECT player_color FROM player WHERE player_id = '{$position}'");
+                $opponent_infos = game::$instance->getObjectFromDb("SELECT player_id, player_name, player_color FROM player WHERE player_id = '{$position}'");
                 $txt = clienttranslate('${player_name} steals ${log} from ${opponent}');
                 game::$instance->notify->all(
                     "stealPet",
@@ -2293,13 +2297,17 @@ class Pending extends APP_GameClass
                     [
                         'player_id' => $this->player_id,
                         'pet_id' => $varg2,
+                        'opponent_id' => $opponent_infos['player_id'],
                         'log' => $this->getLogs('pet'),
                         'opponent' =>    [
                             'log' => '<b style="color: #${color};">${opponent_name}</b>',
-                            'args' => ['opponent_name' => $opponent_name, 'color' => $opponent_color]
+                            'args' => ['opponent_name' => $opponent_infos['player_name'], 'color' => $opponent_infos['player_color']]
                         ],
                     ]
                 );
+
+                // on a volé un pet, on décrémente le compteur
+                game::$instance->player_ghosts->inc($opponent_infos['player_id'], -1);
             }
 
             //MAJ TABLE GHOST
@@ -2348,7 +2356,7 @@ class Pending extends APP_GameClass
         $ret['title'] = clienttranslate('End of game');
         $ret['titleyou'] = clienttranslate('End of game');
 
-        
+
 
         return $ret;
     }
@@ -2363,8 +2371,7 @@ class Pending extends APP_GameClass
         $ghots = game::$instance->player_ghosts->get($this->player_id);
         $artefacts = game::$instance->player_artefacts->get($this->player_id);
 
-        if($ghots >= 5)
-        {
+        if ($ghots >= 5) {
             $txt = clienttranslate('${player_name} wins the game thank to ${log}');
             game::$instance->notify->all(
                 "message",
@@ -2372,14 +2379,12 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('ghost'),
-                    
+
                 ]
             );
-
         }
 
-        if($artefacts >= 3)
-        {
+        if ($artefacts >= 3) {
             $txt = clienttranslate('${player_name} wins the game thank to ${log}');
             game::$instance->notify->all(
                 "message",
@@ -2387,25 +2392,22 @@ class Pending extends APP_GameClass
                 [
                     'player_id' => $this->player_id,
                     'log' => $this->getLogs('artefact'),
-                    
+
                 ]
             );
-
         }
 
         //stats
-        $players = game::$instance->getObjectListFromDB( "SELECT player_id name FROM player", true );
-        foreach($players as $player)
-        {
+        $players = game::$instance->getObjectListFromDB("SELECT player_id name FROM player", true);
+        foreach ($players as $player) {
             $ghost = game::$instance->player_ghosts->get($player);
             game::$instance->bga->playerStats->set('ghost_number', $ghost, $player);
             $artefact = game::$instance->player_artefacts->get($player);
             game::$instance->bga->playerStats->set('artefact_number', $artefact, $player);
         }
-        
+
         // on vide la table pending pour mettre fin à la partie
         game::$instance->DbQuery("DELETE FROM `pending`;");
-
     }
 
 
@@ -2421,95 +2423,46 @@ class Pending extends APP_GameClass
 
     */
 
-    function getLogs ($type)
+    function getLogs($type)
     {
         if ($type == 'dice_1') {
             return "<div class='dice_log' title='' style='background-position-x : 0%;'></div>";
-        }
-
-        elseif ($type == 'dice_2') {
+        } elseif ($type == 'dice_2') {
             return "<div class='dice_log' title='' style='background-position-x : -100%;'></div>";
-        }
-
-        elseif ($type == 'dice_3') {
+        } elseif ($type == 'dice_3') {
             return "<div class='dice_log' title='' style='background-position-x : -200%;'></div>";
-        }
-
-        elseif ($type == 'dice_4') {
+        } elseif ($type == 'dice_4') {
             return "<div class='dice_log' title='' style='background-position-x : -300%;'></div>";
-        }
-
-        elseif ($type == 'dice_5') {
+        } elseif ($type == 'dice_5') {
             return "<div class='dice_log' title='' style='background-position-x : -400%;'></div>";
-        }
-
-        elseif ($type == 'dice_6') {
+        } elseif ($type == 'dice_6') {
             return "<div class='dice_log' title='' style='background-position-x : -500%;'></div>";
-        }
-
-        elseif ($type == 'reroll') {
+        } elseif ($type == 'reroll') {
             return "<div class='icone_log' title='' style='background-position-x : 0%; background-position-y : 0%;'></div>";
-        }
-
-        elseif ($type == 'clock') {
+        } elseif ($type == 'clock') {
             return "<div class='icone_log' title='' style='background-position-x : -100%; background-position-y : -100%;'></div>";
-        }
-
-        elseif ($type == 'artefact') {
+        } elseif ($type == 'artefact') {
             return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : 0%;'></div>";
-        }
-
-        elseif ($type == 'ghost') {
+        } elseif ($type == 'ghost') {
             return "<div class='icone_log' title='' style='background-position-x : -300%; background-position-y : 0%;'></div>";
-        }
-
-        elseif ($type == 'clue') {
+        } elseif ($type == 'clue') {
             return "<div class='icone_log' title='' style='background-position-x : -400%; background-position-y : 0%;'></div>";
-        }
-
-        elseif ($type == 'replay') {
+        } elseif ($type == 'replay') {
             return "<div class='icone_log' title='' style='background-position-x : -300%; background-position-y : -100%;'></div>";
-        }
-
-        elseif ($type == 'flip8') {
+        } elseif ($type == 'flip8') {
             return "<div class='icone_log' title='' style='background-position-x : 0%; background-position-y : -200%;'></div>";
-        }
-
-        elseif ($type == 'flip9') {
+        } elseif ($type == 'flip9') {
             return "<div class='icone_log' title='' style='background-position-x : -100%; background-position-y : -200%;'></div>";
-        }
-
-        elseif ($type == 'take8') {
+        } elseif ($type == 'take8') {
             return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : -200%;'></div>";
-        }
-
-        elseif ($type == 'pet') {
+        } elseif ($type == 'pet') {
             return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : -100%;'></div>";
-        }
-
-        elseif ($type == 'grimoire') {
+        } elseif ($type == 'grimoire') {
             return "<div class='icone_log' title='' style='background-position-x : 0%; background-position-y : -100%;'></div>";
-        }
-
-        elseif ($type == 'take') {
+        } elseif ($type == 'take') {
             return "<div class='icone_log' title='' style='background-position-x : -300%; background-position-y : -200%;'></div>";
-        }
-
-        else {
+        } else {
             return "";
         }
-
-
-
-
-
-
-
-
     }
-
-
-
-
-
 }
