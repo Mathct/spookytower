@@ -1509,7 +1509,7 @@ class Pending extends APP_GameClass
         }
 
         if ($card_pick['type'] == 7) {
-            game::$instance->addPending($this->player_id, "GrimoirePet");
+            game::$instance->addPending($this->player_id, "GrimoirePet", 1);
 
             $txt = clienttranslate('${player_name} gains ${log}');
             game::$instance->notify->all(
