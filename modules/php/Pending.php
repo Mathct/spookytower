@@ -727,16 +727,66 @@ class Pending extends APP_GameClass
     {
         if ($varg1 == null) {
 
-            $txt = clienttranslate('${player_name} has no more actions to perform');
-            game::$instance->notify->all(
+            $actions_restantes = game::$instance->getObjectListFromDB( "SELECT name FROM actionpending WHERE count >= 1", true );
+            $liste = '';
+
+            foreach($actions_restantes as $action)
+            {
+                if($action == 'flip8')
+                {
+                    $liste = $liste.$this->getLogs('flip8');
+                }
+
+                if($action == 'flip9')
+                {
+                    $liste = $liste.$this->getLogs('flip9');
+                }
+
+                if($action == 'draw8')
+                {
+                    $liste = $liste.$this->getLogs('draw8');
+                }
+
+                if($action == 'pet')
+                {
+                    $liste = $liste.$this->getLogs('pet');
+                }
+
+                if($action == 'grimoire')
+                {
+                    $liste = $liste.$this->getLogs('grimoire');
+                }
+            }
+
+            if(count($actions_restantes) >= 1)
+            {
+                $txt = clienttranslate('${player_name} cannot use ${log}');
+                game::$instance->notify->all(
                 "endBonus",
                 $txt,
                 [
                     'player_id' => $this->player_id,
+                    'log' => $liste,
 
                 ]
-            );
+                );
 
+            }
+
+            else
+            {
+                game::$instance->notify->all(
+                "endBonus",
+                '',
+                [
+                    'player_id' => $this->player_id,
+
+                ]
+                );
+
+            }
+
+            
             $clue = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
             $count_park = game::$instance->deck_park->get();
 
@@ -991,7 +1041,7 @@ class Pending extends APP_GameClass
                     $txt,
                     [
                         'player_id' => $this->player_id,
-                        'log' => $this->getLogs('take8'),
+                        'log' => $this->getLogs('draw8'),
 
                     ]
                 );
@@ -1294,7 +1344,7 @@ class Pending extends APP_GameClass
         $ret["selectable"] = [];
         $ret["selected"] = [];
         $ret['buttons'] = [];
-        $ret["function"] = "ActionsBonus";
+        $ret["function"] = "Grimoire";
         $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
         $ret['titleyou'] = clienttranslate('${you} are reading the grimoire');
 
@@ -1480,7 +1530,7 @@ class Pending extends APP_GameClass
         $ret["selectable"] = [];
         $ret["selected"] = [];
         $ret['buttons'] = [];
-        $ret["function"] = "ActionsBonus";
+        $ret["function"] = "Grimoire";
         $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
         $ret['titleyou'] = clienttranslate('${you} must take a card');
 
@@ -1723,7 +1773,7 @@ class Pending extends APP_GameClass
         $ret["selectable"] = [];
         $ret["selected"] = [];
         $ret['buttons'] = [];
-        $ret["function"] = "ActionsBonus";
+        $ret["function"] = "Grimoire";
         $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
         $ret['titleyou'] = clienttranslate('${you} are reading the grimoire');
 
@@ -1857,7 +1907,7 @@ class Pending extends APP_GameClass
         $ret["selectable"] = [];
         $ret["selected"] = [];
         $ret['buttons'] = [];
-        $ret["function"] = "ActionsBonus";
+        $ret["function"] = "Grimoire";
         $ret['title'] = clienttranslate('${actplayer} reads the grimoire');
         $ret['titleyou'] = clienttranslate('${you} must choose a pet');
 
@@ -2453,7 +2503,7 @@ class Pending extends APP_GameClass
             return "<div class='icone_log' title='' style='background-position-x : 0%; background-position-y : -200%;'></div>";
         } elseif ($type == 'flip9') {
             return "<div class='icone_log' title='' style='background-position-x : -100%; background-position-y : -200%;'></div>";
-        } elseif ($type == 'take8') {
+        } elseif ($type == 'draw8') {
             return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : -200%;'></div>";
         } elseif ($type == 'pet') {
             return "<div class='icone_log' title='' style='background-position-x : -200%; background-position-y : -100%;'></div>";
