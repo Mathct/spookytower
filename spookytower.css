@@ -485,10 +485,32 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .player_board {
   display: flex;
-
+  padding: 5px;
   justify-content: flex-end;
   gap: var(--card_gap);
+  border: 2px solid;
 }
+
+
+.player_label {
+  flex: 0 0 calc(48px * var(--st_scale));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "AktivGrotesk-Regular", sans-serif;
+  font-size: calc(36px * var(--st_scale));
+  font-weight: bold;
+  text-shadow: 2px 2px 5px white, -2px -2px 5px white, 2px -2px 5px white, -2px 2px 5px white;
+  overflow: hidden;             /* si texte dépasse */
+}
+
+.player_label .player_name_span {
+  display: inline-block;
+  transform: rotate(-90deg);
+  white-space: nowrap;
+}
+
+
 
 .building_columns {
   display: flex;
@@ -511,22 +533,9 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   height: calc(var(--card_h) * 1.8);
   position: relative;
   overflow: visible;
-
-    /* contour avec gradients pour toutes les stacks visibles */
-  background: 
-    linear-gradient(to bottom, #364a93 0%, #364a93 1px), /* haut */
-    linear-gradient(to top, #73c6ce 0%, #73c6ce 1px),    /* bas */
-    linear-gradient(to bottom, #364a93, #73c6ce) left,   /* gauche */
-    linear-gradient(to bottom, #364a93, #73c6ce) right;  /* droite */
-    
-  background-repeat: no-repeat;
-  background-size: 100% 1px, 100% 3px, 1px 100%, 1px 100%;
-  background-position: top, bottom, left, right;
   border-radius: 4px;
 }
 
-
-/* stack vide : invisible */
 .building_stack.empty {
   display: none;
 }
@@ -596,16 +605,6 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   width: calc(var(--card_w) * 1.41);
   height: calc(var(--card_h) * 1.8);
   position: relative;
-      /* contour avec gradients pour toutes les stacks visibles */
-  background: 
-    linear-gradient(to bottom, #364a93 0%, #364a93 1px), /* haut */
-    linear-gradient(to top, #73c6ce 0%, #73c6ce 1px),    /* bas */
-    linear-gradient(to bottom, #364a93, #73c6ce) left,   /* gauche */
-    linear-gradient(to bottom, #364a93, #73c6ce) right;  /* droite */
-    
-  background-repeat: no-repeat;
-  background-size: 100% 1px, 100% 3px, 1px 100%, 1px 100%;
-  background-position: top, bottom, left, right;
   border-radius: 4px;
 }
 
@@ -617,16 +616,6 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   justify-content: center;
   width: 100%;
   height: calc(var(--card_h) * 0.37);
-        /* contour avec gradients pour toutes les stacks visibles */
-  background: 
-    linear-gradient(to bottom, #317872 0%, #317872 1px), /* haut */
-    linear-gradient(to top, #aae0c6 0%, #aae0c6 1px),    /* bas */
-    linear-gradient(to bottom, #317872, #aae0c6) left,   /* gauche */
-    linear-gradient(to bottom, #317872, #aae0c6) right;  /* droite */
-    
-  background-repeat: no-repeat;
-  background-size: 100% 1px, 100% 3px, 1px 100%, 1px 100%;
-  background-position: top, bottom, left, right;
 }
 
 .house_slot .house_ghosts {
@@ -635,6 +624,12 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   gap: 20px;
   align-items: center;
   justify-content: center;
+}
+
+.ghost_single_container {
+  position: absolute;
+  width: calc(var(--card_w) * 0.5);
+  height: calc(var(--card_h) * 0.5);
 }
 
 

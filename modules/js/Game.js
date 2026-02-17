@@ -206,7 +206,7 @@ class NormalTurn {
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
-                  arg2: this.game.selected_token,
+                  arg2: this.game.selected_pet,
                 }),
               {
                 color: "primary",
@@ -214,7 +214,7 @@ class NormalTurn {
               },
             );
 
-            if (this.game.selected_token == "") {
+            if (this.game.selected_pet == "") {
               this.game.safeClass("take_grimoire_pet_btn", "add", "disabled");
             }
             break;
@@ -438,25 +438,6 @@ export class Game {
       if (!element) return;
 
       if (this.function == "ActionsBonus") {
-        /*if (elt_id.startsWith("card_pet_")) {
-          const clickHandler = () => this.onSelectPet(elt_id);
-          element.addEventListener("click", clickHandler);
-          this.connections.push({
-            element,
-            event: "click",
-            handler: clickHandler,
-          });
-          return;
-        } else  if (elt_id.startsWith("table_building_card_")) {
-          const clickHandler = () => this.onSelectBuilding(elt_id);
-          element.addEventListener("click", clickHandler);
-          this.connections.push({
-            element,
-            event: "click",
-            handler: clickHandler,
-          });
-          return;
-        } else {*/
         // --- Cartes “token” ou autres éléments cliquables ---
         const clickHandler = () => this.onSelectToken(elt_id);
         element.addEventListener("click", clickHandler);
@@ -650,6 +631,7 @@ export class Game {
       this.safeClass(pet_elt, "add", "selected");
       this.selected_pet = pet_id;
       this.safeClass("take_pet_btn", "remove", "disabled");
+      this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
     }
     // Si on clique sur une autre case
     else {
@@ -664,6 +646,7 @@ export class Game {
       } else {
         this.selected_pet = "";
         this.safeClass("take_pet_btn", "add", "disabled");
+        this.safeClass("take_grimoire_pet_btn", "add", "disabled");
       }
     }
   }
@@ -1003,10 +986,11 @@ export class Game {
       const houseIndex = spriteIndices[idx];
 
       // création du board
+      // opacity affecte tout le contenu mais pas un background_color avec alpha
       playersArea.insertAdjacentHTML(
         "beforeend",
         `
-      <div class="player_board" id="player_board_${player.id}">
+      <div class="player_board" id="player_board_${player.id}" style="border-color: #${player.color};background-color: #${player.color}22;">
         <div class="building_columns">
           ${[...Array(12)].map((_, i) => `<div class="building_stack empty clickable" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
         </div>
@@ -1015,6 +999,7 @@ export class Game {
           <div class="house_cards" id="player_${player.id}_house_card" ></div>
         </div>
         <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="Ghosts Captured"></div>
+        <div class="player_label" id="player_${player.id}_label" style="color: #${player.color};background-color: #${player.color}88;"><div class="player_name_span">${player.name}</div></div>
       </div>`,
       );
 
@@ -1068,6 +1053,17 @@ export class Game {
             </div>`,
           );
         });
+
+        // ==== ZONE DE SELECTION ====
+        const selectorHeight = cards.length > 0 ? `calc(var(--card_h) + (${cards.length - 1}) * var(--card_h) * 0.2)` : "0px";
+
+        stack.insertAdjacentHTML(
+          "beforeend",
+          `<div class="stack_selector" 
+                    id="player_${player.id}_stack_${stackIndex}_selector"
+                    style="position: absolute; bottom: 0; left: 0; width: 100%; height: ${selectorHeight}; cursor: pointer; background-color: rgba(0,0,0,0);">
+                 </div>`,
+        );
       });
 
       console.log("petzz", this.gamedatas.players[player.id].player_clues);
@@ -1090,25 +1086,34 @@ export class Game {
   spawnGhosts() {
     this.gamedatas.ghost_sprites.forEach((ghost) => {
       const container = document.getElementById(`player_${ghost.position}_house_ghost`);
+      if (!container) return;
+
       const col = (ghost.id - 1) % 7;
       const row = Math.floor((ghost.id - 1) / 7);
 
-      const left = Math.random() * 60;
-      const top = Math.random() * 75;
-      const duration = 6 + Math.random() * 3;
-      const delay = Math.random() * 3;
+      // grille 2 colonnes x 3 lignes max
+      const maxCols = 2;
+      const maxRows = 3;
+      const indexInContainer = container.querySelectorAll(".ghost_single_container").length;
+      if (indexInContainer >= maxCols * maxRows) return;
 
-      const ghostsHTML = `
-        <div id="ghost_${ghost.name}" class="ghost_sprites"
-          style="
-            background-position: -${col}00% -${row}00%;
-            left: ${left}%;
-            top: ${top}%;
-            animation-duration: ${duration}s;
-            animation-delay: ${delay}s;
-          "></div>`;
+      const colIndex = indexInContainer % maxCols;
+      const rowIndex = Math.floor(indexInContainer / maxCols);
 
-      container.insertAdjacentHTML("beforeend", ghostsHTML);
+      // position légèrement aléatoire pour que ce ne soit pas trop rigide
+      const left = colIndex * 50 + Math.random() * 10; // % de container width
+      const top = rowIndex * 33.33 + Math.random() * 10; // % de container height
+
+      const ghostContainerHTML = `
+            <div class="ghost_single_container"
+                 style="left: ${left}%; top: ${top}%;">
+                <div id="ghost_${ghost.name}" class="ghost_sprites"
+                     style="background-position: -${col}00% -${row}00%;">
+                </div>
+            </div>
+        `;
+
+      container.insertAdjacentHTML("beforeend", ghostContainerHTML);
     });
   }
 
@@ -1623,7 +1628,7 @@ export class Game {
 
       // on envoie chaque carte existante dans le container suivant
       animations.push(() =>
-        this.animationManager.slideAndAttach(cardElement, nextContainer, { duration: 600 }).then(() => {
+        this.animationManager.slideAndAttach(cardElement, nextContainer, { duration: 600, bump: 1 }).then(() => {
           cardElement.id = `player_${playerId}_stack_${stackId}_card_${i + 2}`;
         }),
       );
@@ -1855,46 +1860,54 @@ export class Game {
 
   async moveGhostToHouse(ghostId, startElement, playerId) {
     const index = this.gamedatas.ghost_assets.indexOf(ghostId);
-    console.log("index", index);
     if (index === -1) return;
 
     const col = index % 7;
     const row = Math.floor(index / 7);
 
-    const duration = 6 + Math.random() * 3;
-    const delay = Math.random() * 3;
+    const houseContainer = document.getElementById(`player_${playerId}_house_ghost`);
+    if (!houseContainer) return;
 
-    // 1️⃣ Création sans left/top
+    // 1️⃣ Créer le container destination AVANT l'animation
+    const left = Math.random() * 50; // % de largeur du container
+    const top = Math.random() * 70; // % de hauteur du container
+
+    const ghostContainerHTML = `
+        <div class="ghost_single_container"
+            id="ghost_container_${ghostId}"
+            style="left: ${left}%; top: ${top}%;">
+        </div>`;
+    houseContainer.insertAdjacentHTML("beforeend", ghostContainerHTML);
+
+    const destinationContainer = document.getElementById(`ghost_container_${ghostId}`);
+    if (!destinationContainer) return;
+
+    // 2️⃣ Créer le sprite fantôme dans l'élément de départ
     startElement.insertAdjacentHTML(
       "beforeend",
       `
-        <div id="ghost_${ghostId}" class="ghost_sprites"
-          style="
-            background-position: -${col}00% -${row}00%;
-            animation-duration: ${duration}s;
-            animation-delay: ${delay}s;
-          ">
-        </div>
+      <div id="ghost_${ghostId}" class="ghost_sprites"
+          style="background-position: -${col}00% -${row}00%;">
+      </div>
       `,
     );
 
     const spriteElement = document.getElementById(`ghost_${ghostId}`);
-    const destination = document.getElementById(`player_${playerId}_house_ghost`);
-    if (!spriteElement || !destination) return;
+    if (!spriteElement) return;
 
-    console.log("spriteElement", spriteElement);
-    console.log("destination", destination);
-    // 2️⃣ Animation avec chaînage explicite
-    this.animationManager
-      .slideAndAttach(spriteElement, destination, 800)
-      .then(() => {
-        // 3️⃣ Position aléatoire APRES reparenting
-        spriteElement.style.left = `${Math.random() * 60}%`;
-        spriteElement.style.top = `${Math.random() * 75}%`;
-      })
-      .catch((err) => {
-        console.error("Animation stealPet error:", err);
-      });
+    // 3️⃣ Animation vers le container déjà existant
+    try {
+      await this.animationManager.slideAndAttach(spriteElement, destinationContainer, 800);
+
+      // 4️⃣ Une fois à destination, on place le sprite dans son container
+      destinationContainer.appendChild(spriteElement);
+
+      // (optionnel) réinitialiser left/top pour être exact dans le container
+      spriteElement.style.left = "0";
+      spriteElement.style.top = "0";
+    } catch (err) {
+      console.error("Animation moveGhostToHouse error:", err);
+    }
   }
 
   async toggleRiver() {
@@ -2108,7 +2121,7 @@ export class Game {
       // on décale les cartes
       const card = currentContainer.children[0];
       animations.push(() =>
-        this.animationManager.slideAndAttach(card, prevContainer, { duration: 600 }).then(() => {
+        this.animationManager.slideAndAttach(card, prevContainer, { duration: 600, bump: 1 }).then(() => {
           card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
         }),
       );
@@ -2117,7 +2130,7 @@ export class Game {
     await this.animationManager.playParallel(animations);
   }
 
-  async animShiftStackCards(stackId, playerId) {
+  /*  async animShiftStackCards(stackId, playerId) {
     const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
     if (!stack) return;
 
@@ -2150,14 +2163,14 @@ export class Game {
 
       const card = currentContainer.children[0];
       animations.push(() =>
-        this.animationManager.slideAndAttach(card, prevContainer, { duration: 600 }).then(() => {
+        this.animationManager.slideAndAttach(card, prevContainer, { duration: 600, bump: 1 }).then(() => {
           card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
         }),
       );
     }
 
     await this.animationManager.playParallel(animations);
-  }
+  }*/
 
   async animRemoveBonus(bonus_type) {
     // Sélecteur du premier élément correspondant
@@ -2355,9 +2368,11 @@ export class Game {
     oldCard.remove();
   }
 
-  async animZoomOutReward(bonus) {
+  async animZoomOutReward() {
     const deckGrimoireSlot = document.getElementById("deck_grimoire");
     if (!deckGrimoireSlot) return;
+
+    console.log("bonus", bonus);
 
     const iconId = `grimoire_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
     const html = `<div id="${iconId}" class="river_icon ic_${bonus}"></div>`;
@@ -2580,7 +2595,8 @@ export class Game {
   async notif_removeGrimoire(args) {
     console.log("notif_removeGrimoire", args);
 
-    await this.animZoomOutReward(args.icon);
+    // récupérer le type de la carte pour l'animation du token
+    //await this.animZoomOutReward();
 
     await this.animRemoveGrimoire();
   }

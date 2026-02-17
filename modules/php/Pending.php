@@ -153,15 +153,15 @@ class Pending extends APP_GameClass
 
         //SELECT HOUSE
         if ($count_house1 >= 1) {
-            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $dice1;
+            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $dice1 . '_selector';
             $btn_flip = 1;
         }
         if ($count_house2 >= 1 && $dice1 != $dice2) {
-            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $dice2;
+            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $dice2 . '_selector';
             $btn_flip = 1;
         }
         if ($count_houseaddition >= 1) {
-            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $addition;
+            $ret["selectable"][] = 'player_' . $this->player_id . '_stack_' . $addition . '_selector';
             $btn_flip = 1;
         }
 
@@ -646,7 +646,7 @@ class Pending extends APP_GameClass
             $cards_8 = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type <= 8");
             if (count($cards_8) >= 1) {
                 foreach ($cards_8 as $card_8) {
-                    $value = 'player_' . $this->player_id . '_stack_' . $card_8['type'];
+                    $value = 'player_' . $this->player_id . '_stack_' . $card_8['type'] . '_selector';
 
                     if (!in_array($value, $ret["selectable"], true)) {
                         $ret["selectable"][] = $value;
@@ -659,7 +659,7 @@ class Pending extends APP_GameClass
             $cards_9 = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type >= 9");
             if (count($cards_9) >= 1) {
                 foreach ($cards_9 as $card_9) {
-                    $value = 'player_' . $this->player_id . '_stack_' . $card_9['type'];
+                    $value = 'player_' . $this->player_id . '_stack_' . $card_9['type'] . '_selector';
 
                     if (!in_array($value, $ret["selectable"], true)) {
                         $ret["selectable"][] = $value;
@@ -727,70 +727,58 @@ class Pending extends APP_GameClass
     {
         if ($varg1 == null) {
 
-            $actions_restantes = game::$instance->getObjectListFromDB( "SELECT name FROM actionpending WHERE count >= 1", true );
+            $actions_restantes = game::$instance->getObjectListFromDB("SELECT name FROM actionpending WHERE count >= 1", true);
             $liste = '';
 
-            foreach($actions_restantes as $action)
-            {
-                if($action == 'flip8')
-                {
-                    $liste = $liste.$this->getLogs('flip8');
+            foreach ($actions_restantes as $action) {
+                if ($action == 'flip8') {
+                    $liste = $liste . $this->getLogs('flip8');
                 }
 
-                if($action == 'flip9')
-                {
-                    $liste = $liste.$this->getLogs('flip9');
+                if ($action == 'flip9') {
+                    $liste = $liste . $this->getLogs('flip9');
                 }
 
-                if($action == 'draw8')
-                {
-                    $liste = $liste.$this->getLogs('draw8');
+                if ($action == 'draw8') {
+                    $liste = $liste . $this->getLogs('draw8');
                 }
 
-                if($action == 'pet')
-                {
-                    $liste = $liste.$this->getLogs('pet');
+                if ($action == 'pet') {
+                    $liste = $liste . $this->getLogs('pet');
                 }
 
-                if($action == 'grimoire')
-                {
-                    $liste = $liste.$this->getLogs('grimoire');
+                if ($action == 'grimoire') {
+                    $liste = $liste . $this->getLogs('grimoire');
                 }
             }
 
-            if(count($actions_restantes) >= 1)
-            {
+            if (count($actions_restantes) >= 1) {
                 $txt = clienttranslate('${player_name} cannot use ${log}');
                 game::$instance->notify->all(
-                "endBonus",
-                $txt,
-                [
-                    'player_id' => $this->player_id,
-                    'log' => $liste,
+                    "endBonus",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $liste,
 
-                ]
+                    ]
                 );
-
-            }
-
-            else
-            {
+            } else {
                 game::$instance->notify->all(
-                "endBonus",
-                '',
-                [
-                    'player_id' => $this->player_id,
+                    "endBonus",
+                    '',
+                    [
+                        'player_id' => $this->player_id,
 
-                ]
+                    ]
                 );
-
             }
 
-            
+
             $clue = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
             $count_park = game::$instance->deck_park->get();
 
-            if (($clue >= 1 && $count_park == 5)||($clue >= 2 && $count_park >=2 && $count_park <= 4)||($clue >= 3 && $count_park == 1)) {
+            if (($clue >= 1 && $count_park == 5) || ($clue >= 2 && $count_park >= 2 && $count_park <= 4) || ($clue >= 3 && $count_park == 1)) {
                 game::$instance->addPending($this->player_id, "Park");
             } else {
 
