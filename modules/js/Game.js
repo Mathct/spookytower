@@ -1967,32 +1967,37 @@ export class Game {
 
   async animFlipSoloStack(stackId, cardsInfos, playerId) {
     const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
+    if (!stack) return;
 
-    const info = cardsInfos[0]; // on ne prend QUE la carte demandée
+    if (stack.dataset.flipping === "true") return;
+    stack.dataset.flipping = "true";
 
-    const card = Array.from(stack.querySelectorAll(".building_cards"))[0]; // première carte dans le stack
+    const card = stack.querySelector(".building_cards");
+    const info = cardsInfos?.[0];
 
-    const half = 200;
-
-    if (this.instantaneousMode) {
-      // flip instantané : appliquer directement le verso
-      const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
-      const col = card_offset % 12;
-      const row = 1 + Math.floor(card_offset / 12);
-      card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
-      card.style.transition = "";
-      card.style.transform = "";
+    if (!card || !info) {
+      delete stack.dataset.flipping;
       return;
     }
 
-    // flip animé
-    card.style.transition = `transform ${half}ms ease-in-out`;
-    card.style.transform = "rotateY(90deg)";
-    await new Promise((r) => setTimeout(r, half));
+    const half = 200;
 
     const card_offset = (info.type - 1) * 5 + (info.type_arg - 1);
     const col = card_offset % 12;
     const row = 1 + Math.floor(card_offset / 12);
+
+    if (this.instantaneousMode) {
+      card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
+      card.style.transition = "";
+      card.style.transform = "";
+      delete stack.dataset.flipping;
+      return;
+    }
+
+    card.style.transition = `transform ${half}ms ease-in-out`;
+    card.style.transform = "rotateY(90deg)";
+    await new Promise((r) => setTimeout(r, half));
+
     card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
 
     card.style.transform = "rotateY(0deg)";
@@ -2001,8 +2006,9 @@ export class Game {
     card.style.transition = "";
     card.style.transform = "";
 
-    // ---- Supprimer la carte ----
-    card.remove();
+    //card.remove(); // uniquement si c’est vraiment voulu
+
+    delete stack.dataset.flipping;
   }
 
   async animGetRewardsSolo(no_house, cardsInfos, playerId) {
@@ -2010,28 +2016,31 @@ export class Game {
     const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
 
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
-    // on cache si c'est vide
+
     if (!cards.length) {
       stack.classList.add("empty");
       return;
     }
 
-    // Empêcher l'animation simultanée
     if (stack.dataset.animating === "true") return;
     stack.dataset.animating = "true";
 
-    // Trier les cartes par position (bas → haut)
     cardsInfos.sort((a, b) => a.position - b.position);
 
     const cardEl = cards[0];
     const info = cardsInfos[0];
 
-    // Récupérer les bonus pour cette carte
+    if (!info) {
+      stack.classList.add("empty");
+      delete stack.dataset.animating;
+      return;
+    }
+
     const card_idx = info.type + info.type_arg;
     const bonuses = this.gamedatas.building_cards[card_idx] || [];
     const parent = cardEl.parentElement;
 
-    // 1️⃣ Animation disparition
+    // Animation disparition
     cardEl.style.transition = "transform 400ms ease, opacity 400ms ease";
     cardEl.style.transform = "scale(0)";
     cardEl.style.opacity = "0";
@@ -2039,52 +2048,46 @@ export class Game {
 
     cardEl.remove();
 
-    for (let j = 0; j < bonuses.length; j++) {
-      const bonus = bonuses[j];
+    for (let bonus of bonuses) {
       const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
       if (!ic) continue;
 
-      console.log("IC", ic);
       if (["grimoire", "clock", "flip8", "flip9", "draw8", "pet"].includes(ic)) {
         const iconId = `river_ic_${bonus}_${Math.floor(Math.random() * 1000)}`;
-        const html = `<div id="${iconId}" class="river_icon ic_${ic}"></div>`;
-        parent.insertAdjacentHTML("beforeend", html);
+        parent.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="river_icon ic_${ic}"></div>`);
 
         const iconEl = document.getElementById(iconId);
 
-        if (riverElt.classList.contains("closed")) {
+        if (river.classList.contains("closed")) {
           await this.showRiver();
         }
 
-        // Animation slide vers la rivière
         this.animationManager.slideAndAttach(iconEl, river, 600, 0, null);
-      } else if (ic == "replay") {
+      } else if (ic === "replay") {
         const iconId = `panel_ic_replay`;
-        const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
-        parent.insertAdjacentHTML("beforeend", html);
+        parent.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_${ic}"></div>`);
 
         const iconEl = document.getElementById(iconId);
-
         const panel = document.getElementById(`bottom_board_${playerId}`);
-        // Animation slide vers la rivière
+
         this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
-      } else if (ic == "clue") {
+      } else if (ic === "clue") {
         const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
-        const html = `<div id="${iconId}" class="icon ic_${ic}"></div>`;
-        parent.insertAdjacentHTML("beforeend", html);
+        parent.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_${ic}"></div>`);
 
         const iconEl = document.getElementById(iconId);
-
         const house_clues = document.getElementById(`player_${playerId}_house_clues`);
 
-        // Animation slide vers la rivière
         this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
-      } else if (ic == "ghost") {
+      } else if (ic === "ghost") {
         const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
         const ghost_id = `ghost_${ghost_idx}`;
         await this.moveGhostToHouse(ghost_id, parent, playerId);
       }
     }
+
+    stack.classList.add("empty");
+    delete stack.dataset.animating;
   }
 
   async animShiftStackCards(stackId, playerId) {

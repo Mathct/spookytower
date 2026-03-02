@@ -120,7 +120,7 @@ class Game extends \Bga\GameFramework\Table
         $this->building_DB = $this->deckFactory->createDeck("building");
         $this->grimoire_DB = $this->deckFactory->createDeck("grimoire");
 
-        
+
 
 
         /* example of notification decorator.
@@ -167,7 +167,7 @@ class Game extends \Bga\GameFramework\Table
         //gsv
         $this->setGameStateInitialValue("replay", 0);
 
-                
+
         $park = ['2', '3', '4'];
         shuffle($park);          // Mélange le tableau
         $park_order = intval('1' . $park[0] . $park[1] . $park[2] . '5');
@@ -349,32 +349,25 @@ class Game extends \Bga\GameFramework\Table
      */
     public function getGameProgression()
     {
-        $players = game::$instance->getObjectListFromDB( "SELECT player_id FROM player", true );
+        $players = game::$instance->getObjectListFromDB("SELECT player_id FROM player", true);
         $ghosts_tab = [];
         $artefacts_tab = [];
-        foreach($players as $player)
-        {
+        foreach ($players as $player) {
             $ghost = $this->player_ghosts->get((int) $player);
             $artefact = $this->player_artefacts->get((int) $player);
 
             $ghosts_tab[] = $ghost;
             $artefacts_tab[] = $artefact;
-
         }
 
-        $progession_ghost = round(max($ghosts_tab) * 100/5);
-        $progession_artefact = round(max($artefacts_tab) * 100/3);
+        $progession_ghost = round(max($ghosts_tab) * 100 / 5);
+        $progession_artefact = round(max($artefacts_tab) * 100 / 3);
 
-        if($progession_ghost >= $progession_artefact)
-        {
+        if ($progession_ghost >= $progession_artefact) {
             return $progession_ghost;
-        }
-
-        else
-        {
+        } else {
             return $progession_artefact;
         }
-
     }
 
 
@@ -485,20 +478,19 @@ class Game extends \Bga\GameFramework\Table
     /////////////////////////////////////////////////////////////////////////////////  
 
     // le pending sera exécuté juste après
-    function addPending($player_id, $function, $arg = NULL, $arg2 = NULL, $arg3 = NULL, $arg4 = NULL)
+    public function addPending(int $player_id, string $function, ?string $arg = NULL, ?string $arg2 = NULL, ?string $arg3 = NULL, ?string $arg4 = NULL): void
     {
-        $sql = "INSERT INTO pending (player_id, function, arg, arg2, arg3, arg4) 
+        $sql = "INSERT INTO `pending` (`player_id`, `function`, `arg`, `arg2`, `arg3`, `arg4`) 
                 VALUES (" . $player_id . ", '" . $function . "', '" . $arg . "', '" . $arg2 . "', '" . $arg3 . "', '" . $arg4 . "')";
         $this->DbQuery($sql);
     }
 
 
     // le pending est envoyé au fond (First mais on lit de Bas en Haut)
-    function addPendingFirst($player_id, $function, $arg = NULL, $arg2 = NULL, $arg3 = NULL, $arg4 = NULL)
+    public function addPendingFirst(int $player_id, string $function, ?string $arg = NULL, ?string $arg2 = NULL, ?string $arg3 = NULL, ?string $arg4 = NULL): void
     {
-
-        $minid = $this->getUniqueValueFromDB("SELECT MIN(id) FROM pending") - 1;
-        $sql = "INSERT INTO pending (id, player_id, function, arg, arg2, arg3, arg4) 
+        $minid = $this->getUniqueValueFromDB("SELECT MIN(`id`) FROM `pending`") - 1;
+        $sql = "INSERT INTO `pending` (`id`, `player_id`, `function`, `arg`, `arg2`, `arg3`, `arg4`)
                 VALUES (" . $minid . "," . $player_id . ", '" . $function . "', '" . $arg . "', '" . $arg2 . "', '" . $arg3 . "', '" . $arg4 . "')";
         $this->DbQuery($sql);
     }
