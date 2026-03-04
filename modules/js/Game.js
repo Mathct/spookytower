@@ -1394,17 +1394,13 @@ export class Game {
 
   async animFlipReroll(playerId) {
     const icon = document.getElementById(`icon_reroll_${playerId}`);
+    if (!icon) return;
 
-    if (this.instantaneousMode) {
-      icon.classList.toggle("ic_reroll_0");
-      icon.classList.toggle("ic_reroll_1");
-      return;
-    }
-
+    // Bloquer les multiclics
     if (icon.dataset.flipping === "true") return;
     icon.dataset.flipping = "true";
 
-    const half = 200; // durée demi-flip
+    const half = this.instantaneousMode ? 0 : 200; // durée demi-flip
 
     // Premier demi-flip
     icon.style.transition = `transform ${half}ms ease-in-out`;
@@ -1427,63 +1423,53 @@ export class Game {
 
   async animFlipPark() {
     const park = document.getElementById("park_active");
+    if (!park) return;
 
-    // on change l'id de la carte qui va flipper
-    park.id = `park_active_verso`;
-
-    // on prend l'indice du sprite la carte pour le recto et le verso
-    const nb_cards = parseInt(this.gamedatas.deck_park);
-    const versoCol = this.gamedatas.park_order[5 - nb_cards];
-
-    if (this.instantaneousMode) {
-      park.style.transition = "";
-      park.style.transform = "";
-      park.style.backgroundPosition = `-${versoCol}00% 0%`;
-      return;
-    }
-
-    // pour bloquer les multiclics
+    // Bloquer les multiclics
     if (park.dataset.flipping === "true") return;
     park.dataset.flipping = "true";
 
-    const half = 200;
+    // Changer l'id de la carte avant le flip
+    park.id = "park_active_verso";
+
+    // Calcul du verso
+    const nb_cards = parseInt(this.gamedatas.deck_park);
+    const versoCol = this.gamedatas.park_order[5 - nb_cards];
+
+    // Durée demi-flip : 0 si instantané, 200ms sinon
+    const half = this.instantaneousMode ? 0 : 200;
 
     // Premier demi-flip
     park.style.transition = `transform ${half}ms ease-in-out`;
     park.style.transform = "rotateY(90deg) translateY(-5px) scale(1.05)";
-    await new Promise((resolve) => setTimeout(resolve, half));
+    await new Promise((r) => setTimeout(r, half));
 
     // Changement visuel : verso
     park.style.backgroundPosition = `-${versoCol}00% 0%`;
 
     // Deuxième demi-flip
     park.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
-    await new Promise((resolve) => setTimeout(resolve, half));
+    await new Promise((r) => setTimeout(r, half));
 
+    // Reset
+    park.style.transition = "";
+    park.style.transform = "";
     delete park.dataset.flipping;
   }
 
   async animFlipGrimoire(grimoireType, playerId) {
     const grimoire = document.getElementById("grimoire_active");
+    if (!grimoire) return;
 
-    // on change l'id de la carte qui va flipper
-    grimoire.id = `grimoire_active_verso`;
-
-    // on prend l'indice du sprite la carte pour le recto et le verso
-    const versoCol = grimoireType - 1;
-
-    if (this.instantaneousMode) {
-      grimoire.style.transition = "";
-      grimoire.style.transform = "";
-      grimoire.style.backgroundPosition = `-${versoCol}00% -100%`;
-      return;
-    }
-
-    // pour bloquer les multiclics
+    // Bloquer les multiclics
     if (grimoire.dataset.flipping === "true") return;
     grimoire.dataset.flipping = "true";
 
-    const half = 200;
+    // Changer l'id de la carte avant le flip
+    grimoire.id = "grimoire_active_verso";
+
+    const versoCol = grimoireType - 1;
+    const half = this.instantaneousMode ? 0 : 200;
 
     // Premier demi-flip
     grimoire.style.transition = `transform ${half}ms ease-in-out`;
@@ -1493,14 +1479,17 @@ export class Game {
     // Changement visuel : verso
     grimoire.style.backgroundPosition = `-${versoCol}00% -100%`;
 
-    // Deuxième demi-flip : retour à 0°
+    // Deuxième demi-flip
     grimoire.style.transform = "rotateY(0deg) translateY(0px) scale(1)";
     await new Promise((resolve) => setTimeout(resolve, half));
 
+    // Reset
+    grimoire.style.transition = "";
+    grimoire.style.transform = "";
     delete grimoire.dataset.flipping;
 
-    // on gagne un clue pour la deuxième carte
-    if (grimoireType == 2) {
+    // Gestion du clue si c’est la deuxième carte
+    if (grimoireType === 2) {
       const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
       const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
 
@@ -1511,21 +1500,27 @@ export class Game {
 
   async animClockTower(playerId) {
     const hand = document.getElementById("clock_hand_sprite");
+    if (!hand) return;
 
-    // Récupère l’angle de rotation depuis le transform CSS ; sinon calcule une valeur par défaut à partir de l’horloge
+    // Bloquer les multiclics si nécessaire
+    if (hand.dataset.animating === "true") return;
+    hand.dataset.animating = "true";
+
+    // Récupère l’angle de rotation actuel
     const currentTransform = hand.style.transform;
     const match = currentTransform.match(/rotate\(([-\d.]+)deg\)/);
     let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.other.clock * 60;
 
     const nextDeg = currentDeg + 60;
+    const duration = this.instantaneousMode ? 0 : 600;
 
-    // ⚡ Mode instantané
-    if (this.instantaneousMode) {
+    if (duration === 0) {
       hand.style.transition = "";
       hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
       this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
+      delete hand.dataset.animating;
     } else {
-      hand.style.transition = `transform 600ms ease-in-out`;
+      hand.style.transition = `transform ${duration}ms ease-in-out`;
       hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
 
       // attendre la fin de l'animation
@@ -1541,29 +1536,20 @@ export class Game {
       });
 
       this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
+      delete hand.dataset.animating;
     }
 
-    // ⚡ Animation des artefacts si clock = 0 ou 3
+    // ⚡ Animation des artefacts selon clock
     if (this.gamedatas.other.clock === 0 || this.gamedatas.other.clock === 3) {
-      //  on ajoute un artefact
       const iconId = `house_ic_artefact_${Math.floor(Math.random() * 1000)}`;
       const html = `<div id="${iconId}" class="icon ic_artefact"></div>`;
-      const parent = document.getElementById("clock_hand_sprite");
-      parent.insertAdjacentHTML("beforeend", html);
+      hand.insertAdjacentHTML("beforeend", html);
       const iconElt = document.getElementById(iconId);
 
-      // on récupère la destination
       const panel_artefacts = document.getElementById(`icon_artefact_${playerId}`);
-
-      // Animation slide vers le panel joueur + destruction
       await this.animationManager.slideOutAndDestroy(iconElt, panel_artefacts, 600, 0);
 
-      // petit délai si nécessaire
       await new Promise((r) => setTimeout(r, 80));
-    } else if (this.gamedatas.other.clock === 1 || this.gamedatas.other.clock === 4) {
-      // PET
-    } else if (this.gamedatas.other.clock === 2 || this.gamedatas.other.clock === 5) {
-      //this.animFlipReroll(playerId);
     }
   }
 
@@ -2132,48 +2118,6 @@ export class Game {
 
     await this.animationManager.playParallel(animations);
   }
-
-  /*  async animShiftStackCards(stackId, playerId) {
-    const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
-    if (!stack) return;
-
-    const containers = Array.from(stack.querySelectorAll(".building_card_container"));
-    if (containers.length === 0) return;
-
-    // ⚡ Mode instantané : on déplace directement
-    if (this.instantaneousMode) {
-      // Parcours croissant
-      for (let i = 1; i < containers.length; i++) {
-        const currentContainer = containers[i];
-        const prevContainer = containers[i - 1];
-        if (currentContainer.children.length === 0) continue;
-
-        const card = currentContainer.children[0];
-        prevContainer.appendChild(card);
-
-        // Renommer correctement
-        card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
-      }
-      return;
-    }
-
-    // 🎞️ Mode animé : glisser les cartes vers le container précédent
-    const animations = [];
-    for (let i = 1; i < containers.length; i++) {
-      const currentContainer = containers[i];
-      const prevContainer = containers[i - 1];
-      if (currentContainer.children.length === 0) continue;
-
-      const card = currentContainer.children[0];
-      animations.push(() =>
-        this.animationManager.slideAndAttach(card, prevContainer, { duration: 600, bump: 1 }).then(() => {
-          card.id = `player_${playerId}_stack_${stackId}_card_${i}`;
-        }),
-      );
-    }
-
-    await this.animationManager.playParallel(animations);
-  }*/
 
   async animRemoveBonus(bonus_type) {
     // Sélecteur du premier élément correspondant

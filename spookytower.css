@@ -310,7 +310,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   height: var(--card_h);
 
   pointer-events: none;
-
+  border-radius: 50%;
+  box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.7);
   /*background-color: rgba(128, 0, 128, 0.7); /* violet avec alpha 30% */
 }
 
