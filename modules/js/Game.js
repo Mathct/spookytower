@@ -2588,7 +2588,7 @@ export class Game {
     for (let i = 0; i < args.ghosts.length; i++) {
       await this.animFlipPark();
 
-      const ghost_id = `ghost_${args.ghosts[i]}`;
+      const ghost_id = `ghost_${args.ghosts[i] + 20}`;
       const parkElt = document.getElementById("deck_park");
       await this.moveGhostToHouse(ghost_id, parkElt, args.player_id);
 
