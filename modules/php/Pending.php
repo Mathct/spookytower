@@ -1,11 +1,13 @@
 <?php
 
 namespace Bga\Games\spookytower;   // ATTENTION NOM DU JEU
-use APP_GameClass;
 
 //require_once 'PendingConfirm.php'; // ATTENTION
 
-class Pending extends APP_GameClass
+use Bga\GameFramework\UserException;
+use Bga\GameFramework\NotificationMessage;
+
+class Pending extends Game
 {
     //use ConfirmPendingTrait; // ATTENTION TRAIT
 
@@ -349,14 +351,15 @@ class Pending extends APP_GameClass
             //je change le compteur du deck
             game::$instance->{'deck_' . $no_deck}->inc(-1);
 
-            $txt = clienttranslate('${player_name} takes card ${no_card}');
+            $txt = clienttranslate('${player_name} takes card ${no_house}');
             game::$instance->notify->all(
                 "takeCard",
                 $txt,
                 [
                     'player_id' => $this->player_id,
-                    'no_card' => $no_deck,
+                    'no_house' => $no_deck,
                     'card' => $card,
+                    'count_card' => $count_card,
                     'nb_remaining' => game::$instance->{'deck_' . $no_deck}->get()
                 ]
             );
@@ -824,6 +827,11 @@ class Pending extends APP_GameClass
                 LIMIT 1
                 ");
 
+                $count_cards = game::$instance->getUniqueValueFromDb("SELECT COUNT(card_id) FROM building 
+                WHERE card_location = 'house'
+                AND card_location_arg = '{$this->player_id}'
+                AND card_type = '{$no_house}'");
+
 
                 game::$instance->notify->all(
                     "flipCard",
@@ -832,6 +840,7 @@ class Pending extends APP_GameClass
                         'player_id' => $this->player_id,
                         'no_house' => $no_house,
                         'cards' => $cards,
+                        'count_cards' => (int) $count_cards - 1
                     ]
                 );
 
@@ -1017,8 +1026,9 @@ class Pending extends APP_GameClass
                     '',
                     [
                         'player_id' => $this->player_id,
-                        'no_card' => $no_deck,
+                        'no_house' => $no_deck,
                         'card' => $card,
+                        'count_card' => $count_card,
                         'nb_remaining' => game::$instance->{'deck_' . $no_deck}->get()
                     ]
                 );
@@ -1574,14 +1584,15 @@ class Pending extends APP_GameClass
             //je change le compteur du deck
             game::$instance->{'deck_' . $no_deck}->inc(-1);
 
-            $txt = clienttranslate('${player_name} takes card ${no_card}');
+            $txt = clienttranslate('${player_name} takes card ${no_house}');
             game::$instance->notify->all(
                 "takeCard",
                 $txt,
                 [
                     'player_id' => $this->player_id,
-                    'no_card' => $no_deck,
+                    'no_house' => $no_deck,
                     'card' => $card,
+                    'count_card' => $count_card,
                     'nb_remaining' => game::$instance->{'deck_' . $no_deck}->get()
                 ]
             );
@@ -2403,7 +2414,6 @@ class Pending extends APP_GameClass
 
     function EndGame($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
-        game::$instance->DbQuery("UPDATE player set player_score = 1 WHERE player_id = '{$this->player_id}'");
         game::$instance->bga->playerScore->set($this->player_id, 1);
 
         $ghots = game::$instance->player_ghosts->get($this->player_id);

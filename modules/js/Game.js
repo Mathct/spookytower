@@ -1227,30 +1227,45 @@ export class Game {
     });
   }
 
-  rollDiceMultiple() {
+  /*async rollDiceMultiple() {
     //pour lancer les dés plusieurs fois et ainsi éviter que les dés ne tournent pas si le résultat est inchangé ou proche
-    this.rollDice(); // Premier lancer
-    setTimeout(() => {
-      this.rollDice(); // Deuxième lancer
-    }, 100);
-    setTimeout(() => {
-      this.rollDice(); // 3eme lancer
-    }, 200);
-  }
+    // Premier lancer
+    await this.rollDice();
 
-  rollDice() {
-    this.diceElements.forEach((dice, index) => {
-      const face = this.forcedFaces[index];
-      const target = this.faceRotations[face];
+    // Petit délai avant le deuxième lancer
+    await new Promise((r) => setTimeout(r, 100));
+    await this.rollDice();
 
-      const fullTurnsX = Math.floor(Math.random() * 10 + 10) * 360;
-      const fullTurnsY = Math.floor(Math.random() * 10 + 10) * 360;
-      const finalX = fullTurnsX + target.x;
-      const finalY = fullTurnsY + target.y;
+    // Délai avant le troisième lancer
+    await new Promise((r) => setTimeout(r, 100));
+    await this.rollDice();
+  }*/
 
-      dice.style.transition = "transform 2s cubic-bezier(0.23, 1, 0.32, 1)";
-      dice.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
-    });
+  async rollDice() {
+    return Promise.all(
+      this.diceElements.map((dice, index) => {
+        return new Promise((resolve) => {
+          const face = this.forcedFaces[index];
+          const target = this.faceRotations[face];
+
+          // Tours complets aléatoires pour garantir l'animation
+          const fullTurnsX = (Math.floor(Math.random() * 10) + 10) * 360;
+          const fullTurnsY = (Math.floor(Math.random() * 10) + 10) * 360;
+
+          const finalX = fullTurnsX + target.x;
+          const finalY = fullTurnsY + target.y;
+
+          dice.style.transition = "transform 2s cubic-bezier(0.23, 1, 0.32, 1)";
+          dice.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
+
+          const handler = () => {
+            dice.removeEventListener("transitionend", handler);
+            resolve();
+          };
+          dice.addEventListener("transitionend", handler);
+        });
+      }),
+    );
   }
 
   addSideButtons() {
@@ -1429,6 +1444,9 @@ export class Game {
     if (park.dataset.flipping === "true") return;
     park.dataset.flipping = "true";
 
+    this.safeClass(".selectable", "remove", "selectable");
+    this.safeClass(".selected", "remove", "selected");
+
     // Changer l'id de la carte avant le flip
     park.id = "park_active_verso";
 
@@ -1464,6 +1482,9 @@ export class Game {
     // Bloquer les multiclics
     if (grimoire.dataset.flipping === "true") return;
     grimoire.dataset.flipping = "true";
+
+    this.safeClass(".selectable", "remove", "selectable");
+    this.safeClass(".selected", "remove", "selected");
 
     // Changer l'id de la carte avant le flip
     grimoire.id = "grimoire_active_verso";
@@ -1505,6 +1526,9 @@ export class Game {
     // Bloquer les multiclics si nécessaire
     if (hand.dataset.animating === "true") return;
     hand.dataset.animating = "true";
+
+    this.safeClass(".selectable", "remove", "selectable");
+    this.safeClass(".selected", "remove", "selected");
 
     // Récupère l’angle de rotation actuel
     const currentTransform = hand.style.transform;
@@ -1556,6 +1580,9 @@ export class Game {
   async animTakeCard(buildingNumber, playerId, nbRemaining) {
     const elt_id = `table_building_card_${buildingNumber}`;
     const sourceCard = document.getElementById(elt_id);
+
+    this.safeClass(".selectable", "remove", "selectable");
+    this.safeClass(".selected", "remove", "selected");
 
     // Stack cible
     const stackElt = document.getElementById(`player_${playerId}_stack_${buildingNumber}`);
@@ -1642,6 +1669,9 @@ export class Game {
     // pour bloquer les multiclics
     if (stack.dataset.flipping === "true") return;
     stack.dataset.flipping = "true";
+
+    this.safeClass(".selectable", "remove", "selectable");
+    this.safeClass(".selected", "remove", "selected");
 
     // Trier les cartes par position (bas → haut)
     cardsInfos.sort((a, b) => a.position - b.position);
@@ -1958,6 +1988,9 @@ export class Game {
     if (stack.dataset.flipping === "true") return;
     stack.dataset.flipping = "true";
 
+    this.safeClass(".selectable", "remove", "selectable");
+    this.safeClass(".selected", "remove", "selected");
+
     const card = stack.querySelector(".building_cards");
     const info = cardsInfos?.[0];
 
@@ -2002,6 +2035,9 @@ export class Game {
     const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
 
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
+
+    this.safeClass(".selectable", "remove", "selectable");
+    this.safeClass(".selected", "remove", "selected");
 
     if (!cards.length) {
       stack.classList.add("empty");
@@ -2072,7 +2108,6 @@ export class Game {
       }
     }
 
-    stack.classList.add("empty");
     delete stack.dataset.animating;
   }
 
@@ -2082,6 +2117,8 @@ export class Game {
 
     const containers = Array.from(stack.querySelectorAll(".building_card_container"));
     if (containers.length === 0) return;
+
+    console.log("Stack Length", containers.length);
 
     // ⚡ Mode instantané : on déplace directement
     if (this.instantaneousMode) {
@@ -2380,6 +2417,34 @@ export class Game {
     console.log("All remaining bonus elements removed with animation");
   }
 
+  updateStackSelector(playerId, stackIndex, count) {
+    console.log("SelectoR", `player_${playerId}_stack_${stackIndex}_selector`);
+    let selector = document.getElementById(`player_${playerId}_stack_${stackIndex}_selector`);
+    console.log("Selector El", selector);
+
+    if (count === 0) {
+      selector?.remove();
+      return;
+    }
+
+    const height = `calc(var(--card_h) + (${count - 1}) * var(--card_h) * 0.2)`;
+
+    if (!selector) {
+      console.log("Stack", `player_${playerId}_stack_${stackIndex}`);
+      const stack = document.getElementById(`player_${playerId}_stack_${stackIndex}`);
+      console.log("Stack El", stack);
+      stack.insertAdjacentHTML(
+        "beforeend",
+        `<div class="stack_selector"
+         id="player_${playerId}_stack_${stackIndex}_selector"
+         style="position:absolute;bottom:0;left:0;width:100%;cursor:pointer;height:${height}">
+       </div>`,
+      );
+    } else {
+      selector.style.height = height;
+    }
+  }
+
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications
 
@@ -2412,7 +2477,10 @@ export class Game {
 
     // attention car les cartes se positionnent sous celles qui sont en bas
     // ou sinon, on déplace vers le haut celles qui sont présentes et on place la dernière toujours en bas
-    this.animTakeCard(args.no_card, args.player_id, args.nb_remaining);
+    await this.animTakeCard(args.no_house, args.player_id, args.nb_remaining);
+
+    // on met à jour / créé le selector
+    this.updateStackSelector(args.player_id, args.no_house, args.count_card);
   }
 
   async notif_flipCards(args) {
@@ -2420,6 +2488,9 @@ export class Game {
     // on récolte
     console.log("notif_flipCards", args);
     await this.animFlipStack(args.no_house, args.cards, args.player_id);
+
+    // la pile est maintenant vide → suppression du selector
+    this.updateStackSelector(args.player_id, args.no_house, 0);
 
     //await this.showRiver();
 
@@ -2492,6 +2563,8 @@ export class Game {
     await this.animGetRewardsSolo(args.no_house, args.cards, args.player_id);
 
     await this.animShiftStackCards(args.no_house, args.player_id);
+
+    this.updateStackSelector(args.player_id, args.no_house, args.count_cards);
   }
 
   async notif_removeBonus(args) {
@@ -2665,7 +2738,8 @@ export class Game {
     console.log("notif_rollDice", args);
 
     this.forcedFaces = args.roll;
-    this.rollDiceMultiple();
+    //await this.rollDiceMultiple();
+    await this.rollDice();
   }
 
   async notif_endBonus(args) {

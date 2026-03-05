@@ -82,7 +82,7 @@
   --card_gap: calc(12px * var(--st_scale));
   --font-size: calc(16pt * var(--st_scale));
 
-background-image: url("img/ST_background2.jpg");
+background-image: url("img/ST_background3.jpg");
 background-size: auto 100%;
 background-position: top center;
 background-repeat: no-repeat;
