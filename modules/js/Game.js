@@ -1091,27 +1091,27 @@ export class Game {
       const col = (ghost.id - 1) % 7;
       const row = Math.floor((ghost.id - 1) / 7);
 
-      // grille 2 colonnes x 3 lignes max
       const maxCols = 2;
       const maxRows = 3;
-      const indexInContainer = container.querySelectorAll(".ghost_single_container").length;
-      if (indexInContainer >= maxCols * maxRows) return;
+      const existing = container.querySelectorAll(".ghost_single_container").length;
+      if (existing >= maxCols * maxRows) return;
 
-      const colIndex = indexInContainer % maxCols;
-      const rowIndex = Math.floor(indexInContainer / maxCols);
+      // position dans la grille
+      const colIndex = existing % maxCols;
+      const rowIndex = Math.floor(existing / maxCols);
 
-      // position légèrement aléatoire pour que ce ne soit pas trop rigide
-      const left = colIndex * 50 + Math.random() * 10; // % de container width
-      const top = rowIndex * 33.33 + Math.random() * 10; // % de container height
+      // on répartit dans la cellule avec un petit décalage aléatoire (±5%)
+      const left = colIndex * 50 + Math.random() * 10 - 5; // centre dans la cellule
+      const top = rowIndex * 33.33 + Math.random() * 10 - 5;
 
       const ghostContainerHTML = `
-            <div class="ghost_single_container"
-                 style="left: ${left}%; top: ${top}%;">
-                <div id="ghost_${ghost.name}" class="ghost_sprites"
-                     style="background-position: -${col}00% -${row}00%;">
-                </div>
-            </div>
-        `;
+      <div class="ghost_single_container"
+           style="left: ${left}%; top: ${top}%; position: absolute;">
+        <div id="ghost_${ghost.name}" class="ghost_sprites"
+             style="background-position: -${col}00% -${row}00%;">
+        </div>
+      </div>
+    `;
 
       container.insertAdjacentHTML("beforeend", ghostContainerHTML);
     });
@@ -1330,49 +1330,125 @@ export class Game {
   }
 
   showHelpModal() {
-    // Vérifie si la modale existe déjà
     if (document.getElementById("helpModal")) return;
 
-    // Création de la modale
     const modal = document.createElement("div");
     modal.id = "helpModal";
     modal.className = "modal";
 
-    // Contenu HTML de la modale
     const html = `
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <div class="tooltip_content">
-        <p>Besoin d'aide ? Voici quelques instructions...</p>
-        <div class="info_container">
-          <!-- Exemple d'information -->
-          <div class="tooltip_bigtitle">${_("Turn Summary")}</div>
-          <div class="tooltip_subtitle">${_("Select a Card and a Token")}</div>
-          <div class="tooltip_desc">${_("You must select 1 Item Token and 1 Card (Plant or Room) from the same column.")}</div>
+      <div class="modal-content">
+        <span class="close">&times;</span>
+
+        <div class="tooltip_content">
+
+          <div class="tooltip_bigtitle">${_("Bonus Effects")}</div>
+
+          <div class="bonus_effects">
+
+            <div class="effect">
+              <div class="logo lo_reroll"></div>
+              <div class="effect_desc">${_("As soon as you take a Building card with this effect, flip your Reroll token to its available side.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="logo lo_clock"></div>
+              <div class="effect_desc">${_("As soon as you take a Building card with this effect, move the clock hand one step clockwise and apply the effect shown by the hand.")}</div>
+            </div>
+
+          </div>
+
+
+          <div class="tooltip_bigtitle">${_("Other Effects")}</div>
+
+          <div class="other_effects">
+
+            <div class="effect">
+              <div class="icon ic_ghost"></div>
+              <div class="effect_desc">${_("Once revealed, the Ghost is captured! Place it to the right of your House board.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_pet"></div>
+              <div class="effect_desc">${_("Take a Ghost Pet card from the center of the table. If there aren't any left, steal a Ghost Pet from any player. Place it to the right of your House board. <b>It counts as a Ghost.</b>")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_clock"></div>
+              <div class="effect_desc">${_("Move the clock hand one step clockwise and apply the effect shown by the hand.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_grimoire"></div>
+              <div class="effect_desc">${_("Reveal the top Grimoire card and apply its effect.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_clue"></div>
+              <div class="effect_desc">${_("If you have gained one or more of these Clues, you may <i>Go to the Park.</i>")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_artefact"></div>
+              <div class="effect_desc">${_("Take 1 Amulet fragment from the reserve and place it in front of you.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_reroll_0"></div>
+              <div class="effect_desc">${_("Place your Reroll token to its available side.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_draw8"></div>
+              <div class="effect_desc">${_("Take a Building card of value 8 or less (you choose).")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_draw_any"></div>
+              <div class="effect_desc">${_("Take any Building card.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_flip8"></div>
+              <div class="effect_desc">${_("Flip <b>one</b> of your Building cards of value 8 or less (you choose).")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_flip9"></div>
+              <div class="effect_desc">${_("Flip <b>one</b> of your Building cards of value 9 or more (you choose).")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_replay"></div>
+              <div class="effect_desc">${_("At the end of your turn, immediately take another turn.")}</div>
+            </div>
+
+            <div class="effect">
+              <div class="icon ic_empty"></div>
+              <div class="effect_desc">${_("No effect.")}</div>
+            </div>
+
+          </div>
+
         </div>
       </div>
-    </div>
-  `;
+      `;
 
     modal.innerHTML = html;
     document.body.appendChild(modal);
 
-    // Sélection des éléments de la modale
     const closeButton = modal.querySelector(".close");
 
-    // Affichage de la modale
     modal.style.display = "flex";
 
-    // Fermeture en cliquant sur la croix
     closeButton.addEventListener("click", () => modal.remove());
 
-    // Fermeture en cliquant en dehors de la modale
     window.addEventListener(
       "click",
       (event) => {
         if (event.target === modal) modal.remove();
       },
-      { once: true }, // le listener ne se déclenche qu'une fois
+      { once: true },
     );
   }
 
@@ -1884,41 +1960,45 @@ export class Game {
     const houseContainer = document.getElementById(`player_${playerId}_house_ghost`);
     if (!houseContainer) return;
 
-    // 1️⃣ Créer le container destination AVANT l'animation
-    const left = Math.random() * 50; // % de largeur du container
-    const top = Math.random() * 70; // % de hauteur du container
+    // 1️⃣ Déterminer l'index disponible
+    const existing = houseContainer.querySelectorAll(".ghost_single_container").length;
+    const maxCols = 2;
+    const maxRows = 3;
+    if (existing >= maxCols * maxRows) return;
+
+    const colIndex = existing % maxCols;
+    const rowIndex = Math.floor(existing / maxCols);
+
+    // placer le container à destination avec petit offset aléatoire
+    const left = colIndex * 50 + Math.random() * 10 - 5;
+    const top = rowIndex * 33.33 + Math.random() * 10 - 5;
 
     const ghostContainerHTML = `
-        <div class="ghost_single_container"
-            id="ghost_container_${ghostId}"
-            style="left: ${left}%; top: ${top}%;">
-        </div>`;
+    <div class="ghost_single_container"
+         id="ghost_container_${ghostId}"
+         style="left: ${left}%; top: ${top}%; position: absolute;">
+    </div>`;
     houseContainer.insertAdjacentHTML("beforeend", ghostContainerHTML);
 
     const destinationContainer = document.getElementById(`ghost_container_${ghostId}`);
     if (!destinationContainer) return;
 
-    // 2️⃣ Créer le sprite fantôme dans l'élément de départ
+    // 2️⃣ Créer le sprite dans l'élément de départ
     startElement.insertAdjacentHTML(
       "beforeend",
-      `
-      <div id="ghost_${ghostId}" class="ghost_sprites"
-          style="background-position: -${col}00% -${row}00%;">
-      </div>
-      `,
+      `<div id="ghost_${ghostId}" class="ghost_sprites"
+          style="background-position: -${col}00% -${row}00%;"></div>`,
     );
 
     const spriteElement = document.getElementById(`ghost_${ghostId}`);
     if (!spriteElement) return;
 
-    // 3️⃣ Animation vers le container déjà existant
+    // 3️⃣ Animation
     try {
       await this.animationManager.slideAndAttach(spriteElement, destinationContainer, 800);
 
-      // 4️⃣ Une fois à destination, on place le sprite dans son container
+      // 4️⃣ Une fois à destination, placer le sprite dans son container
       destinationContainer.appendChild(spriteElement);
-
-      // (optionnel) réinitialiser left/top pour être exact dans le container
       spriteElement.style.left = "0";
       spriteElement.style.top = "0";
     } catch (err) {

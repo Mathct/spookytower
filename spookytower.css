@@ -124,6 +124,12 @@ background-repeat: no-repeat;
   src: local('AktivGrotesk-Regular'), url(img/AktivGrotesk-Regular.ttf);
 }
 
+@font-face {
+  font-family: 'Poster_Cut_Neue_Regular';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Poster_Cut_Neue_Regular'), url(img/Poster_Cut_Neue_Regular.otf);
+}
 
 /*//////////////////////////////////////
 // ____                _ _            //
@@ -143,6 +149,14 @@ background-repeat: no-repeat;
   flex-wrap: wrap;
 
 }
+
+  .tooltip_bigtitle {
+    font-family: Poster_Cut_Neue_Regular;
+    font-size: 24px;
+    text-decoration: underline;
+    color:#61c2cb;
+  }
+
 
 
 /*  ____  _                             ____                  _  */
@@ -205,10 +219,24 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 .ic_clock { background-position: -100% -100% }
 .ic_pet { background-position: -200% -100% }
 .ic_replay { background-position: -300% -100% }
+.ic_empty { background-position: -400% -100% }
 .ic_flip8 { background-position: 0% -200% }
 .ic_flip9 { background-position: -100% -200% }
 .ic_draw8 { background-position: -200% -200% }
 .ic_draw_any { background-position: -300% -200% }
+
+.logo {
+  width: 48px;
+  height: 96px;
+  background-image: url("img/ST_logos.png");
+  background-size: 200% 100%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.lo_reroll { background-position: 0% 0% }
+.lo_clock { background-position: -100% 0% }
+
 
  /* animation de flip */
 .temp-reroll-card {
@@ -673,6 +701,44 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 
+
+
+
+.effect {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  width: 45%;
+
+  flex: 0 0 auto;
+}
+
+.bonus_effects .effect {
+  min-height: 96px; /* correspond à la hauteur de tes logos */
+}
+
+/* Mobile portrait : une seule colonne */
+@media (max-width: 600px) {
+  .effect {
+    width: 95%;  /* 1 colonne */
+  }
+}
+
+
+.effect_desc {
+  flex: 1;
+  color :#2f4a93;
+}
+
+.bonus_effects,
+.other_effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 30px;
+}
+
+
 /*////////////////////////////////////////
 // ____                _ _              //
 //|  _ \ ___ _ __   __| (_)_ __   __ _  //
@@ -743,7 +809,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .modal-content {
   position: relative;
-    background: #c0d9fa;
+    background: #f6ecd0;
     padding: 10px;
     border-radius: 10px;
     width: 70%;
