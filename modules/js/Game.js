@@ -726,8 +726,14 @@ export class Game {
           </div>
 
           <div class="b-board" id="bottom_board_${player.id}">
-              <div class="icon ic_reroll_${player.reroll ?? 1}" id="icon_reroll_${player.id}" title="${_("Reroll")}"></div>
+            <div class="icon ic_reroll_${player.reroll ?? 1}" id="icon_reroll_${player.id}" title="${_("Reroll")}"></div>
+
+              <div class="amulet-container" id="amulet_${player.id}">
+                <div class="amulets amulet_1 opa_30"></div>
+                <div class="amulets amulet_2 opa_30"></div>
+                <div class="amulets amulet_3 opa_30"></div>
             </div>
+          </div>
           `,
       );
     });
@@ -1140,6 +1146,12 @@ export class Game {
         playerCounter: "player_artefacts",
         playerId: player.id,
       });
+
+      const n = artefact_counter.getValue();
+
+      for (let i = 1; i <= n; i++) {
+        document.querySelector(`#amulet_${player.id} .amulet_${i}`)?.classList.remove("opa_30");
+      }
 
       const clue_counter = new ebg.counter();
       clue_counter.create(`clue_counter_${player.id}`, {
@@ -1647,7 +1659,11 @@ export class Game {
       const iconElt = document.getElementById(iconId);
 
       const panel_artefacts = document.getElementById(`icon_artefact_${playerId}`);
-      await this.animationManager.slideOutAndDestroy(iconElt, panel_artefacts, 600, 0);
+      this.animationManager.slideOutAndDestroy(iconElt, panel_artefacts, 600, 0).then(() => {
+        // enlever opa_30 sur la prochaine amulette encore opaque
+        const nextAmulet = Array.from(document.querySelectorAll(`#amulet_${playerId} .amulets`)).find((el) => el.classList.contains("opa_30"));
+        if (nextAmulet) nextAmulet.classList.remove("opa_30");
+      });
 
       await new Promise((r) => setTimeout(r, 80));
     }
