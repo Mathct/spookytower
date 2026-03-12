@@ -2085,62 +2085,72 @@ class Pending extends Game
 
         $ghosts_win = [];
 
+        $ghost = '';
 
         if ($count_park == 5) {
             if ($count_clues >= 1) {
                 $ghosts_win[] = $tableau_order[0];
+                $ghost = 'park_'.$tableau_order[0];
                 game::$instance->player_clues->inc($this->player_id, -1);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_1'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 3) {
                 $ghosts_win[] = $tableau_order[1];
+                $ghost = 'park_'.$tableau_order[1];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_2'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 5) {
                 $ghosts_win[] = $tableau_order[2];
+                $ghost = 'park_'.$tableau_order[2];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_3'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 7) {
                 $ghosts_win[] = $tableau_order[3];
+                $ghost = 'park_'.$tableau_order[3];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 10) {
                 $ghosts_win[] = $tableau_order[4];
+                $ghost = 'park_'.$tableau_order[4];
                 game::$instance->player_clues->inc($this->player_id, -3);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
         }
 
         if ($count_park == 4) {
             if ($count_clues >= 2) {
                 $ghosts_win[] = $tableau_order[1];
+                $ghost = 'park_'.$tableau_order[1];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_2'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 4) {
                 $ghosts_win[] = $tableau_order[2];
+                $ghost = 'park_'.$tableau_order[2];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_3'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 6) {
                 $ghosts_win[] = $tableau_order[3];
+                $ghost = 'park_'.$tableau_order[3];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 9) {
                 $ghosts_win[] = $tableau_order[4];
+                $ghost = 'park_'.$tableau_order[4];
                 game::$instance->player_clues->inc($this->player_id, -3);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
         }
 
@@ -2148,20 +2158,23 @@ class Pending extends Game
 
             if ($count_clues >= 2) {
                 $ghosts_win[] = $tableau_order[2];
+                $ghost = 'park_'.$tableau_order[2];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_3'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 4) {
                 $ghosts_win[] = $tableau_order[3];
+                $ghost = 'park_'.$tableau_order[3];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 7) {
                 $ghosts_win[] = $tableau_order[4];
+                $ghost = 'park_'.$tableau_order[4];
                 game::$instance->player_clues->inc($this->player_id, -3);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
         }
 
@@ -2169,14 +2182,16 @@ class Pending extends Game
 
             if ($count_clues >= 2) {
                 $ghosts_win[] = $tableau_order[3];
+                $ghost = 'park_'.$tableau_order[3];
                 game::$instance->player_clues->inc($this->player_id, -2);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_4'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
 
             if ($count_clues >= 5) {
                 $ghosts_win[] = $tableau_order[4];
+                $ghost = 'park_'.$tableau_order[4];
                 game::$instance->player_clues->inc($this->player_id, -3);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
         }
 
@@ -2184,8 +2199,9 @@ class Pending extends Game
 
             if ($count_clues >= 3) {
                 $ghosts_win[] = $tableau_order[4];
+                $ghost = 'park_'.$tableau_order[4];
                 game::$instance->player_clues->inc($this->player_id, -3);
-                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = 'park_5'");
+                game::$instance->DbQuery("UPDATE ghost set position = '{$this->player_id}' WHERE name = '{$ghost}'");
             }
         }
 
