@@ -872,7 +872,7 @@ export class Game {
     // ---- Injecter la carte + compteur à l'intérieur ----
     const diceHTML = `
         <div class="card_item building_cards" 
-             style="background-position: -1100% -500%;" title="Dice Track">
+             style="background-position: -1000% -500%;" title="Dice Track">
         </div>
     `;
     diceTrackSlot.insertAdjacentHTML("beforeend", diceHTML);
@@ -1107,8 +1107,8 @@ export class Game {
       const rowIndex = Math.floor(existing / maxCols);
 
       // on répartit dans la cellule avec un petit décalage aléatoire (±5%)
-      const left = colIndex * 50 + Math.random() * 10 - 5; // centre dans la cellule
-      const top = rowIndex * 33.33 + Math.random() * 10 - 5;
+      const left = colIndex * 50 + Math.random() * 2 - 1; // centre dans la cellule
+      const top = rowIndex * 33.33 + Math.random() * 2 - 1;
 
       const ghostContainerHTML = `
       <div class="ghost_single_container"
@@ -1524,7 +1524,7 @@ export class Game {
     delete icon.dataset.flipping;
   }
 
-  async animFlipPark() {
+  async animFlipPark(versoCol) {
     const park = document.getElementById("park_active");
     if (!park) return;
 
@@ -1537,10 +1537,6 @@ export class Game {
 
     // Changer l'id de la carte avant le flip
     park.id = "park_active_verso";
-
-    // Calcul du verso
-    const nb_cards = parseInt(this.gamedatas.deck_park);
-    const versoCol = this.gamedatas.park_order[5 - nb_cards];
 
     // Durée demi-flip : 0 si instantané, 200ms sinon
     const half = this.instantaneousMode ? 0 : 200;
@@ -1897,6 +1893,8 @@ export class Game {
       const bonuses = this.gamedatas.building_cards[card_idx] || [];
       const parent = cardEl.parentElement;
 
+      console.log("Bonuses", bonuses);
+
       // 1️⃣ Animation disparition
       cardEl.style.transition = "transform 400ms ease, opacity 400ms ease";
       cardEl.style.transform = "scale(0)";
@@ -1950,10 +1948,10 @@ export class Game {
           this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
         } else if (ic == "ghost") {
           // on récupère l'id du fantôme et on lance l'anim
-          const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
+          const ghost_idx = parseInt(bonus.split("_")[1]);
           const ghost_id = `ghost_${ghost_idx}`;
-
-          await this.moveGhostToHouse(ghost_id, parent, playerId);
+          console.log("ghost Won");
+          await this.moveGhostToHouse(bonus, parent, playerId);
         }
       }
 
@@ -1967,7 +1965,9 @@ export class Game {
   }
 
   async moveGhostToHouse(ghostId, startElement, playerId) {
+    console.log("ghostId", ghostId);
     const index = this.gamedatas.ghost_assets.indexOf(ghostId);
+    console.log("index", index);
     if (index === -1) return;
 
     const col = index % 7;
@@ -1986,8 +1986,8 @@ export class Game {
     const rowIndex = Math.floor(existing / maxCols);
 
     // placer le container à destination avec petit offset aléatoire
-    const left = colIndex * 50 + Math.random() * 10 - 5;
-    const top = rowIndex * 33.33 + Math.random() * 10 - 5;
+    const left = colIndex * 50 + Math.random() * 2 - 1;
+    const top = rowIndex * 33.33 + Math.random() * 2 - 1;
 
     const ghostContainerHTML = `
     <div class="ghost_single_container"
@@ -1999,6 +1999,8 @@ export class Game {
     const destinationContainer = document.getElementById(`ghost_container_${ghostId}`);
     if (!destinationContainer) return;
 
+    console.log("MGTH col", col);
+    console.log("MGTH row", row);
     // 2️⃣ Créer le sprite dans l'élément de départ
     startElement.insertAdjacentHTML(
       "beforeend",
@@ -2007,6 +2009,7 @@ export class Game {
     );
 
     const spriteElement = document.getElementById(`ghost_${ghostId}`);
+    console.log("MGTH spriteElement", spriteElement);
     if (!spriteElement) return;
 
     // 3️⃣ Animation
@@ -2078,6 +2081,7 @@ export class Game {
   }
 
   async animFlipSoloStack(stackId, cardsInfos, playerId) {
+    console.log("animFlipSolo");
     const stack = document.getElementById(`player_${playerId}_stack_${stackId}`);
     if (!stack) return;
 
@@ -2127,6 +2131,7 @@ export class Game {
   }
 
   async animGetRewardsSolo(no_house, cardsInfos, playerId) {
+    console.log("animGetRewardsSolo");
     const river = document.getElementById("river_id");
     const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
 
@@ -2134,6 +2139,8 @@ export class Game {
 
     this.safeClass(".selectable", "remove", "selectable");
     this.safeClass(".selected", "remove", "selected");
+
+    console.log("cards length solo", cards.length);
 
     if (!cards.length) {
       stack.classList.add("empty");
@@ -2203,7 +2210,10 @@ export class Game {
         await this.moveGhostToHouse(ghost_id, parent, playerId);
       }
     }
-
+    // 3️⃣ Marquer la pile comme vide
+    if (cards.length == 1) {
+      stack.classList.add("empty");
+    }
     delete stack.dataset.animating;
   }
 
@@ -2390,8 +2400,10 @@ export class Game {
       return;
     }
 
-    // 1️⃣ Vérifier le compteur AVANT suppression
+    // 1️⃣ Vérifier le compteur APRES suppression
     const counterValue = this.topRowCounters.deck_park.getValue();
+
+    console.log("ARP park counterValue", counterValue);
 
     if (counterValue > 0) {
       const counterDiv = document.getElementById("deck_park_counter");
@@ -2400,15 +2412,18 @@ export class Game {
 
         // Détermination du nombre de cartes à supprimer
         let numClues;
-        if (counterValue >= 5) {
-          col = 5;
-          numClues = 3;
-        } else if (counterValue >= 2 && counterValue <= 4) {
-          col = 6;
+        if (counterValue == 4) {
+          numClues = 1;
+        } else if (counterValue >= 1 && counterValue <= 3) {
           numClues = 2;
         } else {
+          numClues = 3;
+        }
+
+        if (counterValue >= 2 && counterValue <= 4) {
+          col = 6;
+        } else {
           col = 7;
-          numClues = 1;
         }
 
         // Calcul position pour la nouvelle carte
@@ -2426,6 +2441,7 @@ export class Game {
         );
 
         // 🔹 Suppression des indices correspondants
+        console.log("ARP park numClues", numClues);
         for (let i = 0; i < numClues; i++) {
           await this.animRemoveClue(playerId);
         }
@@ -2591,60 +2607,6 @@ export class Game {
     //await this.showRiver();
 
     await this.animGetRewards(args.no_house, args.cards, args.player_id);
-
-    // cartes 1
-    //  bonus flip9+   : on déplace dans le conteneur si on a des cartes 9+
-    //  le fantôme     : on envoie vers le panel joueur et on incrémente
-
-    // cartes 2
-    //  des clock      : on déplace dans le conteneur
-    //  DEMANDER si les double clock s'activent
-    //  un par un ou si on tourne de deux secteurs d'un coup.
-
-    // cartes 3
-    //  des grimoires  : on déplace dans le conteneur
-    //  une torche     : on déplace dans le conteneur
-
-    // cartes 4
-    //  des cartes Pet : on déplace dans le conteneur si 0 sur la table et 2 chez 2 joueurs différents
-    //  sur la table, on envoie vers le panel joueur et on incrémente pet
-
-    //  un clock       : on déplace dans le conteneur
-
-    // cartes 5
-    //  des cartes flip8- : on déplace dans le conteneur si on a des cartes 8-
-    //  des torches
-
-    // cartes 6
-    //  des cartes draw8-  : on déplace dans le conteneur s'il reste des cartes 8- à piocher
-    //  des torches        : on déplace dans le conteneur
-    //  un clock           : on déplace dans le conteneur
-
-    // cartes 7
-    //  le fantôme         : on envoie vers le panel joueur et on incrémente
-    //  des torches        : on déplace dans le conteneur
-    //  des clocks         : on déplace dans le conteneur
-
-    // cartes 8
-    //  deux fantômes      : on envoie vers le panel joueur et on incrémente
-    //  deux pets          : on déplace dans le conteneur
-    //  un replay          : on envoie vers le panel joueur et on anime la rotation
-
-    // cartes 9
-    //  deux fantômes      : on envoie vers le panel joueur et on incrémente
-    //  deux pets          : on déplace dans le conteneur
-    //  une torche         : on déplace dans le conteneur
-
-    // cartes 10
-    //  cinq fantômes      : on envoie vers le panel joueur et on incrémente
-
-    // cartes 11
-    //  quatre fantômes      : on envoie vers le panel joueur et on incrémente
-    //  un pet               : on déplace dans le conteneur
-    //  un grimoire          : on déplace dans le conteneur
-
-    // cartes 12
-    //  trois fantômes      : on envoie vers le panel joueur et on incrémente
   }
 
   async notif_flipCard(args) {
@@ -2680,12 +2642,19 @@ export class Game {
     // on envoie vers le panel joueur et on incrémente
     // on décrémente les torches et le compteur
     console.log("notif_goToThePark", args);
+    console.log("notif_goToThePark", args.ghosts.length);
 
     for (let i = 0; i < args.ghosts.length; i++) {
-      await this.animFlipPark();
+      console.log("iiiii", i);
+      await this.animFlipPark(Number(args.ghosts[i]) - 1);
 
-      const ghost_id = `ghost_${Number(args.ghosts[i]) + 20}`;
+      //const ghost_id = `ghost_${Number(args.ghosts[i]) + 20}`;
+
+      const ghost_id = `park_${Number(args.ghosts[i])}`;
+
+      console.log("ghost_id", ghost_id);
       const parkElt = document.getElementById("deck_park");
+
       await this.moveGhostToHouse(ghost_id, parkElt, args.player_id);
 
       await this.animRemovePark(args.player_id);

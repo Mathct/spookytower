@@ -778,7 +778,7 @@ class Pending extends Game
             }
 
 
-            $clue = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clue'");
+            $clue = game::$instance->player_clues->get($this->player_id);
             $count_park = game::$instance->deck_park->get();
 
             if (($clue >= 1 && $count_park == 5) || ($clue >= 2 && $count_park >= 2 && $count_park <= 4) || ($clue >= 3 && $count_park == 1)) {
