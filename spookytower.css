@@ -260,25 +260,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 
-.amulet-container {
-  position: relative;
-  width: 48px;
-  height: 48px;
-}
 
-.amulets {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 48px;
-  height: 48px;
-  background-image: url("img/ST_amulets.png");
-  background-size: 300% 100%;
-}
-
-.amulet_1 { background-position: -0% -0%; }
-.amulet_2 { background-position: -100% -0%; }
-.amulet_3 { background-position: -200% -0%; }
 
 /*////////////////////////////////
 // ____                     _ _ //
@@ -433,12 +415,17 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .river_icon {
   width: calc(100px * var(--st_scale));
-  height: calc(100px * var(--st_scale));;
+  height: calc(100px * var(--st_scale));
   background-image: url("img/ST_icons.png");
   background-size: 500% 300%;
 }
 
-
+.house_icon {
+  width: calc(80px * var(--st_scale));
+  height: calc(80px * var(--st_scale));
+  background-image: url("img/ST_icons.png");
+  background-size: 500% 300%;
+}
 
 /* ================= CENTER GRID 5x3 ================= */
 #table_central_grid {
@@ -572,8 +559,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 /* house slot et house ghosts */
-.house_slot,
-.house_ghosts {
+.house_slot {
   align-self: flex-start; /* collé en haut du player_board */
 }
 
@@ -658,50 +644,80 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   border-radius: 4px;
 }
 
-.house_slot .house_clues {
+.house_slot .house_items {
   display: flex;
   flex-direction: row;
-  gap: 20px;
+  gap: 5px;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: calc(var(--card_h) * 0.37);
 }
 
-.house_slot .house_ghosts {
+.house_slot .house_clues {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  flex-direction: row;
+  gap: 5px;
   align-items: center;
   justify-content: center;
+  width: calc(var(--card_h) * 0.60);
+  height: calc(var(--card_h) * 0.37);
 }
 
-.ghost_single_container {
+
+
+.house_slot .house_amulet {
+  position: relative;
+  width: calc(var(--card_h) * 0.37);
+  height: calc(var(--card_h) * 0.37);
+}
+
+.house_ghosts {
+  display: flex;
+  flex-direction: row;      /* ligne principale */
+  flex-wrap: wrap;          /* wrap automatique si trop de fantômes */
+  gap: 5px;                 /* écart constant entre fantômes */
+  align-content: flex-start;
+  justify-content: flex-start;
+}
+
+
+
+
+
+.amulets {
   position: absolute;
-  width: calc(var(--card_w) * 0.5);
-  height: calc(var(--card_h) * 0.5);
+  top: 0;
+  left: 0;
+  width: calc(var(--card_h) * 0.37);
+  height: calc(var(--card_h) * 0.37);
+  background-image: url("img/ST_amulets.png");
+  background-size: 300% 100%;
+}
+
+.amulet_1 { background-position: -0% -0%; }
+.amulet_2 { background-position: -100% -0%; }
+.amulet_3 { background-position: -200% -0%; }
+
+
+
+.ghost_single_container {
+  position: relative;
+  width: calc(var(--card_w) * 0.45);
+  height: calc(var(--card_h) * 0.45);
 }
 
 
 .ghost_sprites {
-  position: absolute;
+  position: relative;
   background-image: url("img/ST_ghosts.png");
   background-size: 700% 400%;
-  width: calc(var(--card_w) * 0.5);
-  height: calc(var(--card_h) * 0.5);
+  width: calc(var(--card_w) * 0.45);
+  height: calc(var(--card_h) * 0.45);
   pointer-events: none;
-
-  /*animation: ghostFloat 6s ease-in-out infinite alternate;*/
 }
 
-@keyframes ghostFloat {
-  0%   { transform: translate(0px, 0px); }
-  20%  { transform: translate(8px, -25px); }
-  40%  { transform: translate(-10px, -40px); }
-  60%  { transform: translate(12px, -15px); }
-  80%  { transform: translate(-6px, 20px); }
-  100% { transform: translate(5px, 35px); }
-}
+
 
 .house_slot .house_cards {
   width: 100%;
@@ -724,14 +740,11 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 
 
-
 .effect {
   display: flex;
   align-items: center;
   gap: 10px;
-
   width: 45%;
-
   flex: 0 0 auto;
 }
 

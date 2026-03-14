@@ -727,12 +727,6 @@ export class Game {
 
           <div class="b-board" id="bottom_board_${player.id}">
             <div class="icon ic_reroll_${player.reroll ?? 1}" id="icon_reroll_${player.id}" title="${_("Reroll")}"></div>
-
-              <div class="amulet-container" id="amulet_${player.id}">
-                <div class="amulets amulet_1 opa_30"></div>
-                <div class="amulets amulet_2 opa_30"></div>
-                <div class="amulets amulet_3 opa_30"></div>
-            </div>
           </div>
           `,
       );
@@ -996,17 +990,40 @@ export class Game {
       playersArea.insertAdjacentHTML(
         "beforeend",
         `
-      <div class="player_board" id="player_board_${player.id}" style="border-color: #${player.color};background-color: #${player.color}22;">
-        <div class="building_columns">
-          ${[...Array(12)].map((_, i) => `<div class="building_stack empty clickable" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
+  <div class="player_board" id="player_board_${player.id}" style="border-color: #${player.color};background-color: #${player.color}22;">
+    
+    <div class="building_columns">
+      ${[...Array(12)].map((_, i) => `<div class="building_stack empty clickable" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
+    </div>
+
+    <div class="house_slot" id="player_${player.id}_house_slot">
+      
+      <div class="house_items" id="player_${player.id}_house_items">
+
+        <div class="house_clues" id="player_${player.id}_house_clues" title="Clues"></div>
+
+        <div class="house_amulet" id="amulet_${player.id}" title="Artefacts">
+
+            <div class="amulets amulet_1 opa_30"></div>
+            <div class="amulets amulet_2 opa_30"></div>
+            <div class="amulets amulet_3 opa_30"></div>
+
         </div>
-        <div class="house_slot" id="player_${player.id}_house_slot">
-          <div class="house_clues" id="player_${player.id}_house_clues" title="Clues"></div>
-          <div class="house_cards" id="player_${player.id}_house_card" ></div>
-        </div>
-        <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="Ghosts Captured"></div>
-        <div class="player_label" id="player_${player.id}_label" style="color: #${player.color};background-color: #${player.color}88;"><div class="player_name_span">${player.name}</div></div>
-      </div>`,
+
+      </div>
+
+      <div class="house_cards" id="player_${player.id}_house_card"></div>
+
+    </div>
+
+    <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="Ghosts Captured"></div>
+
+    <div class="player_label" id="player_${player.id}_label" style="color: #${player.color};background-color: #${player.color}88;">
+      <div class="player_name_span">${player.name}</div>
+    </div>
+
+  </div>
+  `,
       );
 
       // maison
@@ -1077,7 +1094,7 @@ export class Game {
       if (nb_clues > 0) {
         for (let i = 0; i < nb_clues; i++) {
           const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
-          const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
+          const html = `<div id="${iconId}" class="house_icon ic_clue"></div>`;
 
           const house_clues = document.getElementById(`player_${player.id}_house_clues`);
 
@@ -1094,32 +1111,24 @@ export class Game {
       const container = document.getElementById(`player_${ghost.position}_house_ghost`);
       if (!container) return;
 
+      const ghostContainer = document.createElement("div");
+      ghostContainer.id = `ghost_container_${ghost.id}`;
+      ghostContainer.dataset.type = ghost.name.startsWith("pet") ? "pet" : "normal";
+      ghostContainer.className = "ghost_single_container";
+
+      if (ghostContainer.dataset.type === "pet") {
+        container.prepend(ghostContainer);
+      } else {
+        container.appendChild(ghostContainer);
+      }
+
       const col = (ghost.id - 1) % 7;
       const row = Math.floor((ghost.id - 1) / 7);
-
-      const maxCols = 2;
-      const maxRows = 3;
-      const existing = container.querySelectorAll(".ghost_single_container").length;
-      if (existing >= maxCols * maxRows) return;
-
-      // position dans la grille
-      const colIndex = existing % maxCols;
-      const rowIndex = Math.floor(existing / maxCols);
-
-      // on répartit dans la cellule avec un petit décalage aléatoire (±5%)
-      const left = colIndex * 50 + Math.random() * 2 - 1; // centre dans la cellule
-      const top = rowIndex * 33.33 + Math.random() * 2 - 1;
-
-      const ghostContainerHTML = `
-      <div class="ghost_single_container"
-           style="left: ${left}%; top: ${top}%; position: absolute;">
-        <div id="ghost_${ghost.name}" class="ghost_sprites"
-             style="background-position: -${col}00% -${row}00%;">
-        </div>
-      </div>
-    `;
-
-      container.insertAdjacentHTML("beforeend", ghostContainerHTML);
+      ghostContainer.insertAdjacentHTML(
+        "beforeend",
+        `<div id="ghost_${ghost.id}" class="ghost_sprites"
+           style="background-position: -${col}00% -${row}00%;"></div>`,
+      );
     });
   }
 
@@ -1205,7 +1214,7 @@ export class Game {
       });
 
       this.tableBuildingCounters[i] = counter;
-      console.log("tablebuildingcounters", this.tableBuildingCounters);
+
       if (this.tableBuildingCounters[i].current_value == 0) {
         this.safeClass(`table_building_card_${i}`, "add", "empty");
       }
@@ -1965,61 +1974,45 @@ export class Game {
   }
 
   async moveGhostToHouse(ghostId, startElement, playerId) {
-    console.log("ghostId", ghostId);
+    const houseContainer = document.getElementById(`player_${playerId}_house_ghost`);
+    if (!houseContainer) return;
+    // Type du ghost
+    const ghostType = ghostId.toString().startsWith("pet_") ? "pet" : "normal";
+
     const index = this.gamedatas.ghost_assets.indexOf(ghostId);
-    console.log("index", index);
     if (index === -1) return;
+
+    // Créer le container
+    const ghostContainer = document.createElement("div");
+    ghostContainer.id = `ghost_container_${index}`;
+    ghostContainer.dataset.type = ghostType;
+    ghostContainer.className = "ghost_single_container";
+
+    if (ghostType === "pet") {
+      houseContainer.prepend(ghostContainer);
+    } else {
+      houseContainer.appendChild(ghostContainer);
+    }
+
+    // ✅ Utiliser le bon index dans ghost_assets
 
     const col = index % 7;
     const row = Math.floor(index / 7);
 
-    const houseContainer = document.getElementById(`player_${playerId}_house_ghost`);
-    if (!houseContainer) return;
-
-    // 1️⃣ Déterminer l'index disponible
-    const existing = houseContainer.querySelectorAll(".ghost_single_container").length;
-    const maxCols = 2;
-    const maxRows = 3;
-    if (existing >= maxCols * maxRows) return;
-
-    const colIndex = existing % maxCols;
-    const rowIndex = Math.floor(existing / maxCols);
-
-    // placer le container à destination avec petit offset aléatoire
-    const left = colIndex * 50 + Math.random() * 2 - 1;
-    const top = rowIndex * 33.33 + Math.random() * 2 - 1;
-
-    const ghostContainerHTML = `
-    <div class="ghost_single_container"
-         id="ghost_container_${ghostId}"
-         style="left: ${left}%; top: ${top}%; position: absolute;">
-    </div>`;
-    houseContainer.insertAdjacentHTML("beforeend", ghostContainerHTML);
-
-    const destinationContainer = document.getElementById(`ghost_container_${ghostId}`);
-    if (!destinationContainer) return;
-
-    console.log("MGTH col", col);
-    console.log("MGTH row", row);
-    // 2️⃣ Créer le sprite dans l'élément de départ
+    // Créer le sprite correctement
     startElement.insertAdjacentHTML(
       "beforeend",
-      `<div id="ghost_${ghostId}" class="ghost_sprites"
-          style="background-position: -${col}00% -${row}00%;"></div>`,
+      `<div id="ghost_${index}" class="ghost_sprites"
+       style="background-position: -${col}00% -${row}00%;"></div>`,
     );
 
-    const spriteElement = document.getElementById(`ghost_${ghostId}`);
-    console.log("MGTH spriteElement", spriteElement);
+    const spriteElement = document.getElementById(`ghost_${index}`);
     if (!spriteElement) return;
 
-    // 3️⃣ Animation
+    // Animation vers le container
     try {
-      await this.animationManager.slideAndAttach(spriteElement, destinationContainer, 800);
-
-      // 4️⃣ Une fois à destination, placer le sprite dans son container
-      destinationContainer.appendChild(spriteElement);
-      spriteElement.style.left = "0";
-      spriteElement.style.top = "0";
+      await this.animationManager.slideAndAttach(spriteElement, ghostContainer, 800);
+      ghostContainer.appendChild(spriteElement);
     } catch (err) {
       console.error("Animation moveGhostToHouse error:", err);
     }
