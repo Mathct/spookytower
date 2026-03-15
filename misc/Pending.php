@@ -2,14 +2,14 @@
 
 namespace Bga\Games\spookytower;   // ATTENTION NOM DU JEU
 
-require_once 'PendingConfirm.php'; // ATTENTION
+//require_once 'PendingConfirm.php'; // ATTENTION
 
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\NotificationMessage;
 
 class Pending extends Game
 {
-    use PendingConfirmTrait; // ATTENTION TRAIT
+    //use ConfirmPendingTrait; // ATTENTION TRAIT
 
     public $player_id;
     public $player_no;
@@ -29,9 +29,8 @@ class Pending extends Game
         $this->player_color = $p['player_color'];
 
         /// PREFERENCE DE CONFIRMATION
-        // $sql = "SELECT pgp_value FROM bga_user_preferences WHERE pgp_player = '{$this->player_id}' AND pgp_preference_id = 100";
-        // $this->player_pref_confirm = game::$instance->getUniqueValueFromDB($sql);
-        $this->player_pref_confirm = game::$instance->userPreferences->get($this->player_id, 100);
+        $sql = "SELECT pgp_value FROM bga_user_preferences WHERE pgp_player = '{$this->player_id}' AND pgp_preference_id = 100";
+        $this->player_pref_confirm = game::$instance->getUniqueValueFromDB($sql);
     }
 
     /*
@@ -149,9 +148,9 @@ class Pending extends Game
             $btn_take = 1;
         }
 
-        // if ($btn_take == 1) {
-        //     $ret['buttons'][] = 'take_card_btn';
-        // }
+        if ($btn_take == 1) {
+            $ret['buttons'][] = 'take_card_btn';
+        }
 
 
         //SELECT HOUSE
@@ -168,9 +167,9 @@ class Pending extends Game
             $btn_flip = 1;
         }
 
-        // if ($btn_flip == 1) {
-        //     $ret['buttons'][] = 'flip_cards_btn';
-        // }
+        if ($btn_flip == 1) {
+            $ret['buttons'][] = 'flip_cards_btn';
+        }
 
 
         //REROLL DICE
@@ -191,16 +190,63 @@ class Pending extends Game
 
     function ChooseAction($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
+        ///////////////////////////////////////////////////////////////////////////////////////
+        //SI POUR X RAISONS LE JOUEUR ARRIVE A CLICKER SUR UN DES BOUTONS SANS SELECTION (en modifiant sur l'inspecteur)
+        ///////////////////////////////////////////////////////////////////////////////////////
 
-        if ($this->player_pref_confirm == 1) {
-        
+        if (($varg1 == 'flip_cards_btn' || $varg1 == 'take_card_btn') && $varg2 == '') {
+            game::$instance->addPending($this->player_id, "ChooseAction");
+        }
+
         ///////////////////////////////////////////////////////////////////////////////////////
         //REROLL DICE TOKEN SI TOKEN OK
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        if ($varg1 == 'reroll_dice_btn') {
-            
-            game::$instance->addPending($this->player_id, "Reroll");
+        elseif ($varg1 == 'reroll_dice_btn') {
+            game::$instance->DbQuery("UPDATE player set reroll = 0 WHERE player_id='{$this->player_id}'");
+
+            game::$instance->notify->all(
+                "flipReroll",
+                '',
+                [
+                    'player_id' => $this->player_id,
+
+                ]
+            );
+
+            $txt = clienttranslate('${player_name} uses ${log}');
+            game::$instance->notify->all(
+                "message",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'log' => $this->getLogs('reroll'),
+
+                ]
+            );
+
+            $rand_dice1 = bga_rand(1, 6);
+            $rand_dice2 = bga_rand(1, 6);
+            game::$instance->DbQuery("UPDATE other SET dice1 = $rand_dice1, dice2 = $rand_dice2");
+
+            $roll = [$rand_dice1, $rand_dice2];
+
+            $log1 = 'dice_' . $rand_dice1;
+            $log2 = 'dice_' . $rand_dice2;
+
+            $txt = clienttranslate('${player_name} rolls ${dice1} ${dice2}');
+            game::$instance->notify->all(
+                "rollDice",
+                $txt,
+                [
+                    'player_id' => $this->player_id,
+                    'dice1' => $this->getLogs($log1),
+                    'dice2' => $this->getLogs($log2),
+                    'roll' => $roll
+                ]
+            );
+
+            game::$instance->addPending($this->player_id, "ChooseAction");
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
@@ -286,10 +332,10 @@ class Pending extends Game
         // LE JOUEUR TAKE UNE CARTE
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        elseif (str_starts_with($varg1, "table_building_card")) {
+        elseif ($varg1 == 'take_card_btn') {
 
             //on recupere le numero du deck
-            [,,, $no_deck] = explode('_', $varg1);
+            [,,, $no_deck] = explode('_', $varg2);
             $deck = 'deck' . $no_deck;
 
             //on pick la carte et on recupere les info du pickcard (pour la card_id)
@@ -441,9 +487,9 @@ class Pending extends Game
         // LE JOUEUR FLIP UNE MAISON
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        elseif (str_starts_with($varg1, "player_")) {
+        elseif ($varg1 == 'flip_cards_btn') {
             //on recupere le numero de la maison
-            [,,, $no_house] = explode('_', $varg1);
+            [,,, $no_house] = explode('_', $varg2);
 
             $cards = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type ='{$no_house}'");
 
@@ -565,78 +611,6 @@ class Pending extends Game
                 game::$instance->addPending($this->player_id, "ActionsBonus");
             }
         }
-        }
-
-        if ($this->player_pref_confirm == 2) {
-            game::$instance->addPending($this->player_id, "ConfirmChooseAction", $varg1);
-        }
-    }
-
-    function argReroll($parg1, $parg2)
-    {
-        $ret = [];
-        $ret["selectable"] = [];
-        $ret["selected"] = [];
-        $ret['buttons'] = [];
-        $ret["function"] = "EndGame";
-        $ret['title'] = clienttranslate('${actplayer} rolls the dice');
-        $ret['titleyou'] = clienttranslate('${you} roll the dice');
-
-
-
-        return $ret;
-    }
-
-
-
-    function Reroll($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
-    {
-
-        game::$instance->DbQuery("UPDATE player set reroll = 0 WHERE player_id='{$this->player_id}'");
-
-        game::$instance->notify->all(
-            "flipReroll",
-            '',
-            [
-                'player_id' => $this->player_id,
-
-            ]
-        );
-
-        $txt = clienttranslate('${player_name} uses ${log}');
-        game::$instance->notify->all(
-            "message",
-            $txt,
-            [
-                'player_id' => $this->player_id,
-                'log' => $this->getLogs('reroll'),
-
-            ]
-        );
-
-        $rand_dice1 = bga_rand(1, 6);
-        $rand_dice2 = bga_rand(1, 6);
-        game::$instance->DbQuery("UPDATE other SET dice1 = $rand_dice1, dice2 = $rand_dice2");
-
-        $roll = [$rand_dice1, $rand_dice2];
-
-        $log1 = 'dice_' . $rand_dice1;
-        $log2 = 'dice_' . $rand_dice2;
-
-        $txt = clienttranslate('${player_name} rolls ${dice1} ${dice2}');
-        game::$instance->notify->all(
-            "rollDice",
-            $txt,
-            [
-                'player_id' => $this->player_id,
-                'dice1' => $this->getLogs($log1),
-                'dice2' => $this->getLogs($log2),
-                'roll' => $roll
-            ]
-        );
-
-        game::$instance->addPending($this->player_id, "ChooseAction");
-        
     }
 
 
@@ -741,9 +715,9 @@ class Pending extends Game
 
 
 
-        // if (count($ret["selectable"]) >= 1) {
-        //     $ret['buttons'][] = 'validate_bonus_btn';
-        // }
+        if (count($ret["selectable"]) >= 1) {
+            $ret['buttons'][] = 'validate_bonus_btn';
+        }
 
 
 
@@ -830,14 +804,12 @@ class Pending extends Game
 
             game::$instance->DbQuery("UPDATE actionpending set count = 0");
         } else {
-
-            if ($this->player_pref_confirm == 1) {
             ///////////////////////////////////////////////////////////////////////////////////////
             // FLIP CARD 8- ou 9+
             ///////////////////////////////////////////////////////////////////////////////////////
-            if (str_starts_with($varg1, 'player_')) {
+            if (str_starts_with($varg2, 'player_')) {
 
-                [,,, $no_house] = explode('_', $varg1);
+                [,,, $no_house] = explode('_', $varg2);
 
                 $cards = game::$instance->getObjectListFromDB("
                 SELECT 
@@ -1029,10 +1001,10 @@ class Pending extends Game
             ///////////////////////////////////////////////////////////////////////////////////////
             // TAKE CARD 8-
             ///////////////////////////////////////////////////////////////////////////////////////
-            if (str_starts_with($varg1, 'table_building_')) {
+            if (str_starts_with($varg2, 'table_building_')) {
 
                 //on recupere le numero du deck
-                [,,, $no_deck] = explode('_', $varg1);
+                [,,, $no_deck] = explode('_', $varg2);
                 $deck = 'deck' . $no_deck;
 
                 //on pick la carte et on recupere les info du pickcard (pour la card_id)
@@ -1129,7 +1101,7 @@ class Pending extends Game
             ///////////////////////////////////////////////////////////////////////////////////////
             // TURN CLOCK
             ///////////////////////////////////////////////////////////////////////////////////////
-            if (str_starts_with($varg1, 'clock_')) {
+            if (str_starts_with($varg2, 'clock_')) {
 
                 $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
                 $newclock = ($clock + 1) % 6;
@@ -1234,9 +1206,9 @@ class Pending extends Game
             ///////////////////////////////////////////////////////////////////////////////////////
             // TAKE PET
             ///////////////////////////////////////////////////////////////////////////////////////
-            if (str_starts_with($varg1, 'card_pet_')) {
+            if (str_starts_with($varg2, 'card_pet_')) {
 
-                [,, $no_pet] = explode('_', $varg1);
+                [,, $no_pet] = explode('_', $varg2);
 
                 $pet = 'pet' . $no_pet;
 
@@ -1262,7 +1234,7 @@ class Pending extends Game
                         $txt,
                         [
                             'player_id' => $this->player_id,
-                            'pet_id' => $varg1,
+                            'pet_id' => $varg2,
                             'log' => $this->getLogs('pet'),
                         ]
                     );
@@ -1274,7 +1246,7 @@ class Pending extends Game
                         $txt,
                         [
                             'player_id' => $this->player_id,
-                            'pet_id' => $varg1,
+                            'pet_id' => $varg2,
                             'opponent_id' => $opponent_infos['player_id'],
                             'log' => $this->getLogs('pet'),
                             'opponent' =>    [
@@ -1321,7 +1293,7 @@ class Pending extends Game
             ///////////////////////////////////////////////////////////////////////////////////////
             // GRIMOIRE
             ///////////////////////////////////////////////////////////////////////////////////////
-            if (str_starts_with($varg1, 'deck_grimoire')) {
+            if (str_starts_with($varg2, 'deck_grimoire')) {
 
                 // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
                 game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'grimoire'");
@@ -1349,14 +1321,6 @@ class Pending extends Game
                 );
 
                 game::$instance->addPending($this->player_id, "Grimoire");
-            }
-            }
-
-            if ($this->player_pref_confirm == 2) {
-            
-            game::$instance->addPending($this->player_id, "ConfirmActionsBonus", $varg1);
-         
-
             }
         }
     }
@@ -1578,6 +1542,9 @@ class Pending extends Game
             }
         }
 
+        if (count($ret["selectable"]) >= 1) {
+            $ret['buttons'][] = 'take_card_btn';
+        }
 
         return $ret;
     }
@@ -1601,7 +1568,7 @@ class Pending extends Game
             );
         } else {
             //on recupere le numero du deck
-            [,,, $no_deck] = explode('_', $varg1);
+            [,,, $no_deck] = explode('_', $varg2);
             $deck = 'deck' . $no_deck;
 
             //on pick la carte et on recupere les info du pickcard (pour la card_id)
@@ -1962,9 +1929,9 @@ class Pending extends Game
             }
         }
 
-        // if (count($ret["selectable"]) != 0) {
-        //     $ret['buttons'][] = 'take_grimoire_pet_btn';
-        // }
+        if (count($ret["selectable"]) != 0) {
+            $ret['buttons'][] = 'take_grimoire_pet_btn';
+        }
 
 
         return $ret;
@@ -1994,7 +1961,7 @@ class Pending extends Game
             }
         } else {
 
-            [,, $no_pet] = explode('_', $varg1);
+            [,, $no_pet] = explode('_', $varg2);
 
             $pet = 'pet' . $no_pet;
 
@@ -2020,7 +1987,7 @@ class Pending extends Game
                     $txt,
                     [
                         'player_id' => $this->player_id,
-                        'pet_id' => $varg1,
+                        'pet_id' => $varg2,
                         'log' => $this->getLogs('pet'),
                     ]
                 );
@@ -2032,7 +1999,7 @@ class Pending extends Game
                     $txt,
                     [
                         'player_id' => $this->player_id,
-                        'pet_id' => $varg1,
+                        'pet_id' => $varg2,
                         'opponent_id' => $opponent_infos['player_id'],
                         'log' => $this->getLogs('pet'),
                         'opponent' =>    [
@@ -2338,9 +2305,9 @@ class Pending extends Game
             }
         }
 
-        // if (count($ret["selectable"]) != 0) {
-        //     $ret['buttons'][] = 'take_pet_btn';
-        // }
+        if (count($ret["selectable"]) != 0) {
+            $ret['buttons'][] = 'take_pet_btn';
+        }
 
 
         return $ret;
@@ -2356,7 +2323,7 @@ class Pending extends Game
                 game::$instance->addPendingFirst($this->player_id, "PlayerTurn");
             }
         } else {
-            [,, $no_pet] = explode('_', $varg1);
+            [,, $no_pet] = explode('_', $varg2);
 
             $pet = 'pet' . $no_pet;
 
@@ -2382,7 +2349,7 @@ class Pending extends Game
                     $txt,
                     [
                         'player_id' => $this->player_id,
-                        'pet_id' => $varg1,
+                        'pet_id' => $varg2,
                         'log' => $this->getLogs('pet'),
                     ]
                 );
@@ -2394,7 +2361,7 @@ class Pending extends Game
                     $txt,
                     [
                         'player_id' => $this->player_id,
-                        'pet_id' => $varg1,
+                        'pet_id' => $varg2,
                         'opponent_id' => $opponent_infos['player_id'],
                         'log' => $this->getLogs('pet'),
                         'opponent' =>    [

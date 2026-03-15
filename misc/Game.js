@@ -102,9 +102,7 @@ class NormalTurn {
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
                 }),
-              { color: "primary",
-                autoclick: this.bga.userPreferences.get(101) == 1,
-               },
+              { color: "primary" },
             );
             break;
 
@@ -115,7 +113,7 @@ class NormalTurn {
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
                 }),
-              { color: "alert" },
+              { color: "primary" },
             );
             break;
           case "roll_dice_btn":
@@ -140,41 +138,39 @@ class NormalTurn {
             );
             break;
 
-          // case "take_card_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Take Card"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     {
-          //       color: "primary",
-          //       id: "take_card_btn",
-          //     },
-          //   );
+          case "take_card_btn":
+            this.bga.statusBar.addActionButton(
+              _("Take Card"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                  arg2: this.game.selected_token,
+                }),
+              {
+                color: "primary",
+                id: "take_card_btn",
+              },
+            );
 
-          //   if (this.game.selected_building == "") {
-          //     this.game.safeClass("take_card_btn", "add", "disabled");
-          //   }
-          //   break;
-          
-          // case "flip_cards_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Flip Cards"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     { color: "primary", id: "flip_cards_btn" },
-          //   );
+            if (this.game.selected_building == "") {
+              this.game.safeClass("take_card_btn", "add", "disabled");
+            }
+            break;
+          case "flip_cards_btn":
+            this.bga.statusBar.addActionButton(
+              _("Flip Cards"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                  arg2: this.game.selected_token,
+                }),
+              { color: "primary", id: "flip_cards_btn" },
+            );
 
-          //   if (this.game.selected_stack == "") {
-          //     this.game.safeClass("flip_cards_btn", "add", "disabled");
-          //   }
-          //   break;
-          
+            if (this.game.selected_stack == "") {
+              this.game.safeClass("flip_cards_btn", "add", "disabled");
+            }
+            break;
           case "go_to_park_btn":
             this.bga.statusBar.addActionButton(
               _("Go to Park"),
@@ -185,44 +181,43 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-          
-          // case "take_pet_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Take Pet"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_pet,
-          //       }),
-          //     {
-          //       color: "primary",
-          //       id: "take_pet_btn",
-          //     },
-          //   );
+          case "take_pet_btn":
+            this.bga.statusBar.addActionButton(
+              _("Take Pet"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                  arg2: this.game.selected_pet,
+                }),
+              {
+                color: "primary",
+                id: "take_pet_btn",
+              },
+            );
 
-          //   if (this.game.selected_pet == "") {
-          //     this.game.safeClass("take_pet_btn", "add", "disabled");
-          //   }
-          //   break;
+            if (this.game.selected_pet == "") {
+              this.game.safeClass("take_pet_btn", "add", "disabled");
+            }
+            break;
 
-          // case "take_grimoire_pet_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Take Pet"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_pet,
-          //       }),
-          //     {
-          //       color: "primary",
-          //       id: "take_grimoire_pet_btn",
-          //     },
-          //   );
+          case "take_grimoire_pet_btn":
+            this.bga.statusBar.addActionButton(
+              _("Take Pet"),
+              () =>
+                this.bga.actions.performAction("actButton", {
+                  arg1: key,
+                  arg2: this.game.selected_pet,
+                }),
+              {
+                color: "primary",
+                id: "take_grimoire_pet_btn",
+              },
+            );
 
-          //   if (this.game.selected_pet == "") {
-          //     this.game.safeClass("take_grimoire_pet_btn", "add", "disabled");
-          //   }
-          //   break;
+            if (this.game.selected_pet == "") {
+              this.game.safeClass("take_grimoire_pet_btn", "add", "disabled");
+            }
+            break;
 
           case "turn_clock_btn":
             this.bga.statusBar.addActionButton(
@@ -234,32 +229,32 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-          // case "validate_bonus_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Validate Bonus"),
-          //     () =>
-          //       this.bga.actions.performAction("actValidateBonus", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     { color: "primary", id: "validate_bonus_btn" },
-          //   );
+          case "validate_bonus_btn":
+            this.bga.statusBar.addActionButton(
+              _("Validate Bonus"),
+              () =>
+                this.bga.actions.performAction("actValidateBonus", {
+                  arg1: key,
+                  arg2: this.game.selected_token,
+                }),
+              { color: "primary", id: "validate_bonus_btn" },
+            );
 
-          //   if (this.game.selected_token == "") {
-          //     this.game.safeClass("validate_bonus_btn", "add", "disabled");
-          //   }
-          //   break;
-          // case "end_bonus_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("End Bonus"),
-          //     () =>
-          //       this.bga.actions.performAction("actValidateBonus", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     { color: "primary", id: "validate_bonus_btn" },
-          //   );
-          //   break;
+            if (this.game.selected_token == "") {
+              this.game.safeClass("validate_bonus_btn", "add", "disabled");
+            }
+            break;
+          case "end_bonus_btn":
+            this.bga.statusBar.addActionButton(
+              _("End Bonus"),
+              () =>
+                this.bga.actions.performAction("actValidateBonus", {
+                  arg1: key,
+                  arg2: this.game.selected_token,
+                }),
+              { color: "primary", id: "validate_bonus_btn" },
+            );
+            break;
         }
       }
     }
@@ -332,11 +327,11 @@ export class Game {
 
     this.nb_players = Object.keys(this.players).length;
 
-    // this.selected_token = "";
-    // this.selected_building = "";
-    // this.selected_stack = "";
-    // this.selected_pet = "";
-    // this.function = "";
+    this.selected_token = "";
+    this.selected_building = "";
+    this.selected_stack = "";
+    this.selected_pet = "";
+    this.function = "";
 
     // variable en local storage pour le zoom
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
@@ -435,77 +430,66 @@ export class Game {
   setupConnections(selectables) {
     this.connections = [];
 
-    // console.log("ARGS .connections", this.function);
+    console.log("ARGS .connections", this.function);
 
     selectables.forEach((elt_id) => {
       const element = document.getElementById(elt_id);
       //console.log("connections elements", element);
       if (!element) return;
 
-      const clickHandler = (evt) => this.onSelect(evt);
-           element.addEventListener("click", clickHandler);
-           this.connections.push({
-             element,
-             event: "click",
-             handler: clickHandler,
-           });
-      
-
-      // if (this.function == "ActionsBonus") {
-      //   // --- Cartes “token” ou autres éléments cliquables ---
-      //   const clickHandler = () => this.onSelectToken(elt_id);
-      //   element.addEventListener("click", clickHandler);
-      //   this.connections.push({
-      //     element,
-      //     event: "click",
-      //     handler: clickHandler,
-      //   });
-      //   return;
-      //   //}
-      // } else {
-      //   // --- Carte table (building) ---
-      //   if (elt_id.startsWith("table_building_card_")) {
-      //     const clickHandler = () => this.onSelectBuilding(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   } else if (elt_id.includes("_stack_")) {
-      //     // --- Cartes “token” ou autres éléments cliquables ---
-      //     const clickHandler = () => this.onSelectStack(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   } else if (elt_id.startsWith("card_pet_")) {
-      //     const clickHandler = () => this.onSelectPet(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   } else {
-      //     // --- Cartes “token” ou autres éléments cliquables ---
-      //     const clickHandler = () => this.onSelectToken(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   }
-      // }
-
-
+      if (this.function == "ActionsBonus") {
+        // --- Cartes “token” ou autres éléments cliquables ---
+        const clickHandler = () => this.onSelectToken(elt_id);
+        element.addEventListener("click", clickHandler);
+        this.connections.push({
+          element,
+          event: "click",
+          handler: clickHandler,
+        });
+        return;
+        //}
+      } else {
+        // --- Carte table (building) ---
+        if (elt_id.startsWith("table_building_card_")) {
+          const clickHandler = () => this.onSelectBuilding(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else if (elt_id.includes("_stack_")) {
+          // --- Cartes “token” ou autres éléments cliquables ---
+          const clickHandler = () => this.onSelectStack(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else if (elt_id.startsWith("card_pet_")) {
+          const clickHandler = () => this.onSelectPet(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        } else {
+          // --- Cartes “token” ou autres éléments cliquables ---
+          const clickHandler = () => this.onSelectToken(elt_id);
+          element.addEventListener("click", clickHandler);
+          this.connections.push({
+            element,
+            event: "click",
+            handler: clickHandler,
+          });
+          return;
+        }
+      }
     });
   }
 
@@ -524,200 +508,186 @@ export class Game {
       }
     });
     this.connections = [];
-    // this.selected_token = "";
-    // this.selected_building = "";
-    // this.selected_stack = "";
-    // this.selected_pet = "";
-    // this.function = "";
+    this.selected_token = "";
+    this.selected_building = "";
+    this.selected_stack = "";
+    this.selected_pet = "";
+    this.function = "";
   }
 
+  // Gestion de la sélection d'un building
+  onSelectBuilding(building_id) {
+    const building_elt = document.getElementById(building_id);
+    if (!building_elt) return;
 
-  onSelect(evt) {        	 
-    // Preventing default browser reaction
-      dojo.stopEvent( evt );
+    if (building_elt.classList.contains("selectable")) {
+      this.safeClass(building_elt, "remove", "selectable");
+    }
 
-    
-        if(evt.currentTarget.classList.contains('selectable'))
-        {                    
-                this.bga.actions.performAction('actSelect', { arg1: evt.currentTarget.id });
-                
-        }
-    
+    // retire l'ancien building sélectionné
+    if (this.selected_building && this.selected_building !== building_id) {
+      const old_elt = document.getElementById(this.selected_building);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+    }
+
+    // retire l'ancien stack sélectionné
+    if (this.selected_stack) {
+      const oldStack = document.getElementById(this.selected_stack);
+      if (oldStack) {
+        this.safeClass(oldStack, "remove", "selected");
+        this.safeClass(oldStack, "add", "selectable");
+      }
+      this.selected_stack = "";
+      this.safeClass("flip_cards_btn", "add", "disabled");
+      this.safeClass("flip_card8_btn", "add", "disabled");
+      this.safeClass("flip_card9_btn", "add", "disabled");
+    }
+
+    // toggle building
+    if (this.selected_building !== building_id) {
+      this.safeClass(building_elt, "add", "selected");
+      this.selected_building = building_id;
+      this.selected_token = building_id;
+      this.safeClass("take_card_btn", "remove", "disabled");
+      this.safeClass("take_card8_btn", "remove", "disabled");
+      this.safeClass("take_card_any_btn", "remove", "disabled");
+    } else {
+      this.safeClass(building_elt, "remove", "selected");
+      this.safeClass(building_elt, "add", "selectable");
+      this.selected_building = "";
+      this.selected_token = "";
+      this.safeClass("take_card_btn", "add", "disabled");
+      this.safeClass("take_card8_btn", "add", "disabled");
+      this.safeClass("take_card_any_btn", "add", "disabled");
+    }
   }
 
-  // // Gestion de la sélection d'un building
-  // onSelectBuilding(building_id) {
-  //   const building_elt = document.getElementById(building_id);
-  //   if (!building_elt) return;
+  onSelectStack(stack_id) {
+    const stack_elt = document.getElementById(stack_id);
+    if (!stack_elt) return;
 
-  //   if (building_elt.classList.contains("selectable")) {
-  //     this.safeClass(building_elt, "remove", "selectable");
-  //   }
+    if (stack_elt.classList.contains("selectable")) {
+      this.safeClass(stack_elt, "remove", "selectable");
+    }
 
-  //   // retire l'ancien building sélectionné
-  //   if (this.selected_building && this.selected_building !== building_id) {
-  //     const old_elt = document.getElementById(this.selected_building);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //   }
+    // retire l'ancien stack sélectionné
+    if (this.selected_stack && this.selected_stack !== stack_id) {
+      const old_elt = document.getElementById(this.selected_stack);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+    }
 
-  //   // retire l'ancien stack sélectionné
-  //   if (this.selected_stack) {
-  //     const oldStack = document.getElementById(this.selected_stack);
-  //     if (oldStack) {
-  //       this.safeClass(oldStack, "remove", "selected");
-  //       this.safeClass(oldStack, "add", "selectable");
-  //     }
-  //     this.selected_stack = "";
-  //     this.safeClass("flip_cards_btn", "add", "disabled");
-  //     this.safeClass("flip_card8_btn", "add", "disabled");
-  //     this.safeClass("flip_card9_btn", "add", "disabled");
-  //   }
+    // retire l'ancien building sélectionné
+    if (this.selected_building) {
+      const oldBuilding = document.getElementById(this.selected_building);
+      if (oldBuilding) {
+        this.safeClass(oldBuilding, "remove", "selected");
+        this.safeClass(oldBuilding, "add", "selectable");
+      }
+      this.selected_building = "";
+      this.safeClass("take_card_btn", "add", "disabled");
+      this.safeClass("take_card8_btn", "add", "disabled");
+      this.safeClass("take_card_any_btn", "add", "disabled");
+    }
 
-  //   // toggle building
-  //   if (this.selected_building !== building_id) {
-  //     this.safeClass(building_elt, "add", "selected");
-  //     this.selected_building = building_id;
-  //     this.selected_token = building_id;
-  //     this.safeClass("take_card_btn", "remove", "disabled");
-  //     this.safeClass("take_card8_btn", "remove", "disabled");
-  //     this.safeClass("take_card_any_btn", "remove", "disabled");
-  //   } else {
-  //     this.safeClass(building_elt, "remove", "selected");
-  //     this.safeClass(building_elt, "add", "selectable");
-  //     this.selected_building = "";
-  //     this.selected_token = "";
-  //     this.safeClass("take_card_btn", "add", "disabled");
-  //     this.safeClass("take_card8_btn", "add", "disabled");
-  //     this.safeClass("take_card_any_btn", "add", "disabled");
-  //   }
-  // }
+    // toggle stack
+    if (this.selected_stack !== stack_id) {
+      this.safeClass(stack_elt, "add", "selected");
+      this.selected_stack = stack_id;
+      this.selected_token = stack_id;
+      this.safeClass("flip_cards_btn", "remove", "disabled");
+      this.safeClass("flip_card8_btn", "remove", "disabled");
+      this.safeClass("flip_card9_btn", "remove", "disabled");
+    } else {
+      this.safeClass(stack_elt, "remove", "selected");
+      this.safeClass(stack_elt, "add", "selectable");
+      this.selected_stack = "";
+      this.selected_token = "";
+      this.safeClass("flip_cards_btn", "add", "disabled");
+      this.safeClass("flip_card8_btn", "add", "disabled");
+      this.safeClass("flip_card9_btn", "add", "disabled");
+    }
+  }
 
-  // onSelectStack(stack_id) {
-  //   const stack_elt = document.getElementById(stack_id);
-  //   if (!stack_elt) return;
+  onSelectPet(pet_id) {
+    console.log("onSelectPet", pet_id);
 
-  //   if (stack_elt.classList.contains("selectable")) {
-  //     this.safeClass(stack_elt, "remove", "selectable");
-  //   }
+    const pet_elt = document.getElementById(pet_id);
+    if (!pet_elt) return;
 
-  //   // retire l'ancien stack sélectionné
-  //   if (this.selected_stack && this.selected_stack !== stack_id) {
-  //     const old_elt = document.getElementById(this.selected_stack);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //   }
+    // Retire 'selectable' uniquement si présent
+    if (pet_elt.classList.contains("selectable")) {
+      this.safeClass(pet_elt, "remove", "selectable");
+    }
 
-  //   // retire l'ancien building sélectionné
-  //   if (this.selected_building) {
-  //     const oldBuilding = document.getElementById(this.selected_building);
-  //     if (oldBuilding) {
-  //       this.safeClass(oldBuilding, "remove", "selected");
-  //       this.safeClass(oldBuilding, "add", "selectable");
-  //     }
-  //     this.selected_building = "";
-  //     this.safeClass("take_card_btn", "add", "disabled");
-  //     this.safeClass("take_card8_btn", "add", "disabled");
-  //     this.safeClass("take_card_any_btn", "add", "disabled");
-  //   }
+    // si aucun est sélectionné
+    if (this.selected_pet === "") {
+      console.log("pas de selected pet");
+      this.safeClass(pet_elt, "add", "selected");
+      this.selected_pet = pet_id;
+      this.safeClass("take_pet_btn", "remove", "disabled");
+      this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
+    }
+    // Si on clique sur une autre case
+    else {
+      const old_elt = document.getElementById(this.selected_pet);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+      if (this.selected_pet != pet_id) {
+        this.safeClass(pet_elt, "add", "selected");
+        this.selected_pet = pet_id;
+      } else {
+        this.selected_pet = "";
+        this.safeClass("take_pet_btn", "add", "disabled");
+        this.safeClass("take_grimoire_pet_btn", "add", "disabled");
+      }
+    }
+  }
 
-  //   // toggle stack
-  //   if (this.selected_stack !== stack_id) {
-  //     this.safeClass(stack_elt, "add", "selected");
-  //     this.selected_stack = stack_id;
-  //     this.selected_token = stack_id;
-  //     this.safeClass("flip_cards_btn", "remove", "disabled");
-  //     this.safeClass("flip_card8_btn", "remove", "disabled");
-  //     this.safeClass("flip_card9_btn", "remove", "disabled");
-  //   } else {
-  //     this.safeClass(stack_elt, "remove", "selected");
-  //     this.safeClass(stack_elt, "add", "selectable");
-  //     this.selected_stack = "";
-  //     this.selected_token = "";
-  //     this.safeClass("flip_cards_btn", "add", "disabled");
-  //     this.safeClass("flip_card8_btn", "add", "disabled");
-  //     this.safeClass("flip_card9_btn", "add", "disabled");
-  //   }
-  // }
+  onSelectToken(token_id) {
+    console.log("onSelectToken", token_id);
 
-  // onSelectPet(pet_id) {
-  //   console.log("onSelectPet", pet_id);
+    const token_elt = document.getElementById(token_id);
+    if (!token_elt) return;
 
-  //   const pet_elt = document.getElementById(pet_id);
-  //   if (!pet_elt) return;
+    // Retire 'selectable' uniquement si présent
+    if (token_elt.classList.contains("selectable")) {
+      this.safeClass(token_elt, "remove", "selectable");
+    }
 
-  //   // Retire 'selectable' uniquement si présent
-  //   if (pet_elt.classList.contains("selectable")) {
-  //     this.safeClass(pet_elt, "remove", "selectable");
-  //   }
-
-  //   // si aucun est sélectionné
-  //   if (this.selected_pet === "") {
-  //     console.log("pas de selected pet");
-  //     this.safeClass(pet_elt, "add", "selected");
-  //     this.selected_pet = pet_id;
-  //     this.safeClass("take_pet_btn", "remove", "disabled");
-  //     this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
-  //   }
-  //   // Si on clique sur une autre case
-  //   else {
-  //     const old_elt = document.getElementById(this.selected_pet);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //     if (this.selected_pet != pet_id) {
-  //       this.safeClass(pet_elt, "add", "selected");
-  //       this.selected_pet = pet_id;
-  //     } else {
-  //       this.selected_pet = "";
-  //       this.safeClass("take_pet_btn", "add", "disabled");
-  //       this.safeClass("take_grimoire_pet_btn", "add", "disabled");
-  //     }
-  //   }
-  // }
-
-  // onSelectToken(token_id) {
-  //   console.log("onSelectToken", token_id);
-
-  //   const token_elt = document.getElementById(token_id);
-  //   if (!token_elt) return;
-
-  //   // Retire 'selectable' uniquement si présent
-  //   if (token_elt.classList.contains("selectable")) {
-  //     this.safeClass(token_elt, "remove", "selectable");
-  //   }
-
-  //   // si aucun est sélectionné
-  //   if (this.selected_token === "") {
-  //     this.safeClass(token_elt, "add", "selected");
-  //     this.selected_token = token_id;
-  //     this.safeClass("validate_bonus_btn", "remove", "disabled");
-  //     this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
-  //   }
-  //   // Si on clique sur une autre case
-  //   else {
-  //     const old_elt = document.getElementById(this.selected_token);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //     if (this.selected_token != token_id) {
-  //       this.safeClass(token_elt, "add", "selected");
-  //       this.selected_token = token_id;
-  //       this.safeClass("validate_bonus_btn", "remove", "disabled");
-  //       this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
-  //     } else {
-  //       this.selected_token = "";
-  //       this.safeClass("validate_bonus_btn", "add", "disabled");
-  //       this.safeClass("take_grimoire_pet_btn", "add", "disabled");
-  //     }
-  //   }
-  // }
+    // si aucun est sélectionné
+    if (this.selected_token === "") {
+      this.safeClass(token_elt, "add", "selected");
+      this.selected_token = token_id;
+      this.safeClass("validate_bonus_btn", "remove", "disabled");
+      this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
+    }
+    // Si on clique sur une autre case
+    else {
+      const old_elt = document.getElementById(this.selected_token);
+      if (old_elt) {
+        this.safeClass(old_elt, "remove", "selected");
+        this.safeClass(old_elt, "add", "selectable");
+      }
+      if (this.selected_token != token_id) {
+        this.safeClass(token_elt, "add", "selected");
+        this.selected_token = token_id;
+        this.safeClass("validate_bonus_btn", "remove", "disabled");
+        this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
+      } else {
+        this.selected_token = "";
+        this.safeClass("validate_bonus_btn", "add", "disabled");
+        this.safeClass("take_grimoire_pet_btn", "add", "disabled");
+      }
+    }
+  }
 
   setupPlayersBoard() {
     console.log("Setting up the players board");
@@ -1114,7 +1084,7 @@ export class Game {
           "beforeend",
           `<div class="stack_selector" 
                     id="player_${player.id}_stack_${stackIndex}_selector"
-                    style="position: absolute; bottom: 0; left: 0; width: 100%; height: ${selectorHeight}; background-color: rgba(0,0,0,0);">
+                    style="position: absolute; bottom: 0; left: 0; width: 100%; height: ${selectorHeight}; cursor: pointer; background-color: rgba(0,0,0,0);">
                  </div>`,
         );
       });
@@ -2572,7 +2542,7 @@ export class Game {
         "beforeend",
         `<div class="stack_selector"
          id="player_${playerId}_stack_${stackIndex}_selector"
-         style="position:absolute;bottom:0;left:0;width:100%;height:${height}">
+         style="position:absolute;bottom:0;left:0;width:100%;cursor:pointer;height:${height}">
        </div>`,
       );
     } else {
