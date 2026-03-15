@@ -754,7 +754,7 @@ class Pending extends Game
 
             if ($nb_clock == 0) {
 
-            $actions_restantes = game::$instance->getObjectListFromDB("SELECT name FROM actionpending WHERE count >= 1", true);
+            $actions_restantes = game::$instance->getObjectListFromDB("SELECT name FROM actionpending WHERE count >= 1 AND name != 'clue'", true);
             $liste = '';
 
             foreach ($actions_restantes as $action) {
