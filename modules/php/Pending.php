@@ -669,7 +669,7 @@ class Pending extends Game
         $pet = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'pet'");
         $grimoire = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'grimoire'");
 
-
+        if ($clock == 0) {
 
         if ($flip8 >= 1) {
             $cards_8 = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type <= 8");
@@ -706,10 +706,7 @@ class Pending extends Game
             }
         }
 
-        if ($clock >= 1) {
-            $ret["selectable"][] = 'clock_tower_id';
-        }
-
+        
         if ($pet >= 1) {
 
             $pets = game::$instance->getObjectFromDB("SELECT pet1 pet1, pet2 pet2, pet3 pet3 FROM other WHERE id=1");
@@ -739,14 +736,11 @@ class Pending extends Game
             }
         }
 
-
-
-        // if (count($ret["selectable"]) >= 1) {
-        //     $ret['buttons'][] = 'validate_bonus_btn';
-        // }
+        }
 
 
 
+      
         return $ret;
     }
 
@@ -755,6 +749,10 @@ class Pending extends Game
     function ActionsBonus($parg1, $parg2, $varg1, $varg2, $varg3, $varg4)
     {
         if ($varg1 == null) {
+
+            $nb_clock = game::$instance->getUniqueValueFromDB("SELECT count FROM actionpending WHERE name = 'clock'");
+
+            if ($nb_clock == 0) {
 
             $actions_restantes = game::$instance->getObjectListFromDB("SELECT name FROM actionpending WHERE count >= 1", true);
             $liste = '';
@@ -829,6 +827,117 @@ class Pending extends Game
             }
 
             game::$instance->DbQuery("UPDATE actionpending set count = 0");
+
+            }
+
+            else {
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            // TURN CLOCK
+            ///////////////////////////////////////////////////////////////////////////////////////
+            
+                $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
+                $newclock = ($clock + 1) % 6;
+                game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
+
+                game::$instance->notify->all(
+                    "activateClockTower",
+                    '',
+                    [
+                        'player_id' => $this->player_id,
+                        'clock' => $newclock,
+
+                    ]
+                );
+
+                $txt = clienttranslate('${player_name} uses ${log}');
+                game::$instance->notify->all(
+                    "message",
+                    $txt,
+                    [
+                        'player_id' => $this->player_id,
+                        'log' => $this->getLogs('clock'),
+
+                    ]
+                );
+
+                // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
+                game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'clock'");
+
+                // Notif pour enlever l'icone
+                game::$instance->notify->all(
+                    "removeBonus",
+                    '',
+                    [
+                        'player_id' => $this->player_id,
+                        'bonus' => 'clock'
+
+                    ]
+                );
+
+
+                //Position Artefact
+                if ($newclock == 0 || $newclock == 3) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('artefact'),
+
+                        ]
+                    );
+
+                    game::$instance->player_artefacts->inc($this->player_id, 1);
+                    $count_artefact = game::$instance->player_artefacts->get($this->player_id);
+                    if ($count_artefact == 3) {
+                        game::$instance->addPending($this->player_id, "EndGame");
+                    } else {
+                        game::$instance->addPending($this->player_id, "ActionsBonus");
+                    }
+                }
+
+                // Position Turn reroll token
+                if ($newclock == 2 || $newclock == 5) {
+
+                    $txt = clienttranslate('${player_name} gains ${log}');
+                    game::$instance->notify->all(
+                        "message",
+                        $txt,
+                        [
+                            'player_id' => $this->player_id,
+                            'log' => $this->getLogs('reroll'),
+
+                        ]
+                    );
+
+                    $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
+                    if ($reroll == 0) {
+                        game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
+
+                        game::$instance->notify->all(
+                            "flipReroll",
+                            '',
+                            [
+                                'player_id' => $this->player_id,
+
+                            ]
+                        );
+                    }
+                    game::$instance->addPending($this->player_id, "ActionsBonus");
+                }
+
+                // Position pet
+                if ($newclock == 1 || $newclock == 4) {
+
+                    game::$instance->addPending($this->player_id, "ClockChoosePet", 1);
+                }
+            
+            }
+
+
         } else {
 
             if ($this->player_pref_confirm == 1) {
@@ -1126,111 +1235,7 @@ class Pending extends Game
                 }
             }
 
-            ///////////////////////////////////////////////////////////////////////////////////////
-            // TURN CLOCK
-            ///////////////////////////////////////////////////////////////////////////////////////
-            if (str_starts_with($varg1, 'clock_')) {
-
-                $clock = intval(game::$instance->getUniqueValueFromDB("SELECT clock FROM other WHERE id=1"));
-                $newclock = ($clock + 1) % 6;
-                game::$instance->DbQuery("UPDATE other SET clock = $newclock WHERE id=1");
-
-                game::$instance->notify->all(
-                    "activateClockTower",
-                    '',
-                    [
-                        'player_id' => $this->player_id,
-                        'clock' => $newclock,
-
-                    ]
-                );
-
-                $txt = clienttranslate('${player_name} uses ${log}');
-                game::$instance->notify->all(
-                    "message",
-                    $txt,
-                    [
-                        'player_id' => $this->player_id,
-                        'log' => $this->getLogs('clock'),
-
-                    ]
-                );
-
-                // DECREMENTE LA VALEUR DE LA TABLE ACTIONPENDING
-                game::$instance->DbQuery("UPDATE actionpending set count = count - 1 WHERE name = 'clock'");
-
-                // Notif pour enlever l'icone
-                game::$instance->notify->all(
-                    "removeBonus",
-                    '',
-                    [
-                        'player_id' => $this->player_id,
-                        'bonus' => 'clock'
-
-                    ]
-                );
-
-
-                //Position Artefact
-                if ($newclock == 0 || $newclock == 3) {
-
-                    $txt = clienttranslate('${player_name} gains ${log}');
-                    game::$instance->notify->all(
-                        "message",
-                        $txt,
-                        [
-                            'player_id' => $this->player_id,
-                            'log' => $this->getLogs('artefact'),
-
-                        ]
-                    );
-
-                    game::$instance->player_artefacts->inc($this->player_id, 1);
-                    $count_artefact = game::$instance->player_artefacts->get($this->player_id);
-                    if ($count_artefact == 3) {
-                        game::$instance->addPending($this->player_id, "EndGame");
-                    } else {
-                        game::$instance->addPending($this->player_id, "ActionsBonus");
-                    }
-                }
-
-                // Position Turn reroll token
-                if ($newclock == 2 || $newclock == 5) {
-
-                    $txt = clienttranslate('${player_name} gains ${log}');
-                    game::$instance->notify->all(
-                        "message",
-                        $txt,
-                        [
-                            'player_id' => $this->player_id,
-                            'log' => $this->getLogs('reroll'),
-
-                        ]
-                    );
-
-                    $reroll = game::$instance->getUniqueValueFromDB("SELECT reroll FROM player WHERE player_id='{$this->player_id}'");
-                    if ($reroll == 0) {
-                        game::$instance->DbQuery("UPDATE player set reroll = 1 WHERE player_id='{$this->player_id}'");
-
-                        game::$instance->notify->all(
-                            "flipReroll",
-                            '',
-                            [
-                                'player_id' => $this->player_id,
-
-                            ]
-                        );
-                    }
-                    game::$instance->addPending($this->player_id, "ActionsBonus");
-                }
-
-                // Position pet
-                if ($newclock == 1 || $newclock == 4) {
-
-                    game::$instance->addPending($this->player_id, "ClockChoosePet", 1);
-                }
-            }
-
+           
             ///////////////////////////////////////////////////////////////////////////////////////
             // TAKE PET
             ///////////////////////////////////////////////////////////////////////////////////////

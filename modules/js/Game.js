@@ -97,7 +97,7 @@ class NormalTurn {
         switch (key) {
           case "yes_btn":
             this.bga.statusBar.addActionButton(
-              _("Yes"),
+              _("Confirm"),
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
@@ -110,7 +110,7 @@ class NormalTurn {
 
           case "no_btn":
             this.bga.statusBar.addActionButton(
-              _("No"),
+              _("Cancel"),
               () =>
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
