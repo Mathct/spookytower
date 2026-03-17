@@ -14,6 +14,8 @@ trait PendingConfirmTrait  // ATTENTION
         $ret['title'] = clienttranslate('${actplayer} must confirm');
         $ret['titleyou'] = clienttranslate('${you} must confirm');
 
+        $ret["selected"][] = $parg1;
+
         $ret['buttons'][] = 'yes_btn';
         $ret['buttons'][] = 'no_btn';
         
@@ -416,6 +418,8 @@ trait PendingConfirmTrait  // ATTENTION
         $ret["function"] = "ActionsBonus";
         $ret['title'] = clienttranslate('${actplayer} must confirm');
         $ret['titleyou'] = clienttranslate('${you} must confirm');
+
+        $ret["selected"][] = $parg1;
 
         $ret['buttons'][] = 'yes_btn';
         $ret['buttons'][] = 'no_btn';
