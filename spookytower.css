@@ -293,10 +293,38 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 /* ---------- TOP ROW ---------- */
-#table_top_row {
+/*#table_top_row {
   display: flex;
   gap: calc( 8*var(--card_gap));
+}*/
+
+
+/* Colonnes gauche et droite autour de la grille */
+.table_side_column {
+  display: flex;
+  flex-direction: column; /* empile les éléments verticalement */
+  gap: var(--card_gap);   /* espacement entre les éléments */
+  align-items: center;
 }
+
+/* Largeur flexible ou fixe selon ton layout */
+#left_column,
+#right_column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card_gap);
+  align-items: center;
+}
+
+/* Si tu veux que les colonnes aient une largeur identique à une carte */
+#left_column {
+  width: var(--card_w);
+}
+
+#right_column {
+  width: calc( 1.5 * var(--card_w));
+}
+
 
 .table_deck_slot,
 .table_track_slot {
@@ -328,6 +356,41 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   left: 0;
 }
 
+
+
+.big_clock_tower {
+  position: relative;
+  background-image: url('img/ST_clocktower850.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: contain;
+
+  width: calc( 1.5 * var(--card_w));
+  height: calc(1.5 * var(--card_w)/25*85);
+
+  pointer-events: none;
+  border-radius: 2%;
+  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+}
+
+#clock_zone {
+  position: absolute;
+  top: 22%;   /* ajuste visuellement */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#dice_zone {
+  position: absolute;
+  bottom: 10%; /* ajuste */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+
+
 .clock_tower {
   position: relative;
   background-image: url('img/ST_clock.png');
@@ -351,8 +414,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: var(--card_h);
-  height: var(--card_h);
+  width: calc(0.8 * var(--card_h));
+  height: calc(0.8 * var(--card_h));
 }
 
 
@@ -376,12 +439,22 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 }
 
 /* ================= FLIP RIVER ================= */
-#river_id {
+/*#river_id {
   opacity: 1;
   max-height: calc(150px * var(--st_scale));
   height: calc(150px * var(--st_scale));
   overflow: hidden;
   transition: max-height 0.4s ease, opacity 0.4s ease;
+}*/
+
+#river_id {
+  width: 100%;
+  max-height: calc(150px * var(--st_scale));
+  height: calc(150px * var(--st_scale));
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+  display: flex;         /* déjà en flex dans .river_container */
+  justify-content: center;
 }
 
 #river_id.closed {

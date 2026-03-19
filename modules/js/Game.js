@@ -102,9 +102,7 @@ class NormalTurn {
                 this.bga.actions.performAction("actButton", {
                   arg1: key,
                 }),
-              { color: "primary",
-                autoclick: this.bga.userPreferences.get(101) == 1,
-               },
+              { color: "primary", autoclick: this.bga.userPreferences.get(101) == 1 },
             );
             break;
 
@@ -158,7 +156,7 @@ class NormalTurn {
           //     this.game.safeClass("take_card_btn", "add", "disabled");
           //   }
           //   break;
-          
+
           // case "flip_cards_btn":
           //   this.bga.statusBar.addActionButton(
           //     _("Flip Cards"),
@@ -174,7 +172,7 @@ class NormalTurn {
           //     this.game.safeClass("flip_cards_btn", "add", "disabled");
           //   }
           //   break;
-          
+
           case "go_to_park_btn":
             this.bga.statusBar.addActionButton(
               _("Go to Park"),
@@ -185,7 +183,7 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-          
+
           // case "take_pet_btn":
           //   this.bga.statusBar.addActionButton(
           //     _("Take Pet"),
@@ -339,7 +337,8 @@ export class Game {
     // this.function = "";
 
     // variable en local storage pour le zoom
-    this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 1;
+    this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 0.5;
+    console.log("zoom_factor Setup", this.zoom_factor);
 
     this.icons = ["reroll_1", "reroll_0", "artefact", "ghost", "clue", "grimoire", "clock", "pet", "replay", "flip8", "flip9", "draw8", "draw_any"];
 
@@ -443,13 +442,12 @@ export class Game {
       if (!element) return;
 
       const clickHandler = (evt) => this.onSelect(evt);
-           element.addEventListener("click", clickHandler);
-           this.connections.push({
-             element,
-             event: "click",
-             handler: clickHandler,
-           });
-      
+      element.addEventListener("click", clickHandler);
+      this.connections.push({
+        element,
+        event: "click",
+        handler: clickHandler,
+      });
 
       // if (this.function == "ActionsBonus") {
       //   // --- Cartes “token” ou autres éléments cliquables ---
@@ -504,8 +502,6 @@ export class Game {
       //     return;
       //   }
       // }
-
-
     });
   }
 
@@ -531,18 +527,13 @@ export class Game {
     // this.function = "";
   }
 
-
-  onSelect(evt) {        	 
+  onSelect(evt) {
     // Preventing default browser reaction
-      dojo.stopEvent( evt );
+    dojo.stopEvent(evt);
 
-    
-        if(evt.currentTarget.classList.contains('selectable'))
-        {                    
-                this.bga.actions.performAction('actSelect', { arg1: evt.currentTarget.id });
-                
-        }
-    
+    if (evt.currentTarget.classList.contains("selectable")) {
+      this.bga.actions.performAction("actSelect", { arg1: evt.currentTarget.id });
+    }
   }
 
   // // Gestion de la sélection d'un building
@@ -822,30 +813,49 @@ export class Game {
 
     // =================== HTML complet ===================
     const gameBoardHTML = `
-        <div id="resized_id">
-            <div id="board_id">
+    <div id="resized_id">
+        <div id="board_id">
 
-                <!-- TOP ROW TABLE -->
-                <div id="table_top_row">
+
+
+            <!-- CENTER GRID AVEC COLONNES GAUCHE / CENTRALE / DROITE -->
+            <div id="table_center_area" style="display: flex; gap: 10px;">
+
+                <!-- COLONNE GAUCHE -->
+                <div class="table_side_column" id="left_column" style="display: flex; flex-direction: column; gap: 10px;">
                     <div class="table_deck_slot" id="deck_park" title="Park"></div>
                     <div class="table_deck_slot" id="deck_grimoire" title="Grimoire"></div>
-                    <div class="table_track_slot" id="dice_track" title="Dice Track"></div>
-                    <div class="table_clock_slot" id="clock_tower_slot" title="Clock Tower"></div>
-                </div>
-                <div id="river_id" class="river_container closed"></div>
-                <!-- CENTER GRID 5x3 TABLE -->
-                <div id="table_center_area">
-                    <div id="table_central_grid">
-                        ${centralGridHTML.join("")}
-                    </div>
                 </div>
 
-                <!-- ZONE JOUEURS -->
-                <div id="players_area"></div>
+                <!-- COLONNE CENTRALE -->
+                <div id="table_central_grid">
+                    ${centralGridHTML.join("")}
+                </div>
+
+                <!-- COLONNE DROITE -->
+                <div class="table_side_column" id="right_column">
+                  <div class="big_clock_tower" id="clock_tower_container">
+                    
+                    <!-- zone horloge -->
+                    <div id="clock_zone"></div>
+
+                    <!-- zone dés -->
+                    <div id="dice_zone"></div>
+
+                  </div>
+                </div>
 
             </div>
+
+            <!-- RIVER EN BAS -->
+            <div id="river_id" class="river_container closed"></div>
+
+            <!-- ZONE JOUEURS -->
+            <div id="players_area"></div>
+
         </div>
-    `;
+    </div>
+`;
 
     // Injecte le board
     document.getElementById("game_play_area").insertAdjacentHTML("beforeend", gameBoardHTML);
@@ -892,7 +902,7 @@ export class Game {
     deckGrimoireSlot.insertAdjacentHTML("beforeend", cardHTML);
 
     // -------------------- Dice Track --------------------
-    const diceTrackSlot = document.getElementById("dice_track");
+    /*    const diceTrackSlot = document.getElementById("dice_track");
     // ---- Injecter la carte + compteur à l'intérieur ----
     const diceHTML = `
         <div class="card_item building_cards" 
@@ -926,10 +936,52 @@ export class Game {
           </div>
         </div>
     `;
-    diceTrackSlot.insertAdjacentHTML("beforeend", dicefaceHTML);
+    diceTrackSlot.insertAdjacentHTML("beforeend", dicefaceHTML);*/
+
+    const diceZone = document.getElementById("dice_zone");
+
+    const dicefaceHTML = `
+      <div id="scene_1" class="scene">
+        <div class="dice" id="dice1">
+          <div class="face face1"></div>
+          <div class="face face2"></div>
+          <div class="face face3"></div>
+          <div class="face face4"></div>
+          <div class="face face5"></div>
+          <div class="face face6"></div>
+        </div>
+      </div>
+
+      <div id="scene_2" class="scene">
+        <div class="dice" id="dice2">
+          <div class="face face1"></div>
+          <div class="face face2"></div>
+          <div class="face face3"></div>
+          <div class="face face4"></div>
+          <div class="face face5"></div>
+          <div class="face face6"></div>
+        </div>
+      </div>
+`;
+
+    diceZone.insertAdjacentHTML("beforeend", dicefaceHTML);
 
     // -------------------- Clock Tower --------------------
-    const clockTowerSlot = document.getElementById("clock_tower_slot");
+
+    const clockZone = document.getElementById("clock_zone");
+    const clockHourRot = 60 * this.gamedatas.other.clock;
+
+    const towerHTML = `
+      <div class="clock_tower" id="clock_tower_id">
+        <div class="clock_hand" id="clock_hand_sprite"
+          style="transform: translate(-50%, -50%) rotate(${clockHourRot}deg);">
+        </div>
+      </div>
+    `;
+
+    clockZone.insertAdjacentHTML("beforeend", towerHTML);
+
+    /*const clockTowerSlot = document.getElementById("clock_tower_slot");
     const clockHourRot = 60 * this.gamedatas.other.clock;
 
     // ---- Injecter la carte + compteur à l'intérieur ----
@@ -938,7 +990,7 @@ export class Game {
             <div class="clock_hand" id="clock_hand_sprite" style="transform: translate(-50%, -50%) rotate(${clockHourRot}deg);"></div>
           </div>
     `;
-    clockTowerSlot.insertAdjacentHTML("beforeend", towerHTML);
+    clockTowerSlot.insertAdjacentHTML("beforeend", towerHTML);*/
   }
 
   setupRiver() {
@@ -1513,7 +1565,7 @@ export class Game {
 
   zoomMinusCards() {
     // On diminue le zoom par pas de 0.05, min 0.5
-    this.zoom_factor = Math.max(0.5, this.zoom_factor - 0.05);
+    this.zoom_factor = Math.max(0.3, this.zoom_factor - 0.05);
     window.localStorage.setItem("ST_zoom", this.zoom_factor);
 
     this.updateBoardZoom();
@@ -1522,6 +1574,7 @@ export class Game {
   updateBoardZoom() {
     // Met à jour le scale CSS pour les cartes
     document.documentElement.style.setProperty("--st_scale", this.zoom_factor);
+    console.log("zoom_factor update", this.zoom_factor);
   }
 
   //////////////////////////////////////////////////////////////
