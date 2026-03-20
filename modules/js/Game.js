@@ -1371,6 +1371,57 @@ export class Game {
     );
   }
 
+  async animateDiceDropFromClock(duration = 2000) {
+    const clockElement = document.getElementById("clock_tower_id") || document.getElementById("clock_zone");
+    const sceneElements = [document.getElementById("scene_1"), document.getElementById("scene_2")];
+
+    if (!clockElement || sceneElements.some((scene) => !scene)) {
+      return;
+    }
+
+    const clockRect = clockElement.getBoundingClientRect();
+    const clockCenterX = clockRect.left + clockRect.width / 2;
+    const clockCenterY = clockRect.top + clockRect.height / 2;
+
+    const sceneAnimations = sceneElements.map((scene) => {
+      return new Promise((resolve) => {
+        const computedTransform = getComputedStyle(scene).transform;
+        const baseMatrix = new DOMMatrix(computedTransform === "none" ? undefined : computedTransform);
+
+        const sceneRect = scene.getBoundingClientRect();
+        const sceneCenterX = sceneRect.left + sceneRect.width / 2;
+        const sceneCenterY = sceneRect.top + sceneRect.height / 2;
+
+        const deltaX = clockCenterX - sceneCenterX;
+        const deltaY = clockCenterY - sceneCenterY;
+
+        const startMatrix = new DOMMatrix(baseMatrix);
+        startMatrix.e += deltaX;
+        startMatrix.f += deltaY;
+
+        scene.style.transition = "none";
+        scene.style.transform = startMatrix.toString();
+
+        void scene.offsetWidth;
+
+        scene.style.transition = `transform ${duration}ms cubic-bezier(0.23, 1, 0.32, 1)`;
+        scene.style.transform = baseMatrix.toString();
+
+        const onEnd = (event) => {
+          if (event.propertyName !== "transform") return;
+          scene.removeEventListener("transitionend", onEnd);
+          scene.style.transition = "";
+          scene.style.transform = "";
+          resolve();
+        };
+
+        scene.addEventListener("transitionend", onEnd);
+      });
+    });
+
+    await Promise.all(sceneAnimations);
+  }
+
   addSideButtons() {
     document.body.insertAdjacentHTML(
       "beforeend",
@@ -2880,7 +2931,7 @@ export class Game {
 
     this.forcedFaces = args.roll;
     //await this.rollDiceMultiple();
-    await this.rollDice();
+    await Promise.all([this.rollDice(), this.animateDiceDropFromClock(2000)]);
   }
 
   async notif_endBonus(args) {

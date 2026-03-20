@@ -378,15 +378,25 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   top: 22%;   /* ajuste visuellement */
   left: 50%;
   transform: translateX(-50%);
+  z-index: 30;
 }
 
 #dice_zone {
   position: absolute;
-  bottom: 10%; /* ajuste */
+  bottom: 7%;
   left: 50%;
   transform: translateX(-50%);
+  width: 100%;
+  height: 14%;
+  min-height: calc((80px * var(--st_scale)) + 16px);
+  box-sizing: border-box;
   display: flex;
-  gap: 10px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: calc(20px * var(--st_scale));
+  z-index: 20;
 }
 
 
@@ -1010,18 +1020,18 @@ font-family: "AktivGrotesk-Regular", sans-serif;
     perspective: 1000px;
   }
 
-#scene_1
-{
-  position: absolute;
-  top: 17%;
-  left: 15%;
+#scene_1,
+#scene_2 {
+  position: relative;
+  flex-shrink: 0;
 }
 
-#scene_2
-{
-  position: absolute;
-  bottom: 17%;
-  right: 15%;
+#scene_1 {
+  transform: translateY(calc(-60px * var(--st_scale)));
+}
+
+#scene_2 {
+  transform: translateY(calc(40px * var(--st_scale)));
 }
 
 .dice {
