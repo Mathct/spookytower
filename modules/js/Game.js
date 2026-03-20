@@ -2116,9 +2116,11 @@ export class Game {
     const index = this.gamedatas.ghost_assets.indexOf(ghostId);
     if (index === -1) return;
 
+    const idx = index + 1;
+
     // Créer le container
     const ghostContainer = document.createElement("div");
-    ghostContainer.id = `ghost_container_${index}`;
+    ghostContainer.id = `ghost_container_${idx}`;
     ghostContainer.dataset.type = ghostType;
     ghostContainer.className = "ghost_single_container";
 
@@ -2136,11 +2138,11 @@ export class Game {
     // Créer le sprite correctement
     startElement.insertAdjacentHTML(
       "beforeend",
-      `<div id="ghost_${index}" class="ghost_sprites"
+      `<div id="ghost_${idx}" class="ghost_sprites"
        style="background-position: -${col}00% -${row}00%;"></div>`,
     );
 
-    const spriteElement = document.getElementById(`ghost_${index}`);
+    const spriteElement = document.getElementById(`ghost_${idx}`);
     if (!spriteElement) return;
 
     // Animation vers le container
@@ -2832,13 +2834,9 @@ export class Game {
 
     // ID du pet reçu dans la notif (ex: "card_pet_2")
     const petElementId = args.pet_id;
-
-    // Élément DOM du pet
     const petElement = document.getElementById(petElementId);
 
-    // Joueur actif
     const activePlayerColor = this.players[args.player_id].color; // ex: "ff0000"
-
     // Conversion hex → rgb
     const red = parseInt(activePlayerColor.slice(0, 2), 16);
     const green = parseInt(activePlayerColor.slice(2, 4), 16);
@@ -2846,34 +2844,39 @@ export class Game {
 
     // Application de la bordure + fond semi-transparent
     petElement.style.boxShadow = `
-    inset 0 0 0 4px #${activePlayerColor},
-    inset 0 0 0 9999px rgba(${red}, ${green}, ${blue}, 0.3)
-  `;
+      inset 0 0 0 4px #${activePlayerColor},
+      inset 0 0 0 9999px rgba(${red}, ${green}, ${blue}, 0.3)
+      `;
 
     console.log("opponent ?", args.opponent);
     if (!args.opponent) {
       const cardId = args.pet_id;
+
       const petId = cardId.replace(/^card_/, "");
       const index = this.gamedatas.ghost_assets.indexOf(petId);
       console.log("moveGhostToHouse no opponent");
       await this.moveGhostToHouse(petId, petElement, args.player_id);
     } else {
       const cardId = args.pet_id;
+      //card_pet_2 devient ghost_19
       const petId = cardId.replace(/^card_/, "");
-      const spriteElement = document.getElementById(`ghost_${petId}`);
-      const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
+      const index = this.gamedatas.ghost_assets.indexOf(petId) + 1;
 
+      const spriteElement = document.getElementById(`ghost_${index}`);
       // 1️⃣ Stopper l'animation CSS
       spriteElement.style.animationPlayState = "paused";
 
+      const houseContainer = document.getElementById(`player_${args.player_id}_house_ghost`);
+      const ghostContainer = document.createElement("div");
+      ghostContainer.id = `ghost_container_${index}`;
+      ghostContainer.dataset.type = "pet";
+      ghostContainer.className = "ghost_single_container";
+      houseContainer.prepend(ghostContainer);
+
       // 2️⃣ Lancer l'animation slide
-      this.animationManager.slideAndAttach(spriteElement, destination, 800).then(() => {
+      this.animationManager.slideAndAttach(spriteElement, ghostContainer, 800).then(() => {
         // 3️⃣ Relancer l'animation CSS
         spriteElement.style.animationPlayState = "running";
-
-        // 4️⃣ Appliquer position aléatoire après le slide
-        spriteElement.style.left = `${Math.random() * 60}%`;
-        spriteElement.style.top = `${Math.random() * 75}%`;
       });
     }
   }
@@ -2891,8 +2894,10 @@ export class Game {
 
     // Joueur actif
     const cardId = args.ghost_id;
-    const ghostId = cardId.replace("card_", "");
-    const index = this.gamedatas.ghost_assets.indexOf(ghostId);
+    const ghostIdx = cardId.replace("card_", "");
+    const index = this.gamedatas.ghost_assets.indexOf(ghostIdx);
+
+    const ghostId = index + 1;
 
     const col = index % 7;
     const row = Math.floor(index / 7);
@@ -2910,7 +2915,7 @@ export class Game {
 
     ghostElement.insertAdjacentHTML("beforeend", ghostsHTML);
 
-    const spriteElement = document.getElementById(`ghost_${petId}`);
+    const spriteElement = document.getElementById(`ghost_${ghostId}`);
 
     const destination = document.getElementById(`player_${args.player_id}_house_ghost`);
     await this.animationManager.slideAndAttach(spriteElement, destination, 800).then(() => {
