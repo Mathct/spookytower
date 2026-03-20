@@ -143,13 +143,14 @@ trait PendingConfirmTrait  // ATTENTION
             //je change le compteur du deck
             game::$instance->{'deck_' . $no_deck}->inc(-1);
 
-            $txt = clienttranslate('${player_name} takes card ${no_house}');
+            $txt = clienttranslate('${player_name} takes card ${log}');
             game::$instance->notify->all(
                 "takeCard",
                 $txt,
                 [
                     'player_id' => $this->player_id,
                     'no_house' => $no_deck,
+                    'log' => $this->getNumbersLogs($no_deck),
                     'card' => $card,
                     'count_card' => $count_card,
                     'nb_remaining' => game::$instance->{'deck_' . $no_deck}->get()
@@ -285,13 +286,14 @@ trait PendingConfirmTrait  // ATTENTION
 
             $cards = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type ='{$no_house}'");
 
-            $txt = clienttranslate('${player_name} flips house ${no_house}');
+            $txt = clienttranslate('${player_name} flips house ${log}');
             game::$instance->notify->all(
                 "flipCards",
                 $txt,
                 [
                     'player_id' => $this->player_id,
                     'no_house' => $no_house,
+                    'log' => $this->getNumbersLogs($no_house),
                     'cards' => $cards,
                 ]
             );
@@ -480,13 +482,14 @@ trait PendingConfirmTrait  // ATTENTION
 
                 if ($no_house <= 8) {
 
-                    $txt = clienttranslate('${player_name} uses ${log}');
+                    $txt = clienttranslate('${player_name} uses ${log} and flips ${log2}');
                     game::$instance->notify->all(
                         "message",
                         $txt,
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('flip8'),
+                            'log2' => $this->getNumbersLogs($no_house),
 
                         ]
                     );
@@ -505,13 +508,14 @@ trait PendingConfirmTrait  // ATTENTION
                     );
                 } else {
 
-                    $txt = clienttranslate('${player_name} uses ${log}');
+                    $txt = clienttranslate('${player_name} uses ${log} and flips ${log2}');
                     game::$instance->notify->all(
                         "message",
                         $txt,
                         [
                             'player_id' => $this->player_id,
                             'log' => $this->getLogs('flip9'),
+                            'log2' => $this->getNumbersLogs($no_house),
 
                         ]
                     );
@@ -667,13 +671,14 @@ trait PendingConfirmTrait  // ATTENTION
                     ]
                 );
 
-                $txt = clienttranslate('${player_name} uses ${log}');
+                $txt = clienttranslate('${player_name} uses ${log} and takes card ${log2}');
                 game::$instance->notify->all(
                     "message",
                     $txt,
                     [
                         'player_id' => $this->player_id,
                         'log' => $this->getLogs('draw8'),
+                        'log2' => $this->getNumbersLogs($no_deck),
 
                     ]
                 );

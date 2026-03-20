@@ -855,6 +855,32 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   gap: 8px 30px;
 }
 
+.numbers {
+  background-image: url("img/ST_numbers.png");
+  background-size: 1200% 100%;
+  width: 29px;
+  height: 32px;
+  pointer-events: none;
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
+
+}
+
+.numb_1  { background-position: -0%   -0%; }
+.numb_2  { background-position: -100% -0%; }
+.numb_3  { background-position: -200% -0%; }
+.numb_4  { background-position: -300% -0%; }
+.numb_5  { background-position: -400% -0%; }
+.numb_6  { background-position: -500% -0%; }
+.numb_7  { background-position: -600% -0%; }
+.numb_8  { background-position: -700% -0%; }
+.numb_9  { background-position: -800% -0%; }
+.numb_10 { background-position: -900% -0%; }
+.numb_11 { background-position: -1000% -0%; }
+.numb_12 { background-position: -1100% -0%; }
+
+
 
 /*////////////////////////////////////////
 // ____                _ _              //
