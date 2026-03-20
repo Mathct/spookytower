@@ -2866,6 +2866,8 @@ export class Game {
       // 1️⃣ Stopper l'animation CSS
       spriteElement.style.animationPlayState = "paused";
 
+      const oldContainer = document.getElementById(`ghost_container_${index}`);
+
       const houseContainer = document.getElementById(`player_${args.player_id}_house_ghost`);
       const ghostContainer = document.createElement("div");
       ghostContainer.id = `ghost_container_${index}`;
@@ -2877,6 +2879,8 @@ export class Game {
       this.animationManager.slideAndAttach(spriteElement, ghostContainer, 800).then(() => {
         // 3️⃣ Relancer l'animation CSS
         spriteElement.style.animationPlayState = "running";
+        oldContainer.remove();
+        console.log("old conatainer removed", oldContainer);
       });
     }
   }

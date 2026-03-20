@@ -360,13 +360,13 @@ font-family: "AktivGrotesk-Regular", sans-serif;
 
 .big_clock_tower {
   position: relative;
-  background-image: url('img/ST_clocktower850.png');
+  background-image: url('img/ST_clocktower850.jpg');
   background-position: center top;
   background-repeat: no-repeat;
   background-size: contain;
 
-  width: calc( 1.5 * var(--card_w));
-  height: calc(1.5 * var(--card_w)/25*85);
+  width: calc( 1.4 * var(--card_w));
+  height: calc(1.4 * var(--card_w)/25*85);
 
   pointer-events: none;
   border-radius: 2%;
@@ -424,8 +424,8 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: calc(0.8 * var(--card_h));
-  height: calc(0.8 * var(--card_h));
+  width: calc(0.75 * var(--card_h));
+  height: calc(0.75 * var(--card_h));
 }
 
 
