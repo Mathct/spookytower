@@ -912,7 +912,11 @@ font-family: "AktivGrotesk-Regular", sans-serif;
     z-index: 100;
   }
 
+#dice_zone.selectable {
+  outline: none !important;
+  box-shadow: none !important;
 
+}
 
   #st_help_button {
   display: flex;

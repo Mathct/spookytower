@@ -36,7 +36,7 @@ trait PendingConfirmTrait  // ATTENTION
         //REROLL DICE TOKEN SI TOKEN OK
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        if ($parg1 == 'reroll_dice_btn') {
+        if ($parg1 == 'reroll_dice_btn' || $parg1 == 'dice_zone') {
             
             game::$instance->addPending($this->player_id, "Reroll");
         }

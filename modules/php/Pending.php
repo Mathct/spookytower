@@ -57,6 +57,7 @@ class Pending extends Game
 
 
         $ret['buttons'][] = 'roll_dice_btn';
+        $ret['selectable'][] = 'dice_zone';
 
 
         return $ret;
@@ -176,6 +177,7 @@ class Pending extends Game
         //REROLL DICE
         if ($reroll == 1) {
             $ret['buttons'][] = 'reroll_dice_btn';
+            $ret['selectable'][] = 'dice_zone';
         }
 
         //CLOCK SI RIEN N'EST POSSIBLE
@@ -198,7 +200,7 @@ class Pending extends Game
         //REROLL DICE TOKEN SI TOKEN OK
         ///////////////////////////////////////////////////////////////////////////////////////
 
-        if ($varg1 == 'reroll_dice_btn') {
+        if ($varg1 == 'reroll_dice_btn' || $varg1 == 'dice_zone') {
             
             game::$instance->addPending($this->player_id, "Reroll");
         }
