@@ -137,42 +137,6 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-
-          // case "take_card_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Take Card"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     {
-          //       color: "primary",
-          //       id: "take_card_btn",
-          //     },
-          //   );
-
-          //   if (this.game.selected_building == "") {
-          //     this.game.safeClass("take_card_btn", "add", "disabled");
-          //   }
-          //   break;
-
-          // case "flip_cards_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Flip Cards"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     { color: "primary", id: "flip_cards_btn" },
-          //   );
-
-          //   if (this.game.selected_stack == "") {
-          //     this.game.safeClass("flip_cards_btn", "add", "disabled");
-          //   }
-          //   break;
-
           case "go_to_park_btn":
             this.bga.statusBar.addActionButton(
               _("Go to Park"),
@@ -183,45 +147,6 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-
-          // case "take_pet_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Take Pet"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_pet,
-          //       }),
-          //     {
-          //       color: "primary",
-          //       id: "take_pet_btn",
-          //     },
-          //   );
-
-          //   if (this.game.selected_pet == "") {
-          //     this.game.safeClass("take_pet_btn", "add", "disabled");
-          //   }
-          //   break;
-
-          // case "take_grimoire_pet_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Take Pet"),
-          //     () =>
-          //       this.bga.actions.performAction("actButton", {
-          //         arg1: key,
-          //         arg2: this.game.selected_pet,
-          //       }),
-          //     {
-          //       color: "primary",
-          //       id: "take_grimoire_pet_btn",
-          //     },
-          //   );
-
-          //   if (this.game.selected_pet == "") {
-          //     this.game.safeClass("take_grimoire_pet_btn", "add", "disabled");
-          //   }
-          //   break;
-
           case "turn_clock_btn":
             this.bga.statusBar.addActionButton(
               _("Turn clock"),
@@ -232,32 +157,6 @@ class NormalTurn {
               { color: "primary" },
             );
             break;
-          // case "validate_bonus_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("Validate Bonus"),
-          //     () =>
-          //       this.bga.actions.performAction("actValidateBonus", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     { color: "primary", id: "validate_bonus_btn" },
-          //   );
-
-          //   if (this.game.selected_token == "") {
-          //     this.game.safeClass("validate_bonus_btn", "add", "disabled");
-          //   }
-          //   break;
-          // case "end_bonus_btn":
-          //   this.bga.statusBar.addActionButton(
-          //     _("End Bonus"),
-          //     () =>
-          //       this.bga.actions.performAction("actValidateBonus", {
-          //         arg1: key,
-          //         arg2: this.game.selected_token,
-          //       }),
-          //     { color: "primary", id: "validate_bonus_btn" },
-          //   );
-          //   break;
         }
       }
     }
@@ -271,19 +170,6 @@ class NormalTurn {
     this.game.safeClass(".selected", "remove", "selected");
     this.game.removeConnections();
   }
-
-  /*  onCardClick(card_id) {
-    console.log("onCardClick", card_id);
-
-    this.bga.actions
-      .performAction("actPlayCard", {
-        card_id,
-      })
-      .then(() => {
-        // What to do after the server call if it succeeded
-        // (most of the time, nothing, as the game will react to notifs / change of state instead, so you can delete the `then`)
-      });
-  }*/
 }
 
 export class Game {
@@ -297,10 +183,6 @@ export class Game {
 
     // Uncomment the next line to show debug informations about state changes in the console. Remove before going to production!
     this.bga.states.logger = console.log;
-
-    // Here, you can init the global variables of your user interface
-    // Example:
-    // this.myGlobalValue = 0;
   }
 
   /*
@@ -329,12 +211,6 @@ export class Game {
     this.players_ordered = gamedatas.players_ordered;
 
     this.nb_players = Object.keys(this.players).length;
-
-    // this.selected_token = "";
-    // this.selected_building = "";
-    // this.selected_stack = "";
-    // this.selected_pet = "";
-    // this.function = "";
 
     // variable en local storage pour le zoom
     this.zoom_factor = parseFloat(window.localStorage?.getItem("ST_zoom")) || 0.5;
@@ -448,60 +324,6 @@ export class Game {
         event: "click",
         handler: clickHandler,
       });
-
-      // if (this.function == "ActionsBonus") {
-      //   // --- Cartes “token” ou autres éléments cliquables ---
-      //   const clickHandler = () => this.onSelectToken(elt_id);
-      //   element.addEventListener("click", clickHandler);
-      //   this.connections.push({
-      //     element,
-      //     event: "click",
-      //     handler: clickHandler,
-      //   });
-      //   return;
-      //   //}
-      // } else {
-      //   // --- Carte table (building) ---
-      //   if (elt_id.startsWith("table_building_card_")) {
-      //     const clickHandler = () => this.onSelectBuilding(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   } else if (elt_id.includes("_stack_")) {
-      //     // --- Cartes “token” ou autres éléments cliquables ---
-      //     const clickHandler = () => this.onSelectStack(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   } else if (elt_id.startsWith("card_pet_")) {
-      //     const clickHandler = () => this.onSelectPet(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   } else {
-      //     // --- Cartes “token” ou autres éléments cliquables ---
-      //     const clickHandler = () => this.onSelectToken(elt_id);
-      //     element.addEventListener("click", clickHandler);
-      //     this.connections.push({
-      //       element,
-      //       event: "click",
-      //       handler: clickHandler,
-      //     });
-      //     return;
-      //   }
-      // }
     });
   }
 
@@ -520,11 +342,6 @@ export class Game {
       }
     });
     this.connections = [];
-    // this.selected_token = "";
-    // this.selected_building = "";
-    // this.selected_stack = "";
-    // this.selected_pet = "";
-    // this.function = "";
   }
 
   onSelect(evt) {
@@ -535,180 +352,6 @@ export class Game {
       this.bga.actions.performAction("actSelect", { arg1: evt.currentTarget.id });
     }
   }
-
-  // // Gestion de la sélection d'un building
-  // onSelectBuilding(building_id) {
-  //   const building_elt = document.getElementById(building_id);
-  //   if (!building_elt) return;
-
-  //   if (building_elt.classList.contains("selectable")) {
-  //     this.safeClass(building_elt, "remove", "selectable");
-  //   }
-
-  //   // retire l'ancien building sélectionné
-  //   if (this.selected_building && this.selected_building !== building_id) {
-  //     const old_elt = document.getElementById(this.selected_building);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //   }
-
-  //   // retire l'ancien stack sélectionné
-  //   if (this.selected_stack) {
-  //     const oldStack = document.getElementById(this.selected_stack);
-  //     if (oldStack) {
-  //       this.safeClass(oldStack, "remove", "selected");
-  //       this.safeClass(oldStack, "add", "selectable");
-  //     }
-  //     this.selected_stack = "";
-  //     this.safeClass("flip_cards_btn", "add", "disabled");
-  //     this.safeClass("flip_card8_btn", "add", "disabled");
-  //     this.safeClass("flip_card9_btn", "add", "disabled");
-  //   }
-
-  //   // toggle building
-  //   if (this.selected_building !== building_id) {
-  //     this.safeClass(building_elt, "add", "selected");
-  //     this.selected_building = building_id;
-  //     this.selected_token = building_id;
-  //     this.safeClass("take_card_btn", "remove", "disabled");
-  //     this.safeClass("take_card8_btn", "remove", "disabled");
-  //     this.safeClass("take_card_any_btn", "remove", "disabled");
-  //   } else {
-  //     this.safeClass(building_elt, "remove", "selected");
-  //     this.safeClass(building_elt, "add", "selectable");
-  //     this.selected_building = "";
-  //     this.selected_token = "";
-  //     this.safeClass("take_card_btn", "add", "disabled");
-  //     this.safeClass("take_card8_btn", "add", "disabled");
-  //     this.safeClass("take_card_any_btn", "add", "disabled");
-  //   }
-  // }
-
-  // onSelectStack(stack_id) {
-  //   const stack_elt = document.getElementById(stack_id);
-  //   if (!stack_elt) return;
-
-  //   if (stack_elt.classList.contains("selectable")) {
-  //     this.safeClass(stack_elt, "remove", "selectable");
-  //   }
-
-  //   // retire l'ancien stack sélectionné
-  //   if (this.selected_stack && this.selected_stack !== stack_id) {
-  //     const old_elt = document.getElementById(this.selected_stack);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //   }
-
-  //   // retire l'ancien building sélectionné
-  //   if (this.selected_building) {
-  //     const oldBuilding = document.getElementById(this.selected_building);
-  //     if (oldBuilding) {
-  //       this.safeClass(oldBuilding, "remove", "selected");
-  //       this.safeClass(oldBuilding, "add", "selectable");
-  //     }
-  //     this.selected_building = "";
-  //     this.safeClass("take_card_btn", "add", "disabled");
-  //     this.safeClass("take_card8_btn", "add", "disabled");
-  //     this.safeClass("take_card_any_btn", "add", "disabled");
-  //   }
-
-  //   // toggle stack
-  //   if (this.selected_stack !== stack_id) {
-  //     this.safeClass(stack_elt, "add", "selected");
-  //     this.selected_stack = stack_id;
-  //     this.selected_token = stack_id;
-  //     this.safeClass("flip_cards_btn", "remove", "disabled");
-  //     this.safeClass("flip_card8_btn", "remove", "disabled");
-  //     this.safeClass("flip_card9_btn", "remove", "disabled");
-  //   } else {
-  //     this.safeClass(stack_elt, "remove", "selected");
-  //     this.safeClass(stack_elt, "add", "selectable");
-  //     this.selected_stack = "";
-  //     this.selected_token = "";
-  //     this.safeClass("flip_cards_btn", "add", "disabled");
-  //     this.safeClass("flip_card8_btn", "add", "disabled");
-  //     this.safeClass("flip_card9_btn", "add", "disabled");
-  //   }
-  // }
-
-  // onSelectPet(pet_id) {
-  //   console.log("onSelectPet", pet_id);
-
-  //   const pet_elt = document.getElementById(pet_id);
-  //   if (!pet_elt) return;
-
-  //   // Retire 'selectable' uniquement si présent
-  //   if (pet_elt.classList.contains("selectable")) {
-  //     this.safeClass(pet_elt, "remove", "selectable");
-  //   }
-
-  //   // si aucun est sélectionné
-  //   if (this.selected_pet === "") {
-  //     console.log("pas de selected pet");
-  //     this.safeClass(pet_elt, "add", "selected");
-  //     this.selected_pet = pet_id;
-  //     this.safeClass("take_pet_btn", "remove", "disabled");
-  //     this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
-  //   }
-  //   // Si on clique sur une autre case
-  //   else {
-  //     const old_elt = document.getElementById(this.selected_pet);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //     if (this.selected_pet != pet_id) {
-  //       this.safeClass(pet_elt, "add", "selected");
-  //       this.selected_pet = pet_id;
-  //     } else {
-  //       this.selected_pet = "";
-  //       this.safeClass("take_pet_btn", "add", "disabled");
-  //       this.safeClass("take_grimoire_pet_btn", "add", "disabled");
-  //     }
-  //   }
-  // }
-
-  // onSelectToken(token_id) {
-  //   console.log("onSelectToken", token_id);
-
-  //   const token_elt = document.getElementById(token_id);
-  //   if (!token_elt) return;
-
-  //   // Retire 'selectable' uniquement si présent
-  //   if (token_elt.classList.contains("selectable")) {
-  //     this.safeClass(token_elt, "remove", "selectable");
-  //   }
-
-  //   // si aucun est sélectionné
-  //   if (this.selected_token === "") {
-  //     this.safeClass(token_elt, "add", "selected");
-  //     this.selected_token = token_id;
-  //     this.safeClass("validate_bonus_btn", "remove", "disabled");
-  //     this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
-  //   }
-  //   // Si on clique sur une autre case
-  //   else {
-  //     const old_elt = document.getElementById(this.selected_token);
-  //     if (old_elt) {
-  //       this.safeClass(old_elt, "remove", "selected");
-  //       this.safeClass(old_elt, "add", "selectable");
-  //     }
-  //     if (this.selected_token != token_id) {
-  //       this.safeClass(token_elt, "add", "selected");
-  //       this.selected_token = token_id;
-  //       this.safeClass("validate_bonus_btn", "remove", "disabled");
-  //       this.safeClass("take_grimoire_pet_btn", "remove", "disabled");
-  //     } else {
-  //       this.selected_token = "";
-  //       this.safeClass("validate_bonus_btn", "add", "disabled");
-  //       this.safeClass("take_grimoire_pet_btn", "add", "disabled");
-  //     }
-  //   }
-  // }
 
   setupPlayersBoard() {
     console.log("Setting up the players board");
@@ -759,15 +402,6 @@ export class Game {
       const bottom_board = document.getElementById(`bottom_board_${this.gamedatas.replay_player_id}`);
       bottom_board.insertAdjacentHTML("beforeend", html);
     }
-
-    /*    const current_player_id = this.bga.players.getCurrentPlayerId();
-    if (current_player_id) {
-      const rerollIcon = document.getElementById(`icon_reroll_${current_player_id}`);
-      if (rerollIcon) {
-        rerollIcon.classList.add("clickable");
-        rerollIcon.addEventListener("click", () => this.animClockTower(current_player_id));
-      }
-    }*/
   }
 
   isMobileDevice() {
@@ -815,44 +449,23 @@ export class Game {
     const gameBoardHTML = `
     <div id="resized_id">
         <div id="board_id">
-
-
-
-            <!-- CENTER GRID AVEC COLONNES GAUCHE / CENTRALE / DROITE -->
             <div id="table_center_area" style="display: flex; gap: 10px;">
-
-                <!-- COLONNE GAUCHE -->
                 <div class="table_side_column" id="left_column" style="display: flex; flex-direction: column; gap: 10px;">
                     <div class="table_deck_slot" id="deck_park" title="Park"></div>
                     <div class="table_deck_slot" id="deck_grimoire" title="Grimoire"></div>
                 </div>
-
-                <!-- COLONNE CENTRALE -->
                 <div id="table_central_grid">
                     ${centralGridHTML.join("")}
                 </div>
-
-                <!-- COLONNE DROITE -->
                 <div class="table_side_column" id="right_column">
                   <div class="big_clock_tower" id="clock_tower_container">
-                    
-                    <!-- zone horloge -->
                     <div id="clock_zone"></div>
-
-                    <!-- zone dés -->
                     <div id="dice_zone"></div>
-
                   </div>
                 </div>
-
             </div>
-
-            <!-- RIVER EN BAS -->
             <div id="river_id" class="river_container closed"></div>
-
-            <!-- ZONE JOUEURS -->
             <div id="players_area"></div>
-
         </div>
     </div>
 `;
@@ -900,44 +513,6 @@ export class Game {
       <div class="table_building_counter" id="deck_grimoire_counter"></div>
   `;
     deckGrimoireSlot.insertAdjacentHTML("beforeend", cardHTML);
-
-    // -------------------- Dice Track --------------------
-    /*    const diceTrackSlot = document.getElementById("dice_track");
-    // ---- Injecter la carte + compteur à l'intérieur ----
-    const diceHTML = `
-        <div class="card_item building_cards" 
-             style="background-position: -1000% -500%;" title="Dice Track">
-        </div>
-    `;
-    diceTrackSlot.insertAdjacentHTML("beforeend", diceHTML);
-    // ---- Injecter les dés ----
-    diceTrackSlot.style.position = "relative";
-
-    const dicefaceHTML = `
-        <div id="scene_1" class="scene">
-          <div class="dice" id="dice1">
-            <div class="face face1"></div>
-            <div class="face face2"></div>
-            <div class="face face3"></div>
-            <div class="face face4"></div>
-            <div class="face face5"></div>
-            <div class="face face6"></div>
-          </div>
-        </div>
-
-        <div id="scene_2" class="scene">
-          <div class="dice" id="dice2">
-            <div class="face face1"></div>
-            <div class="face face2"></div>
-            <div class="face face3"></div>
-            <div class="face face4"></div>
-            <div class="face face5"></div>
-            <div class="face face6"></div>
-          </div>
-        </div>
-    `;
-    diceTrackSlot.insertAdjacentHTML("beforeend", dicefaceHTML);*/
-
     const diceZone = document.getElementById("dice_zone");
 
     const dicefaceHTML = `
@@ -980,17 +555,6 @@ export class Game {
     `;
 
     clockZone.insertAdjacentHTML("beforeend", towerHTML);
-
-    /*const clockTowerSlot = document.getElementById("clock_tower_slot");
-    const clockHourRot = 60 * this.gamedatas.other.clock;
-
-    // ---- Injecter la carte + compteur à l'intérieur ----
-    const towerHTML = `
-           <div class="clock_tower" id="clock_tower_id">
-            <div class="clock_hand" id="clock_hand_sprite" style="transform: translate(-50%, -50%) rotate(${clockHourRot}deg);"></div>
-          </div>
-    `;
-    clockTowerSlot.insertAdjacentHTML("beforeend", towerHTML);*/
   }
 
   setupRiver() {
@@ -1071,41 +635,26 @@ export class Game {
       // opacity affecte tout le contenu mais pas un background_color avec alpha
       playersArea.insertAdjacentHTML(
         "beforeend",
-        `
-  <div class="player_board" id="player_board_${player.id}" style="border-color: #${player.color};background-color: #${player.color}22;">
-    
-    <div class="building_columns">
-      ${[...Array(12)].map((_, i) => `<div class="building_stack empty clickable" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
-    </div>
-
-    <div class="house_slot" id="player_${player.id}_house_slot">
-      
-      <div class="house_items" id="player_${player.id}_house_items">
-
-        <div class="house_clues" id="player_${player.id}_house_clues" title="Clues"></div>
-
-        <div class="house_amulet" id="amulet_${player.id}" title="Artefacts">
-
-            <div class="amulets amulet_1 opa_30"></div>
-            <div class="amulets amulet_2 opa_30"></div>
-            <div class="amulets amulet_3 opa_30"></div>
-
-        </div>
-
-      </div>
-
-      <div class="house_cards" id="player_${player.id}_house_card"></div>
-
-    </div>
-
-    <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="Ghosts Captured"></div>
-
-    <div class="player_label" id="player_${player.id}_label" style="color: #${player.color};background-color: #${player.color}88;">
-      <div class="player_name_span">${player.name}</div>
-    </div>
-
-  </div>
-  `,
+        `<div class="player_board" id="player_board_${player.id}" style="border-color: #${player.color};background-color: #${player.color}22;">
+          <div class="building_columns">
+            ${[...Array(12)].map((_, i) => `<div class="building_stack empty clickable" id="player_${player.id}_stack_${i + 1}"></div>`).join("")}
+          </div>
+          <div class="house_slot" id="player_${player.id}_house_slot">
+            <div class="house_items" id="player_${player.id}_house_items">
+              <div class="house_clues" id="player_${player.id}_house_clues" title="Clues"></div>
+              <div class="house_amulet" id="amulet_${player.id}" title="Artefacts">
+                  <div class="amulets amulet_1 opa_30"></div>
+                  <div class="amulets amulet_2 opa_30"></div>
+                  <div class="amulets amulet_3 opa_30"></div>
+              </div>
+            </div>
+            <div class="house_cards" id="player_${player.id}_house_card"></div>
+          </div>
+          <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="Ghosts Captured"></div>
+          <div class="player_label" id="player_${player.id}_label" style="color: #${player.color};background-color: #${player.color}88;">
+            <div class="player_name_span">${player.name}</div>
+          </div>
+        </div>`,
       );
 
       // maison
@@ -1177,7 +726,6 @@ export class Game {
         for (let i = 0; i < nb_clues; i++) {
           const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
           const html = `<div id="${iconId}" class="house_icon ic_clue"></div>`;
-
           const house_clues = document.getElementById(`player_${player.id}_house_clues`);
 
           house_clues.insertAdjacentHTML("beforeend", html);
@@ -1209,7 +757,8 @@ export class Game {
       ghostContainer.insertAdjacentHTML(
         "beforeend",
         `<div id="ghost_${ghost.id}" class="ghost_sprites"
-           style="background-position: -${col}00% -${row}00%;"></div>`,
+           style="background-position: -${col}00% -${row}00%;">
+        </div>`,
       );
     });
   }
@@ -1223,13 +772,6 @@ export class Game {
         playerCounter: "player_ghosts",
         playerId: player.id,
       });
-
-      /*  const pet_counter = new ebg.counter();
-      pet_counter.create(`pet_counter_${player.id}`, {
-        value: player.pet,
-        playerCounter: "player_pets",
-        playerId: player.id,
-      });*/
 
       const artefact_counter = new ebg.counter();
       artefact_counter.create(`artefact_counter_${player.id}`, {
@@ -1250,20 +792,6 @@ export class Game {
         playerCounter: "player_clues",
         playerId: player.id,
       });
-
-      /*  const grimoire_counter = new ebg.counter();
-      grimoire_counter.create(`grimoire_counter_${player.id}`, {
-        value: player.grimoire,
-        playerCounter: "player_grimoires",
-        playerId: player.id,
-      });*/
-
-      /*  const clock_counter = new ebg.counter();
-      clock_counter.create(`clock_counter_${player.id}`, {
-        value: player.clock,
-        playerCounter: "player_clocks",
-        playerId: player.id,
-      });*/
     });
 
     // --- Counters top row ---
@@ -1329,20 +857,6 @@ export class Game {
       dice.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
     });
   }
-
-  /*async rollDiceMultiple() {
-    //pour lancer les dés plusieurs fois et ainsi éviter que les dés ne tournent pas si le résultat est inchangé ou proche
-    // Premier lancer
-    await this.rollDice();
-
-    // Petit délai avant le deuxième lancer
-    await new Promise((r) => setTimeout(r, 100));
-    await this.rollDice();
-
-    // Délai avant le troisième lancer
-    await new Promise((r) => setTimeout(r, 100));
-    await this.rollDice();
-  }*/
 
   async rollDice() {
     return Promise.all(
@@ -1493,97 +1007,74 @@ export class Game {
     const html = `
       <div class="modal-content">
         <span class="close">&times;</span>
-
         <div class="tooltip_content">
-
           <div class="tooltip_bigtitle">${_("Bonus Effects")}</div>
-
           <div class="bonus_effects">
-
             <div class="effect">
               <div class="logo lo_reroll"></div>
               <div class="effect_desc">${_("As soon as you take a Building card with this effect, flip your Reroll token to its available side.")}</div>
             </div>
-
             <div class="effect">
               <div class="logo lo_clock"></div>
               <div class="effect_desc">${_("As soon as you take a Building card with this effect, move the clock hand one step clockwise and apply the effect shown by the hand.")}</div>
             </div>
-
           </div>
 
-
           <div class="tooltip_bigtitle">${_("Other Effects")}</div>
-
           <div class="other_effects">
-
             <div class="effect">
               <div class="icon ic_ghost"></div>
               <div class="effect_desc">${_("Once revealed, the Ghost is captured! Place it to the right of your House board.")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_pet"></div>
               <div class="effect_desc">${_("Take a Ghost Pet card from the center of the table. If there aren't any left, steal a Ghost Pet from any player. Place it to the right of your House board. <b>It counts as a Ghost.</b>")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_clock"></div>
               <div class="effect_desc">${_("Move the clock hand one step clockwise and apply the effect shown by the hand.")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_grimoire"></div>
               <div class="effect_desc">${_("Reveal the top Grimoire card and apply its effect.")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_clue"></div>
               <div class="effect_desc">${_("If you have gained one or more of these Clues, you may <i>Go to the Park.</i>")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_artefact"></div>
               <div class="effect_desc">${_("Take 1 Amulet fragment from the reserve and place it in front of you.")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_reroll_0"></div>
               <div class="effect_desc">${_("Place your Reroll token to its available side.")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_draw8"></div>
               <div class="effect_desc">${_("Take a Building card of value 8 or less (you choose).")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_draw_any"></div>
               <div class="effect_desc">${_("Take any Building card.")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_flip8"></div>
               <div class="effect_desc">${_("Flip <b>one</b> of your Building cards of value 8 or less (you choose).")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_flip9"></div>
               <div class="effect_desc">${_("Flip <b>one</b> of your Building cards of value 9 or more (you choose).")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_replay"></div>
               <div class="effect_desc">${_("At the end of your turn, immediately take another turn.")}</div>
             </div>
-
             <div class="effect">
               <div class="icon ic_empty"></div>
               <div class="effect_desc">${_("No effect.")}</div>
             </div>
-
           </div>
-
         </div>
       </div>
       `;
@@ -2334,7 +1825,7 @@ export class Game {
 
         this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
       } else if (ic === "ghost") {
-        const ghost_idx = parseInt(bonus.split("_")[1]) - 1;
+        const ghost_idx = parseInt(bonus.split("_")[1]);
         const ghost_id = `ghost_${ghost_idx}`;
         await this.moveGhostToHouse(ghost_id, parent, playerId);
       }

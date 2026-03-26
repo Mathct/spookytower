@@ -2111,10 +2111,10 @@ class Pending extends Game
         $ret['buttons'] = [];
         $ret["function"] = "Park";
         $ret['title'] = clienttranslate('${actplayer} goes to the park');
-        $ret['titleyou'] = clienttranslate('${you} are going to the park');
+        $ret['titleyou'] = clienttranslate('${you} must go to the park');
 
 
-        $ret['buttons'][] = 'go_to_park_btn';
+        $ret['selectable'][] = 'park_active';
 
         return $ret;
     }

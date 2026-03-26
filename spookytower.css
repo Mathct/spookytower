@@ -83,9 +83,13 @@
   --font-size: calc(16pt * var(--st_scale));
 
 background-image: url("img/ST_background3.jpg");
-background-size: auto 100%;
-background-position: top center;
-background-repeat: no-repeat;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.body {
+  
 }
 
 .clickable {
