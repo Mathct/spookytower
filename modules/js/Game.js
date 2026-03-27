@@ -204,7 +204,7 @@ export class Game {
     console.log("gamedatas", this.gamedatas);
 
     this.animationManager = new BgaAnimations.Manager({
-      animationsActive: () => this.bga.gameui.bgaAnimationsActive(),
+      animationsActive: () => this.bga.gameui.bgaAnimationsActive() == true,
     });
 
     this.players = gamedatas.players; // A RAJOUTER POUR MOTEUR (UTILITY METHODS)
@@ -859,6 +859,17 @@ export class Game {
   }
 
   async rollDice() {
+    console.log("instantaneous ?", this.bga.gameui.bgaAnimationsActive());
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
+      this.diceElements.forEach((dice, index) => {
+        const face = this.forcedFaces[index];
+        const target = this.faceRotations[face];
+
+        dice.style.transition = "none";
+        dice.style.transform = `rotateX(${target.x}deg) rotateY(${target.y}deg)`;
+      });
+      return;
+    }
     return Promise.all(
       this.diceElements.map((dice, index) => {
         return new Promise((resolve) => {
@@ -886,6 +897,10 @@ export class Game {
   }
 
   async animateDiceDropFromClock(duration = 2000) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
+      return Promise.resolve();
+    }
+
     const clockElement = document.getElementById("clock_tower_id") || document.getElementById("clock_zone");
     const sceneElements = [document.getElementById("scene_1"), document.getElementById("scene_2")];
 
@@ -924,8 +939,8 @@ export class Game {
         const onEnd = (event) => {
           if (event.propertyName !== "transform") return;
           scene.removeEventListener("transitionend", onEnd);
-          scene.style.transition = "";
-          scene.style.transform = "";
+          scene.style.transition = "none";
+          //scene.style.transform = "";
           resolve();
         };
 
@@ -1137,7 +1152,7 @@ export class Game {
     if (icon.dataset.flipping === "true") return;
     icon.dataset.flipping = "true";
 
-    const half = this.instantaneousMode ? 0 : 200; // durée demi-flip
+    const half = this.bga.gameui.bgaAnimationsActive() == false ? 0 : 200; // durée demi-flip
 
     // Premier demi-flip
     icon.style.transition = `transform ${half}ms ease-in-out`;
@@ -1153,8 +1168,8 @@ export class Game {
     await new Promise((resolve) => setTimeout(resolve, half));
 
     // Reset
-    icon.style.transition = "";
-    icon.style.transform = "";
+    icon.style.transition = "none";
+    //icon.style.transform = "";
     delete icon.dataset.flipping;
   }
 
@@ -1173,7 +1188,7 @@ export class Game {
     park.id = "park_active_verso";
 
     // Durée demi-flip : 0 si instantané, 200ms sinon
-    const half = this.instantaneousMode ? 0 : 200;
+    const half = this.bga.gameui.bgaAnimationsActive() == false ? 0 : 200;
 
     // Premier demi-flip
     park.style.transition = `transform ${half}ms ease-in-out`;
@@ -1188,8 +1203,8 @@ export class Game {
     await new Promise((r) => setTimeout(r, half));
 
     // Reset
-    park.style.transition = "";
-    park.style.transform = "";
+    park.style.transition = "none";
+    //park.style.transform = "";
     delete park.dataset.flipping;
   }
 
@@ -1208,7 +1223,7 @@ export class Game {
     grimoire.id = "grimoire_active_verso";
 
     const versoCol = grimoireType - 1;
-    const half = this.instantaneousMode ? 0 : 200;
+    const half = this.bga.gameui.bgaAnimationsActive() == false ? 0 : 200;
 
     // Premier demi-flip
     grimoire.style.transition = `transform ${half}ms ease-in-out`;
@@ -1223,12 +1238,14 @@ export class Game {
     await new Promise((resolve) => setTimeout(resolve, half));
 
     // Reset
-    grimoire.style.transition = "";
-    grimoire.style.transform = "";
+    grimoire.style.transition = "none";
+    //grimoire.style.transform = "";
     delete grimoire.dataset.flipping;
 
+    console.log("grimoireType", grimoireType);
     // Gestion du clue si c’est la deuxième carte
-    if (grimoireType === 2) {
+    if (grimoireType == 2) {
+      console.log("grimoireType reconnu", grimoireType);
       const iconId = `house_ic_clue_${Math.floor(Math.random() * 1000)}`;
       const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
 
@@ -1254,10 +1271,10 @@ export class Game {
     let currentDeg = match ? parseFloat(match[1]) : this.gamedatas.other.clock * 60;
 
     const nextDeg = currentDeg + 60;
-    const duration = this.instantaneousMode ? 0 : 600;
+    const duration = this.bga.gameui.bgaAnimationsActive() == false ? 0 : 600;
 
     if (duration === 0) {
-      hand.style.transition = "";
+      hand.style.transition = "none";
       hand.style.transform = `translate(-50%, -50%) rotate(${nextDeg}deg)`;
       this.gamedatas.other.clock = (this.gamedatas.other.clock + 1) % 6;
       delete hand.dataset.animating;
@@ -1270,7 +1287,7 @@ export class Game {
         const onTransitionEnd = (event) => {
           if (event.propertyName === "transform") {
             hand.removeEventListener("transitionend", onTransitionEnd);
-            hand.style.transition = "";
+            hand.style.transition = "none";
             resolve();
           }
         };
@@ -1330,8 +1347,8 @@ export class Game {
     });
 
     // ⚡ Mode instantané : état final direct
-    if (this.instantaneousMode) {
-      // déplacer les cartes existantes (du bas vers le haut)
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
+      // déplacer les cartes existantes
       existingCards.forEach((cardElement, i) => {
         const nextContainer = containers[i + 1];
         if (!nextContainer) return;
@@ -1340,9 +1357,16 @@ export class Game {
         cardElement.id = `player_${playerId}_stack_${stackId}_card_${i + 2}`;
       });
 
-      // placer la nouvelle carte en première position
-      containers[0].appendChild(card);
-      card.id = `player_${playerId}_stack_${stackId}_card_1`;
+      // ✅ créer une copie comme en mode animé
+      const newCard = card.cloneNode(true);
+
+      containers[0].appendChild(newCard);
+      newCard.id = `player_${playerId}_stack_${stackId}_card_1`;
+
+      // ✅ ne modifier l'original QUE si nécessaire
+      if (nbRemaining == 0) {
+        this.safeClass(card, "add", "empty");
+      }
 
       return;
     }
@@ -1399,7 +1423,7 @@ export class Game {
     cardsInfos.sort((a, b) => a.position - b.position);
 
     // ⚡ Mode instantané
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       cards.forEach((card, i) => {
         const info = cardsInfos[i];
         if (!info) return;
@@ -1409,8 +1433,8 @@ export class Game {
         const col = card_offset % 12;
         const row = 1 + Math.floor(card_offset / 12);
         card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
-        card.style.transition = "";
-        card.style.transform = "";
+        card.style.transition = "none";
+        //card.style.transform = "";
 
         const container = card.parentElement;
         container.style.zIndex = 6 - parseInt(container.style.zIndex || "0", 10);
@@ -1455,8 +1479,8 @@ export class Game {
             await new Promise((r) => setTimeout(r, half));
 
             // Reset transition
-            card.style.transition = "";
-            card.style.transform = "";
+            card.style.transition = "none";
+            //card.style.transform = "";
 
             resolve();
           }),
@@ -1486,7 +1510,7 @@ export class Game {
     const riverElt = document.getElementById("river_id");
 
     // ⚡ Mode instantané : état final direct
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       for (let i = cards.length - 1; i >= 0; i--) {
         const cardEl = cards[i];
         const info = cardsInfos[i];
@@ -1650,8 +1674,8 @@ export class Game {
     if (!riverElt) return;
 
     // ⚡ Mode instantané : état final direct
-    if (this.instantaneousMode) {
-      riverElt.style.transition = "";
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
+      riverElt.style.transition = "none";
       riverElt.classList.toggle("closed");
       return;
     }
@@ -1670,9 +1694,9 @@ export class Game {
     if (!riverElt.classList.contains("closed")) return;
 
     // ⚡ Mode instantané : état final
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       riverElt.classList.remove("closed");
-      riverElt.style.transition = "";
+      riverElt.style.transition = "none";
       return;
     }
 
@@ -1689,9 +1713,9 @@ export class Game {
     if (riverElt.classList.contains("closed")) return;
 
     // ⚡ Mode instantané : état final
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       riverElt.classList.add("closed");
-      riverElt.style.transition = "";
+      riverElt.style.transition = "none";
       return;
     }
 
@@ -1725,10 +1749,10 @@ export class Game {
     const col = card_offset % 12;
     const row = 1 + Math.floor(card_offset / 12);
 
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       card.style.backgroundPosition = `-${col * 100}% -${row * 100}%`;
-      card.style.transition = "";
-      card.style.transform = "";
+      card.style.transition = "none";
+      //card.style.transform = "";
       delete stack.dataset.flipping;
       return;
     }
@@ -1742,8 +1766,8 @@ export class Game {
     card.style.transform = "rotateY(0deg)";
     await new Promise((r) => setTimeout(r, half));
 
-    card.style.transition = "";
-    card.style.transform = "";
+    card.style.transition = "none";
+    //card.style.transform = "";
 
     //card.remove(); // uniquement si c’est vraiment voulu
 
@@ -1752,15 +1776,13 @@ export class Game {
 
   async animGetRewardsSolo(no_house, cardsInfos, playerId) {
     console.log("animGetRewardsSolo");
+
     const river = document.getElementById("river_id");
     const stack = document.getElementById(`player_${playerId}_stack_${no_house}`);
-
     const cards = Array.from(stack.querySelectorAll(".building_cards"));
 
     this.safeClass(".selectable", "remove", "selectable");
     this.safeClass(".selected", "remove", "selected");
-
-    console.log("cards length solo", cards.length);
 
     if (!cards.length) {
       stack.classList.add("empty");
@@ -1785,10 +1807,51 @@ export class Game {
     const bonuses = this.gamedatas.building_cards[card_idx] || [];
     const parent = cardEl.parentElement;
 
-    // Animation disparition
+    // ⚡ MODE INSTANTANÉ
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
+      // supprimer la carte directement
+      cardEl.remove();
+
+      for (let bonus of bonuses) {
+        const ic = bonus.includes("_") ? bonus.split("_")[0] : bonus;
+        if (!ic) continue;
+
+        if (["grimoire", "clock", "flip8", "flip9", "draw8", "pet"].includes(ic)) {
+          const icon = document.createElement("div");
+          icon.className = `river_icon ic_${ic}`;
+          river.appendChild(icon);
+        } else if (ic === "replay") {
+          const panel = document.getElementById(`bottom_board_${playerId}`);
+          const icon = document.createElement("div");
+          icon.className = `icon ic_${ic}`;
+          panel.appendChild(icon);
+        } else if (ic === "clue") {
+          const house_clues = document.getElementById(`player_${playerId}_house_clues`);
+          const icon = document.createElement("div");
+          icon.className = `icon ic_${ic}`;
+          house_clues.appendChild(icon);
+        } else if (ic === "ghost") {
+          const ghost_idx = parseInt(bonus.split("_")[1]);
+          const ghost_id = `ghost_${ghost_idx}`;
+
+          // ⚠️ IMPORTANT : appeler une version instantanée si elle existe
+          await this.moveGhostToHouse(ghost_id, parent, playerId);
+        }
+      }
+
+      if (cards.length == 1) {
+        stack.classList.add("empty");
+      }
+
+      delete stack.dataset.animating;
+      return;
+    }
+
+    // 🎞️ MODE ANIMÉ (inchangé)
     cardEl.style.transition = "transform 400ms ease, opacity 400ms ease";
     cardEl.style.transform = "scale(0)";
     cardEl.style.opacity = "0";
+
     await new Promise((r) => setTimeout(r, 400));
 
     cardEl.remove();
@@ -1830,10 +1893,11 @@ export class Game {
         await this.moveGhostToHouse(ghost_id, parent, playerId);
       }
     }
-    // 3️⃣ Marquer la pile comme vide
+
     if (cards.length == 1) {
       stack.classList.add("empty");
     }
+
     delete stack.dataset.animating;
   }
 
@@ -1847,7 +1911,7 @@ export class Game {
     console.log("Stack Length", containers.length);
 
     // ⚡ Mode instantané : on déplace directement
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       // Parcours croissant
       for (let i = 1; i < containers.length; i++) {
         const currentContainer = containers[i];
@@ -1892,7 +1956,7 @@ export class Game {
       return;
     }
 
-    if (this.instantaneousmode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       // Mode instantané : suppression directe
       bonusElement.remove();
       console.log("Bonus removed instantly:", bonusElement.id);
@@ -1926,7 +1990,7 @@ export class Game {
     // On prend le premier enfant
     const clueElement = container.children[0];
 
-    if (this.instantaneousmode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       // Mode instantané : suppression directe
       clueElement.remove();
       console.log("Clue removed instantly:", clueElement.id);
@@ -1954,7 +2018,7 @@ export class Game {
       return;
     }
 
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       replayElement.remove();
       console.log("Replay removed instantly");
       return;
@@ -1998,7 +2062,7 @@ export class Game {
     }
 
     // 2️⃣ Mode instantané
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       oldCard.remove();
       return;
     }
@@ -2069,7 +2133,7 @@ export class Game {
     }
 
     // 2️⃣ Mode instantané
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       oldCard.remove();
       return;
     }
@@ -2118,14 +2182,14 @@ export class Game {
     // Sélectionne tous les éléments restants river_ic_
     const bonusElements = document.querySelectorAll('[id^="river_ic_"]');
 
-    if (bonusElements.length === 0 && this.instantaneousMode) {
+    if (bonusElements.length === 0 && this.bga.gameui.bgaAnimationsActive() == false) {
       // Pas de bonus à supprimer, mais fermer la rivière
       await this.hideRiver();
       return;
     }
 
     // Si mode instantané, suppression directe
-    if (this.instantaneousMode) {
+    if (this.bga.gameui.bgaAnimationsActive() == false) {
       bonusElements.forEach((el) => el.remove());
       console.log("All remaining bonus elements removed instantly");
 
@@ -2286,7 +2350,7 @@ export class Game {
     // on décrémente lecompteur
     console.log("notif_drawGrimoire", args);
 
-    await this.animFlipGrimoire(args.grimoire.type, args.player_id);
+    await this.animFlipGrimoire(parseInt(args.grimoire.type), args.player_id);
 
     // un fantôme
     // une torche
@@ -2430,7 +2494,6 @@ export class Game {
     console.log("notif_rollDice", args);
 
     this.forcedFaces = args.roll;
-    //await this.rollDiceMultiple();
     await Promise.all([this.rollDice(), this.animateDiceDropFromClock(2000)]);
   }
 
