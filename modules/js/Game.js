@@ -33,8 +33,6 @@ class NormalTurn {
    * This method is called each time we are entering the game state. You can use this method to perform some user interface changes at this moment.
    */
   onEnteringState(args, isCurrentPlayerActive) {
-    //this.bga.statusBar.setTitle(isCurrentPlayerActive ? _("${you} must play a card or pass") : _("${actplayer} must play a card or pass"));
-
     // PART 1 Event listeners
     if (isCurrentPlayerActive) {
       this.possibles = [];
@@ -67,9 +65,11 @@ class NormalTurn {
 
     // PART 2 Titles
     if (isCurrentPlayerActive && args.titleyou) {
+      //this.bga.statusBar.setTitle(isCurrentPlayerActive ? _("${you} must play a card or pass") : _("${actplayer} must play a card or pass"));
+
       this.bga.statusBar.setTitle(
         this.bga.gameui.format_string_recursive(
-          args.titleyou
+          _(args.titleyou)
             .replace("${you}", this.game.divYou())
             .replace(/#opponent#/g, args.opponent ?? "")
             .replace("#nb#", args.nb ?? "")
