@@ -493,7 +493,7 @@ class Pending extends Game
 
             $cards = game::$instance->getObjectListFromDB("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, position position FROM building WHERE card_location ='house' AND card_location_arg = '{$this->player_id}' AND card_type ='{$no_house}'");
 
-            $txt = clienttranslate('${player_name} flips house ${no_house}');
+            $txt = clienttranslate('${player_name} flips building ${no_house}');
             game::$instance->notify->all(
                 "flipCards",
                 $txt,
