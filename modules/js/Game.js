@@ -1247,20 +1247,6 @@ export class Game {
     grimoire.style.transition = "none";
     //grimoire.style.transform = "";
     delete grimoire.dataset.flipping;
-
-    console.log("grimoireType", grimoireType);
-    // Gestion du clue si c’est la deuxième carte
-    if (grimoireType == 2) {
-      console.log("grimoireType reconnu", grimoireType);
-      if (!this._bonusUid) this._bonusUid = 0;
-      this._bonusUid++;
-
-      const iconId = `house_ic_clue_${this._bonusUid}`;
-      const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
-
-      const house_clues = document.getElementById(`player_${playerId}_house_clues`);
-      house_clues.insertAdjacentHTML("beforeend", html);
-    }
   }
 
   async animClockTower(playerId) {
@@ -1544,9 +1530,12 @@ export class Game {
             const iconId = `river_ic_${bonus}_${uid}`;
             riverElt.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="river_icon ic_${ic}"></div>`);
           } else if (ic === "replay") {
-            const panel = document.getElementById(`bottom_board_${playerId}`);
-            const iconId = `panel_ic_replay_${uid}`;
-            panel.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_${ic}"></div>`);
+            const replay = document.getElementById(`panel_ic_replay`);
+            if(!replay) {
+              const panel = document.getElementById(`bottom_board_${playerId}`);
+              const iconId = `panel_ic_replay`;
+              panel.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_replay"></div>`);
+            }
           } else if (ic === "clue") {
             const house_clues = document.getElementById(`player_${playerId}_house_clues`);
             const iconId = `house_ic_clue_${uid}`;
@@ -1601,13 +1590,16 @@ export class Game {
 
           this.animationManager.slideAndAttach(iconEl, riverElt, 600, 0, null);
         } else if (ic === "replay") {
-          const iconId = `panel_ic_replay_${uid}`;
-          parent.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_${ic}"></div>`);
+          const replay = document.getElementById(`panel_ic_replay`);
+          if(!replay) {
+            const iconId = `panel_ic_replay`;
+            parent.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_replay"></div>`);
 
-          const iconEl = document.getElementById(iconId);
-          const panel = document.getElementById(`bottom_board_${playerId}`);
+            const iconEl = document.getElementById(iconId);
+            const panel = document.getElementById(`bottom_board_${playerId}`);
 
-          this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
+            this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
+          }
         } else if (ic === "clue") {
           const iconId = `house_ic_clue_${uid}`;
           parent.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_${ic}"></div>`);
@@ -2362,7 +2354,55 @@ export class Game {
     // on décrémente lecompteur
     console.log("notif_drawGrimoire", args);
 
-    await this.animFlipGrimoire(parseInt(args.grimoire.type), args.player_id);
+    const grimoireType = parseInt(args.grimoire.type);
+    await this.animFlipGrimoire(parseInt(grimoireType), args.player_id);
+
+    console.log("grimoireType", grimoireType);
+    // Gestion du clue si c’est la deuxième carte
+    if (grimoireType == 2) {
+      if (!this._bonusUid) this._bonusUid = 0;
+      this._bonusUid++;
+
+      const grimoireElt = document.getElementById("deck_grimoire");
+      const iconId = `grimoire_ic_clue_${this._bonusUid}`;
+      const html = `<div id="${iconId}" class="icon ic_clue"></div>`;
+
+      grimoireElt.insertAdjacentHTML("beforeend", html);
+      const iconEl = document.getElementById(iconId);
+
+      const house_clues = document.getElementById(`player_${args.player_id}_house_clues`);
+
+      if (this.bga.gameui.bgaAnimationsActive() == false) {
+        house_clues.appendChild(iconEl);
+      } else {
+        this.animationManager.slideAndAttach(iconEl, house_clues, 600, 0, null);
+      }
+    }
+    // Gestion du ghost si c’est la première carte
+    if (grimoireType == 1) {
+      const ghost_id = `grimoire_1`;
+
+      const grimoireElt = document.getElementById("deck_grimoire");
+      await this.moveGhostToHouse(ghost_id, grimoireElt, args.player_id);
+    }
+
+    // Gestion du replay si c’est la 4eme carte
+    if (grimoireType == 4) {
+      const replay = document.getElementById(`panel_ic_replay`);
+      if(!replay) {
+        const grimoireElt = document.getElementById("deck_grimoire");
+        const iconId = `panel_ic_replay`;
+        const html = `<div id="${iconId}" class="icon ic_replay"></div>`;
+
+        grimoireElt.insertAdjacentHTML("beforeend", html);
+        const iconEl = document.getElementById(iconId);
+
+        const panel = document.getElementById(`bottom_board_${args.player_id}`);
+        this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
+
+      }
+
+    }
 
     // un fantôme
     // une torche
