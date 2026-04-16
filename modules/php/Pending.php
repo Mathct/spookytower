@@ -1790,7 +1790,7 @@ class Pending extends Game
                 // Position pet
                 if ($newclock == 1 || $newclock == 4) {
 
-                    game::$instance->addPending($this->player_id, "GrimoirePet");
+                    game::$instance->addPending($this->player_id, "GrimoirePet", 1);
                 }
             }
 
