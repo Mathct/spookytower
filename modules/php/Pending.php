@@ -29,8 +29,6 @@ class Pending extends Game
         $this->player_color = $p['player_color'];
 
         /// PREFERENCE DE CONFIRMATION
-        // $sql = "SELECT pgp_value FROM bga_user_preferences WHERE pgp_player = '{$this->player_id}' AND pgp_preference_id = 100";
-        // $this->player_pref_confirm = game::$instance->getUniqueValueFromDB($sql);
         $this->player_pref_confirm = game::$instance->userPreferences->get($this->player_id, 100);
     }
 
