@@ -977,7 +977,7 @@ export class Game {
 
     let offsetRight = 10; // marge par défaut desktop
     let offsetTopPlus = 125; // top desktop
-    let offsetTopMinus = 185;
+    let offsetTopMinus = 165;
 
     const mobile = this.isMobileDevice();
 
@@ -1531,7 +1531,7 @@ export class Game {
             riverElt.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="river_icon ic_${ic}"></div>`);
           } else if (ic === "replay") {
             const replay = document.getElementById(`panel_ic_replay`);
-            if(!replay) {
+            if (!replay) {
               const panel = document.getElementById(`bottom_board_${playerId}`);
               const iconId = `panel_ic_replay`;
               panel.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_replay"></div>`);
@@ -1591,7 +1591,7 @@ export class Game {
           this.animationManager.slideAndAttach(iconEl, riverElt, 600, 0, null);
         } else if (ic === "replay") {
           const replay = document.getElementById(`panel_ic_replay`);
-          if(!replay) {
+          if (!replay) {
             const iconId = `panel_ic_replay`;
             parent.insertAdjacentHTML("beforeend", `<div id="${iconId}" class="icon ic_replay"></div>`);
 
@@ -2389,7 +2389,7 @@ export class Game {
     // Gestion du replay si c’est la 4eme carte
     if (grimoireType == 4) {
       const replay = document.getElementById(`panel_ic_replay`);
-      if(!replay) {
+      if (!replay) {
         const grimoireElt = document.getElementById("deck_grimoire");
         const iconId = `panel_ic_replay`;
         const html = `<div id="${iconId}" class="icon ic_replay"></div>`;
@@ -2399,9 +2399,7 @@ export class Game {
 
         const panel = document.getElementById(`bottom_board_${args.player_id}`);
         this.animationManager.slideAndAttach(iconEl, panel, 600, 0, null);
-
       }
-
     }
 
     // un fantôme
