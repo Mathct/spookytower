@@ -567,6 +567,11 @@ class Pending extends Game
                 game::$instance->addPending($this->player_id, "ActionsBonus");
             }
         }
+            
+        else {
+                game::$instance->addPending($this->player_id, "ChooseAction");
+        }
+
         }
 
         if ($this->player_pref_confirm == 2) {
@@ -1360,6 +1365,11 @@ class Pending extends Game
 
                 game::$instance->addPending($this->player_id, "Grimoire");
             }
+
+            else {
+                game::$instance->addPending($this->player_id, "ActionsBonus");
+            }
+            
             }
 
             if ($this->player_pref_confirm == 2) {
