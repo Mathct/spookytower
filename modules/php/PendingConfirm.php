@@ -406,9 +406,6 @@ trait PendingConfirmTrait  // ATTENTION
             }
         }
 
-        else {
-            game::$instance->addPending($this->player_id, "ChooseAction");
-        }
 
         }
         
@@ -862,9 +859,6 @@ trait PendingConfirmTrait  // ATTENTION
                 game::$instance->addPending($this->player_id, "Grimoire");
             }
 
-            else {
-                game::$instance->addPending($this->player_id, "ActionsBonus");
-            }
 
         }
 

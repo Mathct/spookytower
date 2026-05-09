@@ -567,10 +567,6 @@ class Pending extends Game
                 game::$instance->addPending($this->player_id, "ActionsBonus");
             }
         }
-            
-        else {
-                game::$instance->addPending($this->player_id, "ChooseAction");
-        }
 
         }
 
@@ -1364,10 +1360,6 @@ class Pending extends Game
                 );
 
                 game::$instance->addPending($this->player_id, "Grimoire");
-            }
-
-            else {
-                game::$instance->addPending($this->player_id, "ActionsBonus");
             }
             
             }
