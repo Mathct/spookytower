@@ -992,7 +992,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   justify-content: center;
   align-items: center;
   position: absolute;
-  top: 125px;
+  top: 5px;
   right: 5px;
   width: 30px;
   height: 30px;
@@ -1011,7 +1011,7 @@ font-family: "AktivGrotesk-Regular", sans-serif;
   justify-content: center;
   align-items: center;
   position: absolute;
-  top: 165px;
+  top: 45px;
   right: 5px;
   width: 30px;
   height: 30px;
@@ -1035,14 +1035,14 @@ font-family: "AktivGrotesk-Regular", sans-serif;
     font-size: 18pt;
   }
 
-
+/*
   #st_zoom_plus_button {
-    top: 80px;
+    top: 5px;
   }
 
   #st_zoom_minus_button {
-    top: 115px;
-  }
+    top: 45px;
+  }*/
 }
 
 

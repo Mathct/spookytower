@@ -958,7 +958,7 @@ export class Game {
   }
 
   addSideButtons() {
-    document.body.insertAdjacentHTML(
+    document.getElementById("game_play_area").insertAdjacentHTML(
       "beforeend",
       `<div id="st_help_button">?</div>
        <div id="st_zoom_plus_button">+</div>
@@ -972,50 +972,6 @@ export class Game {
 
     const zoomMinusButton = document.getElementById("st_zoom_minus_button");
     zoomMinusButton.addEventListener("click", () => this.zoomMinusCards());
-
-    const rightPanel = document.getElementById("right-side");
-
-    let offsetRight = 10; // marge par défaut desktop
-    let offsetTopPlus = 125; // top desktop
-    let offsetTopMinus = 165;
-
-    const mobile = this.isMobileDevice();
-
-    // Si on n'est PAS mobile et que le panel existe → décalage classique
-    if (!mobile && rightPanel) {
-      offsetRight = rightPanel.offsetWidth + 10;
-    }
-
-    // 📱 Sur mobile :
-    if (mobile) {
-      // Boutons plus petits → 30px
-      zoomPlusButton.style.width = "30px";
-      zoomPlusButton.style.height = "30px";
-
-      zoomMinusButton.style.width = "30px";
-      zoomMinusButton.style.height = "30px";
-
-      // Police réduite
-      zoomPlusButton.style.fontSize = "18pt";
-      zoomMinusButton.style.fontSize = "18pt";
-
-      // ✔ Positions verticales compactées pour mobile
-      offsetTopPlus = 80;
-      offsetTopMinus = 115;
-
-      // ✔ Si un panel existe, on place tout sous celui-ci
-      if (rightPanel) {
-        offsetTopPlus += rightPanel.offsetHeight;
-        offsetTopMinus += rightPanel.offsetHeight;
-      }
-    }
-
-    // Application des positions finales
-    zoomPlusButton.style.right = `${offsetRight}px`;
-    zoomMinusButton.style.right = `${offsetRight}px`;
-
-    zoomPlusButton.style.top = `${offsetTopPlus}px`;
-    zoomMinusButton.style.top = `${offsetTopMinus}px`;
   }
 
   showHelpModal() {
