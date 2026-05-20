@@ -424,9 +424,9 @@ export class Game {
       for (let col = 2; col <= 5; col++) {
         centralGridHTML.push(`
           <div class="table_building_slot"
-              id="table_building_slot_${buildingNumber}"
-              style="grid-column:${col}; grid-row:${row};"
-              title="Building ${buildingNumber}">
+            id="table_building_slot_${buildingNumber}"
+            style="grid-column:${col}; grid-row:${row};"
+            title="${_(`Building ${buildingNumber}`)}">
 
             <div class="table_building_cards_container">
               <div class="building_cards opa_30"
@@ -451,8 +451,8 @@ export class Game {
         <div id="board_id">
             <div id="table_center_area" style="display: flex; gap: 10px;">
                 <div class="table_side_column" id="left_column" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="table_deck_slot" id="deck_park" title="Park"></div>
-                    <div class="table_deck_slot" id="deck_grimoire" title="Grimoire"></div>
+                    <div class="table_deck_slot" id="deck_park" title="${_("Park")}"></div>
+                    <div class="table_deck_slot" id="deck_grimoire" title="${_("Grimoire")}"></div>
                 </div>
                 <div id="table_central_grid">
                     ${centralGridHTML.join("")}
@@ -644,8 +644,8 @@ export class Game {
           </div>
           <div class="house_slot" id="player_${player.id}_house_slot">
             <div class="house_items" id="player_${player.id}_house_items">
-              <div class="house_clues" id="player_${player.id}_house_clues" title="Clues"></div>
-              <div class="house_amulet" id="amulet_${player.id}" title="Artefacts">
+              <div class="house_clues" id="player_${player.id}_house_clues" title="${_("Clues")}"></div>
+              <div class="house_amulet" id="amulet_${player.id}" title="${_("Artefacts")}">
                   <div class="amulets amulet_1 opa_30"></div>
                   <div class="amulets amulet_2 opa_30"></div>
                   <div class="amulets amulet_3 opa_30"></div>
@@ -653,7 +653,7 @@ export class Game {
             </div>
             <div class="house_cards" id="player_${player.id}_house_card"></div>
           </div>
-          <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="Ghosts Captured"></div>
+          <div class="house_ghosts building_stack" id="player_${player.id}_house_ghost" title="${_("Ghosts Captured")}"></div>
           <div class="player_label" id="player_${player.id}_label" style="color: #${player.color};background-color: #${player.color}88;">
             <div class="player_name_span">${player.name}</div>
           </div>
